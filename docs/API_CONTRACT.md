@@ -206,10 +206,18 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 | POST | `/admin/payments/:id/refund` | | `AdminPayment` (REFUNDED). Only for REFUND_PENDING (409 otherwise); idempotent |
 | GET | `/admin/audit-logs` | `actorId`, `action` (AuditAction), `entityType`, `entityId`, `fromDate`, `toDate`, `sortOrder` (newest first). No searchTerm/sortBy | `AuditLog[] { id, action, entityType, entityId, actorRole, actor{id, name, email, role} \| null, before, after (redacted JSON), ipAddress, userAgent, createdAt }` + meta |
 | GET | `/zones`, `/hubs` | as §4 (`isActive=all` to include inactive) | |
-| POST / PATCH / DELETE | `/zones`, `/zones/:id` | `CreateZoneInput { name 2-100, code ^[A-Z0-9-]{2,20}$ (upper-cased), description? ≤500 \| null, isActive? }`, PATCH any field | `Zone`. DELETE is a soft delete (`isActive:false`); 409 lists what still uses it; 409 duplicate code |
-| POST / PATCH / DELETE | `/hubs`, `/hubs/:id` | `CreateHubInput { name 2-100, code ^[A-Z0-9-]{2,30}$, address 3-300, city 2-100, phone? \| null, zoneId (active), isActive? }` | `Hub`. 409 zone change or delete while in use |
+| POST / PATCH / DELETE | `/zones`, `/zones/:id` | `CreateZoneInput { name 2-100, code ^[A-Z0-9-]{2,20}$ (upper-cased), description? ≤500 \| null, isActive? }`, PATCH any field | `Zone`. DELETE is a soft delete (`deletedAt` set: gone from every list, even `isActive=all`); 409 lists what still uses it in `errors[]` (hubs, couriers); 409 duplicate code. Deactivate with PATCH `isActive:false` |
+| POST / PATCH / DELETE | `/hubs`, `/hubs/:id` | `CreateHubInput { name 2-100, code ^[A-Z0-9-]{2,30}$, address 3-300, city 2-100, phone? \| null, zoneId (active), isActive? }` | `Hub`. DELETE is a soft delete like zones (gone from every list); 409 on zone change or delete while in use. Deactivate with PATCH `isActive:false` |
 | GET | `/pricing`, `/pricing/:id` | `serviceType`, `originZoneId`, `destinationZoneId`, `isActive` true\|false (omit = both), `searchTerm` (name), `sortBy` name\|serviceType\|baseFee\|perKgFee\|createdAt | `PricingRule[]` + meta / `PricingRule` |
 | POST / PATCH / DELETE | `/pricing`, `/pricing/:id` | `CreatePricingRuleInput { name 2-100, serviceType, originZoneId? \| null, destinationZoneId? \| null (both or neither), baseFee, baseWeightKg? (default 1), perKgFee, maxWeightKg? \| null (≥ baseWeightKg), isActive? (default true) }` | `PricingRule`. 409 when an active rule already exists for that service + route |
+
+**How the admin UI uses this (Phase 7, checked against the live API):**
+- Overview: one `dashboard-stats` call (cached 60 s by the API) gives the cards and all three charts; its `shipmentsPerDay` is a fixed 30 Dhaka days with **no date filter**, so the 7 / 14 / 30-day switch only trims that series. Plus one `requiresReview=true` count and the latest 8 audit entries.
+- **No map panel:** zones and hubs have no coordinates in the contract.
+- Assign lists `/couriers?zoneId=<origin zone>&available=true` (the API also requires an active account). **Reassign = `unassign` then `assign`** (no single call); if the second call fails the UI shows the shipment as unassigned and offers Assign.
+- Users: there's no `GET /admin/users/:id`, so the side sheet uses the list row (`?view=<id>`; a user not on the page costs one `limit=100` lookup).
+- Refunds finished synchronously in every test, so `REFUND_PENDING` was never observed live; "Retry refund" shows only for that status.
+- Audit `before` / `after` snapshots usually hold only the changed fields (no names or tracking ids), so the UI labels records by type + the last 6 characters of the id.
 
 ## 8. Any signed-in role
 
@@ -228,7 +236,7 @@ Render `message` as **plain text**: it contains user-entered text (the example i
 1. **`docs/backend/` was missing** at the start of Phase 0. I copied `README.md` and `docs/postman_collection.json` from `../Carrivo-Backend`.
 2. **Rate limits vs the BFF. Decided:** the BFF forwards `x-client-ip` + `x-bff-secret` (env `BFF_SHARED_SECRET`); backend support is being added. Original problem: The API limits by client IP (`trust proxy 1`). Every BFF call comes from our Vercel server, so all users share **one** 300-requests/15-min bucket and one 20-failed-logins/15-min bucket. A live demo with several graders could hit 429. 
 3. **Refresh semantics. Decided:** refresh proactively before expiry; a 401 means logged out after one retry (§3.5, CLAUDE.md updated).
-4. **Email link path mismatch.** Backend emails link to `FRONTEND_URL/shipments/:id` (for customer *and* admin), but our customer route is `/dashboard/shipments/:id` and there is no admin detail page. **Decided and built:** `src/app/shipments/[id]/route.ts` redirects CUSTOMER → `/dashboard/shipments/:id`, COURIER → `/courier/tasks/:id`, ADMIN → `/admin/shipments?view=:id` (the admin list opens a detail sheet for `view`), logged out → `/login?next=/shipments/:id`.
+4. **Email link path mismatch.** Backend emails link to `FRONTEND_URL/shipments/:id` (for customer *and* admin), but our customer route is `/dashboard/shipments/:id` and there is no admin detail page. **Decided and built:** `src/app/shipments/[id]/route.ts` redirects CUSTOMER → `/dashboard/shipments/:id`, COURIER → `/courier/tasks/:id`, ADMIN → `/admin/shipments/:id` (the admin list opens a detail sheet for `view`), logged out → `/login?next=/shipments/:id`.
 5. **No public pricing table.** `GET /pricing` is ADMIN-only; only `POST /pricing/estimate` (and zones/hubs) are public. **Decided:** `/pricing` is a live quote calculator.
 6. **No contact endpoint. Decided:** the contact form opens a pre-filled `mailto:` and says so.
 7. **No customer stats endpoint.** Dashboard cards need several list calls: counts from `meta.total` with `status=` filters (one call each), and spend summed from `/payments/my?status=PAID` (up to 100 per page). Refunded payments are excluded.

@@ -4,7 +4,7 @@
 // (globals.css and fonts may be what broke).
 import { useEffect } from "react";
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -30,7 +30,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           </p>
           <button
             type="button"
-            onClick={reset}
+            onClick={() => retry()}
             style={{ height: 48, padding: "0 24px", borderRadius: 999, border: 0, background: "#f05a16", color: "#191817", fontWeight: 700, fontSize: 16, cursor: "pointer" }}
           >
             Try again

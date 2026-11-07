@@ -15,8 +15,7 @@ function targetFor(role: Role, id: string): string {
     case "COURIER":
       return `/courier/tasks/${id}`;
     case "ADMIN":
-      // /admin/shipments opens the detail sheet for ?view=<id> (Phase 7).
-      return `/admin/shipments?view=${id}`;
+      return `/admin/shipments/${id}`;
   }
 }
 

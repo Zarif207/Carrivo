@@ -1,13 +1,13 @@
 "use client";
 
-// Client: error boundaries must be client components (they receive reset()).
+// Client: error boundaries must be client components (they receive retry()).
 import { RotateCw, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Container } from "@/components/public/section";
 import { Button } from "@/components/ui/button";
 
-export default function PublicError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function PublicError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -26,7 +26,7 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
           {error.digest ? <p className="font-id text-sm text-muted-foreground">Reference: {error.digest}</p> : null}
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button size="lg" onClick={reset}>
+          <Button size="lg" onClick={() => retry()}>
             <RotateCw aria-hidden="true" /> Try again
           </Button>
           <Button asChild size="lg" variant="outline">

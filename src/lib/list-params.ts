@@ -32,3 +32,10 @@ export function parseListParams<TSort extends string>(
     searchTerm: searchTerm ? searchTerm : undefined,
   };
 }
+
+/** A YYYY-MM-DD date filter from the URL (the format every API date filter accepts), or undefined. */
+export function pickDate(value: string | undefined): string | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const d = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value ? undefined : value;
+}

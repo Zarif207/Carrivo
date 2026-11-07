@@ -18,9 +18,12 @@ import {
   Undo2,
   UserCheck,
   Warehouse,
+  ShieldCheck,
+  UserRound,
+  UserX,
   type LucideIcon,
 } from "lucide-react";
-import type { EarningStatus, PaymentStatus, ServiceType, ShipmentPaymentStatus, ShipmentStatus, VehicleType } from "@/types";
+import type { EarningStatus, PaymentStatus, Role, ServiceType, ShipmentPaymentStatus, ShipmentStatus, UserStatus, VehicleType } from "@/types";
 
 /** Colour families defined as --tone-* tokens in globals.css (light + dark). Brand orange is never a status colour. */
 export type Tone =
@@ -117,6 +120,19 @@ export const SHIPMENT_PAYMENT_STATUS_META: Record<ShipmentPaymentStatus, StatusM
 export const EARNING_STATUS_META: Record<EarningStatus, StatusMeta> = {
   PENDING: { label: "Awaiting payout", tone: "amber", icon: Hourglass, description: "Earned; not paid out yet." },
   PAID: { label: "Paid out", tone: "green", icon: BadgeCheck, description: "Paid out to you." },
+};
+
+/** Account state (admin user list). */
+export const USER_STATUS_META: Record<UserStatus, StatusMeta> = {
+  ACTIVE: { label: "Active", tone: "green", icon: UserCheck, description: "Can sign in." },
+  INACTIVE: { label: "Deactivated", tone: "stone", icon: UserX, description: "Signed out everywhere and can't sign in." },
+};
+
+/** Roles (identity, not state: cool tones only). */
+export const ROLE_META: Record<Role, StatusMeta> = {
+  CUSTOMER: { label: "Customer", tone: "slate", icon: UserRound, description: "Books and pays for shipments." },
+  COURIER: { label: "Courier", tone: "indigo", icon: Bike, description: "Picks up and delivers." },
+  ADMIN: { label: "Admin", tone: "violet", icon: ShieldCheck, description: "Runs operations." },
 };
 
 /** The normal path a parcel takes, used to show upcoming stops. */
