@@ -85,7 +85,7 @@ async function Overview() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <ShipmentsPerDayCard points={perDay} />
         <Panel title="Needs attention">
           <ul className="space-y-1">
@@ -97,12 +97,12 @@ async function Overview() {
         </Panel>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BreakdownCard title="Shipments by status" description="Every shipment, right now" points={byStatus} seriesName="Shipments" />
         <BreakdownCard title="Payments by status" description="Every checkout, right now" points={byPayment} seriesName="Payments" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
         <Panel
           title="Recent activity"
           action={
@@ -142,11 +142,11 @@ function OverviewSkeleton() {
           <StatCardSkeleton key={i} />
         ))}
       </div>
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Skeleton className="h-96 rounded-xl" />
         <Skeleton className="h-96 rounded-xl" />
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Skeleton className="h-[28rem] rounded-xl" />
         <Skeleton className="h-[28rem] rounded-xl" />
       </div>

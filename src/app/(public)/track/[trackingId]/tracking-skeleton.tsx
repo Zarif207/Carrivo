@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function TrackingResultSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] lg:items-start" aria-hidden="true">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr] lg:items-start" aria-hidden="true">
       <div className="space-y-6 rounded-2xl bg-card p-6 shadow-card sm:p-8">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-12 w-56" />

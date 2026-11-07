@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Same footprint as the calculator, so nothing shifts when it streams in. */
 export function CalculatorSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8" aria-hidden="true">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8" aria-hidden="true">
       <div className="space-y-6 rounded-2xl bg-card p-6 shadow-card sm:p-8">
         <div className="grid gap-5 sm:grid-cols-2">
           <Skeleton className="h-16" />

@@ -49,7 +49,7 @@ function Task({ s }: { s: ShipmentDetail }) {
         task={{ id: s.id, trackingId: s.trackingId, status: s.status, failedAttempts: s.failedAttempts, paymentStatus: s.paymentStatus, hasProof: Boolean(s.proofOfDeliveryUrl) }}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <DetailCard title="Pick up from" action={<MapsLink address={pickupAddress} />}>
             <DetailRows

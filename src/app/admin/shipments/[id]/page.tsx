@@ -72,7 +72,7 @@ function Detail({ s, payments, hubs }: { s: ShipmentDetail; payments: AdminPayme
         destinationHubs={hubs.filter((h) => h.zone.id === s.destinationZone.id).map((h) => ({ id: h.id, name: h.name }))}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
         <div className="space-y-6">
           <DetailCard title="Journey">
             <Timeline events={fromStatusHistory(s.statusHistory)} showUpcoming={!terminal} />

@@ -54,7 +54,7 @@ export function ReviewStep({ contact, parcel, zones, hubs, pending, formError, o
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Section title="Sender and receiver" step={1}>
           <Row label="Sender" value={`${contact.senderName}, ${contact.senderPhone}`} />
           <Row label="Pickup address" value={contact.pickupAddress} />

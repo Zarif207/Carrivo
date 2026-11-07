@@ -59,7 +59,7 @@ function Result({ data }: { data: TrackingInfo }) {
   const meta = SHIPMENT_STATUS_META[data.status];
   const terminal = data.status === "DELIVERED" || data.status === "RETURNED" || data.status === "CANCELLED";
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] lg:items-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr] lg:items-start">
       <div className="space-y-6 rounded-2xl bg-card p-6 shadow-card sm:p-8">
         <div className="space-y-3">
           <p className="font-id text-sm font-semibold text-muted-foreground">{data.trackingId}</p>

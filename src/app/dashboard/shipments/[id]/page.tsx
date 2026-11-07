@@ -24,7 +24,7 @@ function Detail({ s }: { s: ShipmentDetail }) {
     <div className="space-y-6">
       <ShipmentStatusPanel shipment={{ id: s.id, trackingId: s.trackingId, status: s.status, paymentStatus: s.paymentStatus, price: s.price }} />
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr]">
         <div className="space-y-6">
           <Card title="Journey">
             <Timeline events={fromStatusHistory(s.statusHistory)} showUpcoming={!terminal} />

@@ -347,7 +347,7 @@ export function Gallery({ theme }: { theme: "light" | "dark" }) {
       </Section>
 
       <Section title="Timeline">
-        <div className="grid gap-6 lg:grid-cols-1">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-1">
           <div className="rounded-xl bg-card p-5 ring-1 ring-border">
             <p className="pb-4 text-sm text-muted-foreground">Shipment detail (status history, with upcoming stops)</p>
             <Timeline events={fromStatusHistory(SAMPLE_HISTORY)} showUpcoming />

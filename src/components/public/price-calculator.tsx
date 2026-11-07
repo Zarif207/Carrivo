@@ -69,7 +69,7 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
   const data = quote.data;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((values) => quote.mutate(values))}
