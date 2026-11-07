@@ -75,7 +75,7 @@ export function ShipmentStatusPanel({ shipment }: ShipmentStatusPanelProps) {
           <StatusBadge kind="shipment-payment" status={paymentStatus} />
         </div>
         <p className="text-muted-foreground">
-          {status === "PENDING" && paymentStatus === "PAID" ? "Paid. We're arranging a pickup and will assign a courier soon." : SHIPMENT_STATUS_META[status].description}
+          {status === "PENDING" && paymentStatus === "PAID" ? "Paid. Choose a pickup window below so we can assign a courier." : SHIPMENT_STATUS_META[status].description}
         </p>
       </div>
 

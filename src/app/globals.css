@@ -4,7 +4,7 @@
 
 /*
  * Dark variant: inside `.dark`, unless a nearer `.light` scope resets it.
- * The scoped form lets /dev/ui render light and dark panels side by side.
+ * The scoped form lets a section render in the other theme (e.g. side-by-side previews).
  */
 @custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
@@ -343,7 +343,7 @@
     font-feature-settings: "kern" 1;
     text-rendering: optimizeLegibility;
   }
-  /* Scoped theme panels (e.g. /dev/ui) also need their own page colour. */
+  /* Scoped theme panels also need their own page colour. */
   .light,
   .dark {
     background-color: var(--background);

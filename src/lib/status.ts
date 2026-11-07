@@ -58,23 +58,6 @@ export const TONE_CLASSES: Record<Tone, string> = {
   stone: "bg-tone-stone-bg text-tone-stone-fg",
 };
 
-/** Solid dot colour for a tone (timeline stops, legends). */
-export const TONE_DOT_CLASSES: Record<Tone, string> = {
-  slate: "bg-tone-slate-fg",
-  sky: "bg-tone-sky-fg",
-  violet: "bg-tone-violet-fg",
-  indigo: "bg-tone-indigo-fg",
-  teal: "bg-tone-teal-fg",
-  blue: "bg-tone-blue-fg",
-  cyan: "bg-tone-cyan-fg",
-  amber: "bg-tone-amber-fg",
-  green: "bg-tone-green-fg",
-  fuchsia: "bg-tone-fuchsia-fg",
-  red: "bg-tone-red-fg",
-  rose: "bg-tone-rose-fg",
-  stone: "bg-tone-stone-fg",
-};
-
 export interface StatusMeta {
   label: string;
   tone: Tone;

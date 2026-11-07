@@ -11,7 +11,7 @@ import { apiFetch } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { hubSchema, type HubValues } from "@/lib/validation/settings";
 import type { Hub, Zone } from "@/types";
-import { SettingsFormDialog, applyApiError } from "./form-dialog";
+import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 
 const FIELDS = ["name", "code", "address", "city", "phone", "zoneId", "isActive"] as const;
 
@@ -56,7 +56,7 @@ export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone
   });
 
   return (
-    <SettingsFormDialog
+    <FormDialog
       form={form}
       open={open}
       onOpenChange={onOpenChange}
@@ -78,6 +78,6 @@ export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone
         <TextField control={form.control} name="phone" label="Phone" optional type="tel" inputMode="tel" placeholder="+8802..." />
       </div>
       <SwitchField control={form.control} name="isActive" label="Active" description="Inactive hubs can't be picked for new shipments." />
-    </SettingsFormDialog>
+    </FormDialog>
   );
 }

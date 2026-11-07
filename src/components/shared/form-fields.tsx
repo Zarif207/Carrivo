@@ -31,7 +31,7 @@ function FieldLabel({ label, optional }: { label: string; optional?: boolean }) 
   );
 }
 
-type InputExtras = Pick<ComponentProps<"input">, "type" | "placeholder" | "autoComplete" | "inputMode" | "maxLength">;
+type InputExtras = Pick<ComponentProps<"input">, "type" | "placeholder" | "autoComplete" | "inputMode" | "maxLength" | "min" | "max">;
 
 export function TextField<T extends FieldValues>({
   control,

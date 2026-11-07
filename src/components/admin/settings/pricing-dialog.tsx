@@ -15,7 +15,7 @@ import { formatMoney } from "@/lib/format";
 import { SERVICE_NAMES } from "@/lib/status";
 import { pricingSchema, type PricingValues } from "@/lib/validation/settings";
 import { SERVICE_TYPES, type PricingRule, type Zone } from "@/types";
-import { SettingsFormDialog, applyApiError } from "./form-dialog";
+import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 
 const FIELDS = ["name", "serviceType", "originZoneId", "destinationZoneId", "baseFee", "baseWeightKg", "perKgFee", "maxWeightKg", "isActive"] as const;
 const NONE = "none";
@@ -78,7 +78,7 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
   );
 
   return (
-    <SettingsFormDialog
+    <FormDialog
       form={form}
       open={open}
       onOpenChange={onOpenChange}
@@ -109,7 +109,7 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
         </p>
       ) : null}
       <SwitchField control={form.control} name="isActive" label="Active" description="Only one active rule per service and route." />
-    </SettingsFormDialog>
+    </FormDialog>
   );
 }
 

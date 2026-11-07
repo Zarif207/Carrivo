@@ -1,6 +1,6 @@
 "use client";
 
-// Client: dialog shell for the settings forms (stays open while saving and after an error).
+// Client: dialog shell for the forms in dialogs (stays open while saving and after an error).
 import { CircleAlert, Loader2 } from "lucide-react";
 import type { FormEventHandler, ReactNode } from "react";
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
@@ -23,7 +23,7 @@ interface FormDialogProps<T extends FieldValues> {
   children: ReactNode;
 }
 
-export function SettingsFormDialog<T extends FieldValues>({ form, open, onOpenChange, trigger, title, description, submitLabel, formError, onSubmit, children }: FormDialogProps<T>) {
+export function FormDialog<T extends FieldValues>({ form, open, onOpenChange, trigger, title, description, submitLabel, formError, onSubmit, children }: FormDialogProps<T>) {
   const pending = form.formState.isSubmitting;
   return (
     <Dialog open={open} onOpenChange={(next) => (pending ? undefined : onOpenChange(next))}>

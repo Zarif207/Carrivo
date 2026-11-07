@@ -1,7 +1,7 @@
 "use client";
 
 // Client: table interactions (URL sort, row links) over rows rendered by the server.
-import { ArrowRight, PackagePlus, PackageSearch } from "lucide-react";
+import { ArrowRight, CalendarClock, PackagePlus, PackageSearch } from "lucide-react";
 import Link from "next/link";
 import { PayButton } from "@/components/payments/pay-button";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -14,6 +14,19 @@ import { SERVICE_NAMES } from "@/lib/status";
 import type { ShipmentListItem } from "@/types";
 
 const detailHref = (row: ShipmentListItem) => `/dashboard/shipments/${row.id}`;
+
+/** Paid but still PENDING: no pickup window yet (booking one moves it to PICKUP_SCHEDULED). */
+const needsPickup = (row: ShipmentListItem) => row.status === "PENDING" && row.paymentStatus === "PAID";
+
+function ScheduleLink({ row, className }: { row: ShipmentListItem; className?: string }) {
+  return (
+    <Button asChild size="sm" variant="outline" className={className ?? "whitespace-nowrap"}>
+      <Link href={detailHref(row)} aria-label={`Schedule pickup for ${row.trackingId}`}>
+        <CalendarClock aria-hidden="true" /> Schedule pickup
+      </Link>
+    </Button>
+  );
+}
 
 const columns: DataTableColumn<ShipmentListItem>[] = [
   {
@@ -48,7 +61,11 @@ const columns: DataTableColumn<ShipmentListItem>[] = [
     header: <span className="sr-only">Actions</span>,
     align: "right",
     cell: (row) =>
-      isPayable(row) ? <PayButton shipmentId={row.id} amount={row.price} label="Pay now" trackingId={row.trackingId} size="sm" variant="outline" className="whitespace-nowrap" /> : null,
+      isPayable(row) ? (
+        <PayButton shipmentId={row.id} amount={row.price} label="Pay now" trackingId={row.trackingId} size="sm" variant="outline" className="whitespace-nowrap" />
+      ) : needsPickup(row) ? (
+        <ScheduleLink row={row} />
+      ) : null,
   },
 ];
 
@@ -75,6 +92,10 @@ function MobileCard(row: ShipmentListItem) {
       {isPayable(row) ? (
         <div className="px-4 pb-4">
           <PayButton shipmentId={row.id} amount={row.price} label="Pay now" trackingId={row.trackingId} size="sm" variant="outline" className="w-full" />
+        </div>
+      ) : needsPickup(row) ? (
+        <div className="px-4 pb-4">
+          <ScheduleLink row={row} className="w-full" />
         </div>
       ) : null}
     </div>

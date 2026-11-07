@@ -3,12 +3,25 @@
 // Client: sorting writes to the URL and rows can navigate on click.
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { MouseEvent, ReactNode } from "react";
+import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUrlState } from "@/hooks/use-url-state";
 import { cn } from "@/lib/utils";
 import type { SortOrder } from "@/types";
+
+/**
+ * Sorting changes the URL, and the page keys its results boundary on the query, so the table
+ * remounts. Remember which header was pressed and put focus back on it afterwards.
+ */
+const SORT_FOCUS_KEY = "carrivo-sort-focus";
+const storage = () => {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+};
 
 export interface DataTableColumn<T> {
   id: string;
@@ -66,8 +79,20 @@ export function DataTable<T>({
 
   const toggleSort = (key: string) => {
     const nextOrder: SortOrder = sortBy === key && sortOrder === "desc" ? "asc" : "desc";
+    storage()?.setItem(SORT_FOCUS_KEY, key);
     set({ sortBy: key, sortOrder: nextOrder });
   };
+
+  const headRef = useRef<HTMLTableSectionElement>(null);
+  useEffect(() => {
+    const key = storage()?.getItem(SORT_FOCUS_KEY);
+    if (!key || isLoading) return;
+    const button = headRef.current?.querySelector<HTMLButtonElement>(`button[data-sort-key="${CSS.escape(key)}"]`);
+    if (button) {
+      button.focus();
+      storage()?.removeItem(SORT_FOCUS_KEY);
+    }
+  });
 
   const onRowClick = (row: T) => (event: MouseEvent<HTMLTableRowElement>) => {
     if (!rowHref || isInteractive(event.target)) return;
@@ -99,7 +124,7 @@ export function DataTable<T>({
           <div className={cn("overflow-x-auto", renderMobileCard && "hidden md:block")}>
             <Table>
               <caption className="sr-only">{caption}</caption>
-              <TableHeader>
+              <TableHeader ref={headRef}>
                 <TableRow className="bg-surface hover:bg-surface">
                   {columns.map((column) => {
                     const active = column.sortKey !== undefined && sortBy === column.sortKey;
@@ -114,6 +139,7 @@ export function DataTable<T>({
                         {column.sortKey ? (
                           <button
                             type="button"
+                            data-sort-key={column.sortKey as string}
                             onClick={() => toggleSort(column.sortKey as string)}
                             className={cn(
                               "-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",

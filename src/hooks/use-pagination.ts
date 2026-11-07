@@ -1,30 +1,4 @@
-"use client";
-
-import { useMemo } from "react";
-import { MAX_PAGE_LIMIT } from "@/lib/api/config";
-import { useUrlState } from "./use-url-state";
-
-const toPositiveInt = (value: string | undefined, fallback: number): number => {
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
-};
-
-/** Reads `page` and `limit` from the URL (clamped to what the API accepts). */
-export function usePagination(defaultLimit = 10) {
-  const { get, set } = useUrlState();
-  const page = toPositiveInt(get("page"), 1);
-  const limit = Math.min(toPositiveInt(get("limit"), defaultLimit), MAX_PAGE_LIMIT);
-
-  return useMemo(
-    () => ({
-      page,
-      limit,
-      setPage: (next: number) => set({ page: next > 1 ? next : null }, { resetPage: false, push: true }),
-      setLimit: (next: number) => set({ limit: next === defaultLimit ? null : next }),
-    }),
-    [page, limit, set, defaultLimit],
-  );
-}
+/* Page-number helpers for <Pagination> (page and limit themselves are parsed from the URL on the server). */
 
 export type PageRange = (number | "gap")[];
 

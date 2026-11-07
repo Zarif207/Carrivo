@@ -11,7 +11,7 @@ import { apiFetch } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { zoneSchema, type ZoneValues } from "@/lib/validation/settings";
 import type { Zone } from "@/types";
-import { SettingsFormDialog, applyApiError } from "./form-dialog";
+import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 
 const FIELDS = ["name", "code", "description", "isActive"] as const;
 
@@ -46,7 +46,7 @@ export function ZoneDialog({ zone, trigger }: { zone?: Zone; trigger: ReactNode 
   });
 
   return (
-    <SettingsFormDialog
+    <FormDialog
       form={form}
       open={open}
       onOpenChange={onOpenChange}
@@ -63,6 +63,6 @@ export function ZoneDialog({ zone, trigger }: { zone?: Zone; trigger: ReactNode 
       </div>
       <TextareaField control={form.control} name="description" label="Description" optional maxLength={500} rows={2} />
       <SwitchField control={form.control} name="isActive" label="Active" description="Inactive zones can't be picked for new shipments." />
-    </SettingsFormDialog>
+    </FormDialog>
   );
 }

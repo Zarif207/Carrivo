@@ -5,7 +5,7 @@ import { applyBffHeaders, getClientIp } from "./client-ip";
 import { API_TIMEOUT_MS, AUTH_COOKIES, getApiBaseUrl } from "./config";
 import { ApiError } from "./errors";
 import { toQueryString } from "./search-params";
-import type { ApiSuccess, Paginated } from "./types";
+import type { ApiSuccess } from "./types";
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -126,11 +126,3 @@ export async function serverFetch<T>(path: string, options: ServerFetchOptions =
   return { success: true, message: "", data: parsed as T };
 }
 
-/** For list endpoints: returns `{ data, meta }` and fails loudly if the API sent no meta. */
-export async function serverFetchList<T>(path: string, options: ServerFetchOptions = {}): Promise<Paginated<T>> {
-  const result = await serverFetch<T[]>(path, options);
-  if (!result.meta) {
-    throw new ApiError(500, `Expected pagination meta from ${path}`);
-  }
-  return { data: result.data, meta: result.meta };
-}

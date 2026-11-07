@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Timeline, fromStatusHistory } from "@/components/shared/timeline";
 import { DetailCard as Card, DetailRows as Rows, PhoneLink, ProofImage, type DetailRow } from "@/components/shipments/detail-parts";
 import { ShipmentDetailSkeleton } from "@/components/shipments/detail-skeleton";
+import { PickupCard } from "@/components/shipments/pickup-card";
 import { ShipmentStatusPanel } from "@/components/shipments/shipment-status-panel";
 import { ApiError } from "@/lib/api/errors";
 import { getMyShipment } from "@/lib/data/customer";
@@ -56,18 +57,7 @@ function Detail({ s }: { s: ShipmentDetail }) {
             </Card>
           ) : null}
 
-          {s.pickupRequest ? (
-            <Card title="Pickup">
-              <Rows
-                rows={[
-                  ["Window", `${formatDateTime(s.pickupRequest.scheduledAt)} to ${formatDateTime(s.pickupRequest.scheduledUntil)}`],
-                  ["Address", s.pickupRequest.pickupAddress],
-                  ["Contact", <span key="c">{s.pickupRequest.contactName}, <PhoneLink phone={s.pickupRequest.contactPhone} /></span>],
-                  ...(s.pickupRequest.notes ? [["Notes", s.pickupRequest.notes] as DetailRow] : []),
-                ]}
-              />
-            </Card>
-          ) : null}
+          <PickupCard s={s} />
 
           <Card title="Parcel">
             <Rows

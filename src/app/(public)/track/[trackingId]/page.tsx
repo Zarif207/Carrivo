@@ -41,16 +41,17 @@ function InvalidId({ id }: { id: string }) {
   );
 }
 
+/** One dt/dd pair per group (valid <dl>): the icon sits inside the <dt>, positioned beside both lines. */
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary [&_svg]:size-5" aria-hidden="true">
-        {icon}
-      </span>
-      <div>
-        <dt className="text-sm text-muted-foreground">{label}</dt>
-        <dd className="font-semibold">{value}</dd>
-      </div>
+    <div className="relative min-h-10 pl-13">
+      <dt className="text-sm text-muted-foreground">
+        <span className="absolute top-0 left-0 grid size-10 place-items-center rounded-full bg-secondary text-foreground [&_svg]:size-5" aria-hidden="true">
+          {icon}
+        </span>
+        {label}
+      </dt>
+      <dd className="font-semibold">{value}</dd>
     </div>
   );
 }

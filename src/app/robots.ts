@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         // Private areas, API routes, personal tracking lookups and the temporary component gallery.
-        disallow: ["/dashboard", "/courier", "/admin", "/api/", "/track/", "/shipments/", "/payment/", "/dev/"],
+        disallow: ["/dashboard", "/courier", "/admin", "/api/", "/track/", "/shipments/", "/payment/"],
       },
     ],
     sitemap: `${SITE.url}/sitemap.xml`,

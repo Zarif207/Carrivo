@@ -1,5 +1,5 @@
 import { ArrowRightLeft, Ban, Building2, Truck, Undo2, UserMinus, UserPlus, Warehouse, type LucideIcon } from "lucide-react";
-import { HUB_STATUSES, getAllowedNextStatuses, type ShipmentStatus } from "@/types";
+import { getAllowedNextStatuses, type ShipmentStatus } from "@/types";
 
 /*
  * What an admin can do next, from the contract's state machine (§2): assign / unassign courier,
@@ -51,5 +51,3 @@ export function adminNextActions(status: ShipmentStatus, failedAttempts: number)
   }
   return actions;
 }
-
-export const isHubStatus = (status: ShipmentStatus) => (HUB_STATUSES as readonly ShipmentStatus[]).includes(status);

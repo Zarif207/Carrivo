@@ -22,8 +22,6 @@ interface DashboardShellProps {
   headerActions?: ReactNode;
   /** Unread/attention counts keyed by nav href, shown as orange badges. */
   badges?: Partial<Record<string, number>>;
-  /** Override the path used for highlighting (only /dev/ui needs this). */
-  currentPath?: string;
 }
 
 const SIDEBAR_HEADINGS = { CUSTOMER: "Shipping", COURIER: "Deliveries", ADMIN: "Operations" } as const;
@@ -93,8 +91,7 @@ function LiveActiveHref({ items, children }: { items: NavItem[]; children: Activ
  * The pathname is request data on dynamic routes (Cache Components), so highlighted navigation
  * streams in under <Suspense>. The fallback renders the same items unhighlighted: no layout shift.
  */
-function WithActiveHref({ items, currentPath, children }: { items: NavItem[]; currentPath?: string; children: ActiveRender }) {
-  if (currentPath) return <>{children(findActiveHref(items, currentPath))}</>;
+function WithActiveHref({ items, children }: { items: NavItem[]; children: ActiveRender }) {
   return (
     <Suspense fallback={children(undefined)}>
       <LiveActiveHref items={items}>{children}</LiveActiveHref>
@@ -102,7 +99,7 @@ function WithActiveHref({ items, currentPath, children }: { items: NavItem[]; cu
   );
 }
 
-export function DashboardShell({ user, children, headerActions, badges = {}, currentPath }: DashboardShellProps) {
+export function DashboardShell({ user, children, headerActions, badges = {} }: DashboardShellProps) {
   const items = DASHBOARD_NAV[user.role];
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -138,7 +135,7 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4">
           <p className={cn("px-4 pb-2 text-xs font-semibold text-sidebar-muted", collapsed && "sr-only")}>{SIDEBAR_HEADINGS[user.role]}</p>
-          <WithActiveHref items={items} currentPath={currentPath}>
+          <WithActiveHref items={items}>
             {(activeHref) => (
               <ul className="space-y-1">
                 {items.map((item) => (
@@ -195,7 +192,7 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
         aria-label={`${ROLE_LABEL[user.role]} navigation`}
         className="fixed inset-x-0 bottom-0 z-40 bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-foreground lg:hidden"
       >
-        <WithActiveHref items={items} currentPath={currentPath}>
+        <WithActiveHref items={items}>
           {(activeHref) => {
             const overflowActive = overflow.some((item) => item.href === activeHref);
             return (
@@ -250,7 +247,7 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
               <SheetTitle className="font-display text-sidebar-foreground">More</SheetTitle>
               <SheetDescription className="text-sidebar-muted">Other {ROLE_LABEL[user.role].toLowerCase()} pages</SheetDescription>
             </SheetHeader>
-            <WithActiveHref items={items} currentPath={currentPath}>
+            <WithActiveHref items={items}>
               {(activeHref) => (
                 <ul className="space-y-1 px-3 pb-6">
                   {overflow.map((item) => (
