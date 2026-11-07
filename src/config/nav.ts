@@ -1,4 +1,5 @@
 import {
+  Bell,
   Bike,
   CreditCard,
   FileClock,
@@ -61,6 +62,7 @@ export const DASHBOARD_NAV: Record<Role, NavItem[]> = {
     { title: "Shipments", href: "/dashboard/shipments", icon: Package, primary: true },
     { title: "New shipment", href: "/dashboard/shipments/new", icon: PackagePlus, primary: true },
     { title: "Payments", href: "/dashboard/payments", icon: CreditCard, primary: true },
+    { title: "Notifications", href: "/dashboard/notifications", icon: Bell },
     { title: "Profile", href: "/dashboard/profile", icon: UserRound },
   ],
   COURIER: [
@@ -85,3 +87,9 @@ export function findActiveHref(items: NavItem[], pathname: string): string | und
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
+/** Full notifications list per role (only customers have one so far; the bell works for every role). */
+export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
+  CUSTOMER: "/dashboard/notifications",
+  COURIER: null,
+  ADMIN: null,
+};

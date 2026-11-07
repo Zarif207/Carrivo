@@ -9,9 +9,9 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Timeline, fromTrackingTimeline } from "@/components/shared/timeline";
 import { getTracking } from "@/lib/data/public";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { SHIPMENT_STATUS_META } from "@/lib/status";
+import { SERVICE_NAMES, SHIPMENT_STATUS_META } from "@/lib/status";
 import { TRACKING_ID_PATTERN, normalizeTrackingId } from "@/lib/validation/public";
-import type { ServiceType, TrackingInfo } from "@/types";
+import type { TrackingInfo } from "@/types";
 import { TrackingResultSkeleton } from "./tracking-skeleton";
 
 type Props = PageProps<"/track/[trackingId]">;
@@ -25,8 +25,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: { index: false, follow: true },
   };
 }
-
-const SERVICE_NAMES: Record<ServiceType, string> = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" };
 
 function InvalidId({ id }: { id: string }) {
   return (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { ApiError } from "@/lib/api/errors";
 import { toSessionUser, useAuthStore, type SessionUser } from "@/stores/auth-store";
+import { SHIPMENT_DRAFT_KEY } from "@/stores/shipment-draft";
 import type { Role, User } from "@/types";
 import type { LoginValues } from "@/lib/validation/auth";
 
@@ -110,10 +111,23 @@ export function useAuth() {
     } finally {
       setUser(null);
       meRequest = null;
+      // The shipment draft holds names, phones and addresses: drop it with the session.
+      try {
+        sessionStorage.removeItem(SHIPMENT_DRAFT_KEY);
+      } catch {
+        // storage unavailable: nothing to clear
+      }
       // Full replace: drops the client router cache so Back can't show the old dashboard.
       window.location.replace("/login?reason=logged-out");
     }
   }, [setUser]);
 
-  return { user, status, isAuthenticated: status === "authenticated", login, register, demoLogin, logout };
+  /** Better Auth's response is reduced to { changed } by /api/auth/change-password (no token reaches the browser). */
+  const changePassword = useCallback(
+    (values: { currentPassword: string; newPassword: string; revokeOtherSessions?: boolean }) =>
+      postAuth<{ changed: boolean }>("/api/auth/change-password", values),
+    [],
+  );
+
+  return { user, status, isAuthenticated: status === "authenticated", login, register, demoLogin, logout, changePassword };
 }

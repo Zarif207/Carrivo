@@ -1,15 +1,13 @@
-import { StatCardSkeleton } from "@/components/shared/stat-card";
+import { StatsSkeleton, TableSkeleton } from "@/components/shipments/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CustomerLoading() {
   return (
     <div className="space-y-6" aria-busy="true">
       <Skeleton className="h-10 w-64" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <StatCardSkeleton key={i} />
-        ))}
-      </div>
+      <Skeleton className="h-11 w-80 max-w-full rounded-full" />
+      <StatsSkeleton />
+      <TableSkeleton rows={5} />
     </div>
   );
 }

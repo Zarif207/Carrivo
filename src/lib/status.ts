@@ -20,7 +20,7 @@ import {
   Warehouse,
   type LucideIcon,
 } from "lucide-react";
-import type { PaymentStatus, ShipmentPaymentStatus, ShipmentStatus } from "@/types";
+import type { PaymentStatus, ServiceType, ShipmentPaymentStatus, ShipmentStatus } from "@/types";
 
 /** Colour families defined as --tone-* tokens in globals.css (light + dark). Brand orange is never a status colour. */
 export type Tone =
@@ -125,3 +125,5 @@ export const SHIPMENT_MAIN_PATH: readonly ShipmentStatus[] = [
   "OUT_FOR_DELIVERY",
   "DELIVERED",
 ];
+
+export const SERVICE_NAMES: Record<ServiceType, string> = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" };

@@ -1,7 +1,7 @@
 "use client";
 
 // Client: selection state and arrow-key navigation (radio group pattern).
-import { useRef, type KeyboardEvent } from "react";
+import { useImperativeHandle, useRef, type KeyboardEvent, type Ref } from "react";
 import { cn } from "@/lib/utils";
 
 export interface SegmentedOption<T extends string> {
@@ -19,11 +19,16 @@ interface SegmentedControlProps<T extends string> {
   /** Stretch to the container and share the width equally (forms on small screens). */
   fullWidth?: boolean;
   className?: string;
+  /** focus() moves focus to the selected segment (React Hook Form's setFocus / error focus use it). */
+  ref?: Ref<{ focus: () => void }>;
 }
 
 /** Pill-shaped single choice. Arrow keys move and select, like native radios. */
-export function SegmentedControl<T extends string>({ options, value, onValueChange, label, size = "md", fullWidth = false, className }: SegmentedControlProps<T>) {
+export function SegmentedControl<T extends string>({ options, value, onValueChange, label, size = "md", fullWidth = false, className, ref }: SegmentedControlProps<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  useImperativeHandle(ref, () => ({
+    focus: () => refs.current[Math.max(0, options.findIndex((o) => o.value === value))]?.focus(),
+  }), [options, value]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;

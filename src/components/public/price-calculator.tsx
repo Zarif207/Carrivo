@@ -91,7 +91,7 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
               <FormItem>
                 <FormLabel>Service</FormLabel>
                 <FormControl>
-                  <SegmentedControl options={SERVICE_OPTIONS} value={field.value} onValueChange={field.onChange} label="Service" fullWidth className="sm:w-auto" />
+                  <SegmentedControl options={SERVICE_OPTIONS} value={field.value} onValueChange={field.onChange} label="Service" ref={field.ref} fullWidth className="sm:w-auto" />
                 </FormControl>
                 <FormDescription>{SERVICE_HINTS[service]}</FormDescription>
                 <FormMessage />

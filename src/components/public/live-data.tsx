@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPriceExamples, getPublicHubs, getPublicZones } from "@/lib/data/public";
 import { formatMoney } from "@/lib/format";
+import { SERVICE_NAMES } from "@/lib/status";
 import type { Hub, Zone } from "@/types";
 
 /*
@@ -12,8 +13,6 @@ import type { Hub, Zone } from "@/types";
  * (inside the page's <Suspense>) instead of at build time: the API being slow or down never
  * breaks a deploy, and the cached data underneath ("use cache") keeps it fast.
  */
-
-const SERVICE_NAMES = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" } as const;
 
 function Unavailable({ what }: { what: string }) {
   return (

@@ -47,3 +47,19 @@ export function timeRangeToDates(range: TimeRange, now: Date = new Date()): { fr
       return { fromDate: ymd(year, 1, 1), toDate: today };
   }
 }
+
+export const TIME_RANGE_LABELS: Record<TimeRange, string> = {
+  today: "today",
+  week: "this week",
+  month: "this month",
+  year: "this year",
+};
+
+/**
+ * Date filters for the API plus the same Dhaka-day bounds as ISO instants (start 00:00, end 23:59:59.999,
+ * UTC+6), for filtering rows the API can't filter by date itself. Same clock rules as above.
+ */
+export function timeRangeBounds(range: TimeRange, now: Date = new Date()) {
+  const { fromDate, toDate } = timeRangeToDates(range, now);
+  return { fromDate, toDate, fromIso: `${fromDate}T00:00:00.000+06:00`, toIso: `${toDate}T23:59:59.999+06:00` };
+}

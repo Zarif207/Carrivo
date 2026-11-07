@@ -21,7 +21,8 @@ export const BFF_RULES: readonly Rule[] = [
   // Users
   r("GET", "/users/me"),
   r("PATCH", "/users/me"),
-  r("POST", "/auth/change-password"),
+  // POST /auth/change-password is NOT proxied: its raw response can carry a session token.
+  // It goes through /api/auth/change-password, which strips it.
 
   // Zones, hubs, pricing (reads public; writes admin, enforced by the API)
   r("GET", "/zones", true),

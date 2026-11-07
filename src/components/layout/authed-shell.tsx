@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { AuthHydrator } from "@/components/auth/auth-hydrator";
 import { requireRole } from "@/lib/auth/current-user";
 import type { Role } from "@/types";
-import { DashboardShell } from "./dashboard-shell";
+import { LiveShell } from "./live-shell";
 
 /**
  * Server gate for a role's area: re-verifies the user against GET /users/me (the proxy only checked
@@ -13,7 +13,7 @@ export async function AuthedShell({ role, children }: { role: Role; children: Re
   return (
     <>
       <AuthHydrator user={user} />
-      <DashboardShell user={{ name: user.name, email: user.email, image: user.image, role: user.role }}>{children}</DashboardShell>
+      <LiveShell user={{ name: user.name, email: user.email, image: user.image, role: user.role }}>{children}</LiveShell>
     </>
   );
 }

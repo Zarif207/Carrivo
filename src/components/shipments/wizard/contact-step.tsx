@@ -1,0 +1,85 @@
+"use client";
+
+// Client: step 1 form (sender and receiver).
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRight } from "lucide-react";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { TextareaField, TextField } from "@/components/shared/form-fields";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { contactStepSchema, type ContactStep } from "@/lib/validation/shipment";
+import { useShipmentDraft } from "@/stores/shipment-draft";
+import { useServerErrors } from "./use-server-errors";
+
+const FIELDS = ["senderName", "senderPhone", "pickupAddress", "receiverName", "receiverPhone", "receiverEmail", "deliveryAddress"] as const;
+
+export function ContactStepForm({ defaults, serverErrors }: { defaults: Partial<ContactStep>; serverErrors?: Record<string, string> }) {
+  const draft = useShipmentDraft((s) => s.contact);
+  const saveContact = useShipmentDraft((s) => s.saveContact);
+  const setStep = useShipmentDraft((s) => s.setStep);
+
+  const form = useForm<ContactStep>({
+    resolver: zodResolver(contactStepSchema),
+    defaultValues: {
+      senderName: "",
+      senderPhone: "",
+      pickupAddress: "",
+      receiverName: "",
+      receiverPhone: "",
+      receiverEmail: "",
+      deliveryAddress: "",
+      ...defaults,
+      ...draft,
+    },
+  });
+  useServerErrors(form, serverErrors, FIELDS);
+
+  // Autosave as you type, so a refresh keeps the step exactly as it was.
+  const typed = useWatch({ control: form.control });
+  useEffect(() => {
+    saveContact(typed as Partial<ContactStep>);
+  }, [typed, saveContact]);
+
+  const next = form.handleSubmit((values) => {
+    saveContact(values);
+    setStep(2);
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={next} noValidate className="space-y-8">
+        <fieldset className="space-y-5 rounded-xl bg-card p-6 shadow-card">
+          <legend className="sr-only">Sender</legend>
+          <h3 className="text-lg font-bold" aria-hidden="true">
+            Sender
+          </h3>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField control={form.control} name="senderName" label="Name" autoComplete="name" />
+            <TextField control={form.control} name="senderPhone" label="Phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+8801711000000" />
+          </div>
+          <TextareaField control={form.control} name="pickupAddress" label="Pickup address" rows={2} maxLength={300} description="House, road and area. The courier collects from here." />
+        </fieldset>
+
+        <fieldset className="space-y-5 rounded-xl bg-card p-6 shadow-card">
+          <legend className="sr-only">Receiver</legend>
+          <h3 className="text-lg font-bold" aria-hidden="true">
+            Receiver
+          </h3>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField control={form.control} name="receiverName" label="Name" />
+            <TextField control={form.control} name="receiverPhone" label="Phone" type="tel" inputMode="tel" placeholder="+8801811000000" />
+          </div>
+          <TextField control={form.control} name="receiverEmail" label="Email" optional type="email" inputMode="email" description="We'll only use it for delivery updates." />
+          <TextareaField control={form.control} name="deliveryAddress" label="Delivery address" rows={2} maxLength={300} />
+        </fieldset>
+
+        <div className="flex justify-end">
+          <Button type="submit" size="lg">
+            Next: parcel <ArrowRight aria-hidden="true" />
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
