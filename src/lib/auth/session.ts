@@ -70,8 +70,14 @@ export function encodeRoleCookie(role: Role, expiresAt: Date, token: string): st
   return `${role}.${exp}.${sign(`${role}.${exp}.${tokenDigest(token)}`)}`;
 }
 
-/** Reads and verifies the session cookies. Returns null when absent, tampered with, or expired. */
-export function readSession(store: CookieReader): Session | null {
+/**
+ * Reads and verifies the session cookies. Returns null when absent, tampered with, or expired.
+ *
+ * `now` is explicit on purpose (Cache Components): route handlers and the proxy pass `Date.now()`
+ * (always request time); Server Components must `await connection()` before reading the clock,
+ * or Next reports "Date.now() while prerendering" in dev. Use getCurrentUser() there.
+ */
+export function readSession(store: CookieReader, now: number): Session | null {
   const token = store.get(AUTH_COOKIES.token)?.value;
   const roleCookie = store.get(AUTH_COOKIES.role)?.value;
   if (!token || !roleCookie) return null;
@@ -88,7 +94,7 @@ export function readSession(store: CookieReader): Session | null {
   if (!safeEqual(signature, expected)) return null;
 
   const expiresAt = new Date(Number(expRaw) * 1000);
-  if (expiresAt.getTime() <= Date.now()) return null;
+  if (expiresAt.getTime() <= now) return null;
   return { token, role, expiresAt };
 }
 

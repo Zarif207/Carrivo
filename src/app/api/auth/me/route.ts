@@ -13,7 +13,7 @@ import type { UserProfile } from "@/types";
  * (contract §3.5). A dead session clears the cookies and also returns { user: null }.
  */
 export async function GET(request: NextRequest) {
-  let session = readSession(request.cookies);
+  let session = readSession(request.cookies, Date.now());
   if (!session) return jsonOk({ user: null }, "Not logged in");
 
   const clientIp = clientIpOf(request);

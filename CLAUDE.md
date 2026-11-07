@@ -27,6 +27,7 @@ Package manager: npm.
 
 - **Server Components by default.** Add `"use client"` only for interactivity (forms, charts, filters, dialogs). Say why in a one-line comment on non-obvious ones.
 - **Cache Components is on** (`cacheComponents: true`). Request-time data (anything that reads `cookies()`/`headers()`, authenticated `serverFetch`, `useSearchParams`, and `usePathname` on dynamic routes) must render inside `<Suspense>` with a skeleton fallback. That includes awaiting `params`/`searchParams` in a page: do it in a child component under `<Suspense>` (or the dev overlay flags the route as blocking). Cacheable public reads (zones, hubs, tracking) use `serverFetch(path, { auth: false })` inside a `"use cache"` function with `cacheLife(...)`.
+- **Time and randomness are request data too.** In Server Components, `Date.now()`, `new Date()` and `Math.random()` may only run after `await connection()` (or `cookies()`/`headers()` plus `connection()`); otherwise dev reports "encountered the unstable value Date.now() while prerendering". Pass time into helpers explicitly (e.g. `readSession(store, now)`); route handlers and `proxy.ts` always run at request time, so they may read the clock directly.
 - Every data page has `loading.tsx` (skeleton, never a full-page spinner) and every route group has `error.tsx`. Add `not-found.tsx` and `global-error.tsx`.
 - **Auth via a thin BFF.** The browser never sees the API token.
   - Route handlers under `src/app/api/auth/*` call the backend, then store the token in an **httpOnly, Secure, SameSite=Lax cookie**.
@@ -79,7 +80,8 @@ Package manager: npm.
 
 ## Workflow
 
-- After implementing, run `npm run lint`, `npx tsc --noEmit` and `npm run build`. Fix errors before reporting.
+- After implementing, run `npm run lint`, `npm run typecheck` (or `npx tsc --noEmit`) and `npm run build`. Fix errors before reporting.
+- **Always test in `npm run dev` as well as a production build; Cache Components errors can appear only in dev.** Partial Prefetching's runtime prerender (with cookies available) runs in dev and can flag blocking routes that `next build` never sees. Log in as each role and open every route (direct load, hard refresh, Back/Forward) with the console open: no dev overlay issues, no errors, no hydration warnings.
 - Report briefly: what works, what you verified, what differs from the plan, then the suggested commits.
 - Never print or log tokens, passwords or secrets. Never commit `.env*` (keep `.env.example` current).
 

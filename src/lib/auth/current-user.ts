@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { endpoints } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/errors";
@@ -20,7 +21,9 @@ export interface CurrentUser {
  * Returns null when there is no valid session.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  const session = readSession(await cookies());
+  // Request-time only: opt out of prerendering before touching cookies or the clock.
+  await connection();
+  const session = readSession(await cookies(), Date.now());
   if (!session) return null;
   try {
     const { data } = await serverFetch<UserProfile>(endpoints.users.me, { auth: session.token, requireAuth: true });

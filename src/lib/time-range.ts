@@ -27,7 +27,9 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /**
  * `{ fromDate, toDate }` as YYYY-MM-DD Dhaka days, the format every API date filter accepts.
- * Weeks start on Monday. Pass `now` for tests.
+ * Weeks start on Monday. Pass `now` for tests. In a Server Component, `await connection()` first
+ * (reading the clock during a prerender is an error under Cache Components); in client components
+ * call it from an event handler or effect.
  */
 export function timeRangeToDates(range: TimeRange, now: Date = new Date()): { fromDate: string; toDate: string } {
   const { year, month, day, weekday } = dhakaParts(now);

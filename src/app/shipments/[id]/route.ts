@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_COOKIES } from "@/lib/api/config";
-import { ROLES, type Role } from "@/types";
+import { readSession } from "@/lib/auth/session";
+import type { Role } from "@/types";
 
 /**
  * Landing URL used in the API's emails: FRONTEND_URL/shipments/:id.
@@ -9,9 +8,6 @@ import { ROLES, type Role } from "@/types";
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const isRole = (value: string | undefined): value is Role =>
-  value !== undefined && (ROLES as readonly string[]).includes(value);
 
 function targetFor(role: Role, id: string): string {
   switch (role) {
@@ -31,15 +27,14 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/shipm
     return NextResponse.redirect(new URL("/not-found", request.url));
   }
 
-  const store = await cookies();
-  const hasSession = Boolean(store.get(AUTH_COOKIES.token)?.value);
-  const role = store.get(AUTH_COOKIES.role)?.value;
+  // Route handler: always request time, so reading the clock here is fine.
+  const session = readSession(request.cookies, Date.now());
 
-  if (!hasSession || !isRole(role)) {
+  if (!session) {
     const login = new URL("/login", request.url);
     login.searchParams.set("next", `/shipments/${id}`);
     return NextResponse.redirect(login);
   }
 
-  return NextResponse.redirect(new URL(targetFor(role, id), request.url));
+  return NextResponse.redirect(new URL(targetFor(session.role, id), request.url));
 }

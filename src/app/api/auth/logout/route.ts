@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const blocked = checkOrigin(request);
   if (blocked) return blocked;
 
-  const session = readSession(request.cookies);
+  const session = readSession(request.cookies, Date.now());
   if (session) {
     try {
       await serverFetch(endpoints.auth.logout, { method: "POST", auth: session.token, clientIp: clientIpOf(request) });

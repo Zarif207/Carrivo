@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return response;
   };
 
-  let session = readSession(request.cookies);
+  let session = readSession(request.cookies, Date.now());
   if (!session) return ended();
 
   const clientIp = clientIpOf(request);

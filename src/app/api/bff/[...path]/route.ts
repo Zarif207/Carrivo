@@ -37,7 +37,7 @@ async function handle(request: NextRequest, { params }: Context): Promise<Respon
   const rule = matchBffRule(method, path);
   if (!rule) return jsonError(404, "Not found", [], "NOT_ALLOWED");
 
-  let session: Session | null = readSession(request.cookies);
+  let session: Session | null = readSession(request.cookies, Date.now());
   if (!session && !rule.public) return jsonError(401, "You're not logged in.", [], "UNAUTHENTICATED");
 
   const clientIp = clientIpOf(request);

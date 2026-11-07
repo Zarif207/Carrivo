@@ -19,7 +19,7 @@ function noStore(response: NextResponse): NextResponse {
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const session = readSession(request.cookies);
+  const session = readSession(request.cookies, Date.now());
 
   if (AUTH_PAGES.has(pathname)) {
     if (!session) return NextResponse.next();
