@@ -70,9 +70,15 @@ The API is Bearer-only and has no cookies the frontend can use. Our Next.js serv
 | Cookie | Content | Flags |
 |---|---|---|
 | `carrivo_session` | Bearer token | httpOnly, Secure (prod), SameSite=Lax, Path=/, Max-Age = until `expiresAt` |
-| `carrivo_session_exp` | token `expiresAt` (ISO) | same |
-| `carrivo_role` | `CUSTOMER`/`COURIER`/`ADMIN`, read by `middleware.ts`/`proxy.ts` for redirects only | same |
-| `carrivo_google_verifier` | PKCE verifier during Google sign-in only | httpOnly, Secure, SameSite=Lax, Max-Age 600 |
+| `carrivo_role` | `ROLE.EXP.SIG`: role + token expiry, `SIG = HMAC-SHA256(SESSION_SECRET, "ROLE.EXP.sha256(token)")`. `src/proxy.ts` trusts it for routing without calling the API; it can't be forged or moved to another token | same |
+| `carrivo_google_verifier`, `carrivo_google_next` | PKCE verifier and the safe `next` path, during Google sign-in only | httpOnly, Secure (prod), SameSite=Lax, Path=/auth/google, Max-Age 600 |
+
+**Implemented in Phase 3** (`src/lib/auth/*`, `src/app/api/auth/*`, `src/app/api/bff/[...path]`, `src/proxy.ts`):
+- Every mutating route handler requires `Origin` = `NEXT_PUBLIC_APP_URL`'s origin (CSRF guard).
+- `/api/bff/*` only forwards method + path pairs in `src/lib/api/bff-allowlist.ts` (404 `NOT_ALLOWED` otherwise), attaches the token, `x-client-ip` and `x-bff-secret`, streams bodies both ways and keeps status codes. A 401 from the API comes back as `code: "SESSION_EXPIRED"` without clearing cookies.
+- `GET /api/auth/me` returns `{ user }`, or `{ user: null }` (200) when signed out, so anonymous pages log no failed requests.
+- Layouts re-verify with `requireRole()` (GET /users/me); a dead session goes through `GET /api/auth/session-expired`, which clears cookies and lands on `/login?reason=expired`.
+- `next` is accepted only as a same-origin path that the signed-in role may open (`src/lib/auth/redirects.ts`).
 
 Server Components call the API with `serverFetch` (`src/lib/api/server.ts`), which reads `carrivo_session`. Client Components call `/api/bff/[...path]`, which attaches the same token server-side.
 
@@ -218,3 +224,4 @@ Render `message` as **plain text**: it contains user-entered text (the example i
 14. **Unknowns typed defensively:** whether `statusHistory[].changedBy` can be null; how many days `shipmentsPerDay` covers; whether `estimatedDeliveryAt` is ever set (every example has null).
 15. **Locale:** zones, hubs and phone numbers are Dhaka/Bangladesh (+880) and date filters use Asia/Dhaka, but money is USD. Format dates in the user's local time and money as `$6.00`.
 16. **Next 16 note (decided: keep it on):** this app has `cacheComponents: true`. A public, cacheable read (zones, tracking) should be `serverFetch(..., { auth: false })` inside a `"use cache"` function with `cacheLife`. Authenticated reads call `cookies()` and must sit under `<Suspense>`.
+17. **Backend config for Google sign-in (found in Phase 3):** the live API sends Google `redirect_uri=http://localhost:5000/api/v1/auth/callback/google`, so `BETTER_AUTH_URL` on the backend's Vercel project is still the local value. Set it to `https://carrivo-backend.vercel.app`, add that callback URL in Google Cloud Console, and set `FRONTEND_URL` to the frontend origin. Until then Google sign-in can't complete.

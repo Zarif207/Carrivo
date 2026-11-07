@@ -44,7 +44,7 @@ function loadMe(): Promise<SessionUser | null> {
     .then(async (response) => {
       if (!response.ok) return null;
       const json: unknown = await response.json();
-      const user = isRecord(json) && isRecord(json.data) ? (json.data.user as User | undefined) : undefined;
+      const user = isRecord(json) && isRecord(json.data) ? (json.data.user as User | null | undefined) : undefined;
       return user ? toSessionUser(user) : null;
     })
     .catch(() => null);

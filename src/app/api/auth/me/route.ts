@@ -8,19 +8,20 @@ import { clearSession, readSession, writeSession } from "@/lib/auth/session";
 import type { UserProfile } from "@/types";
 
 /**
- * GET /api/auth/me → { user } for the client store. Rotates the token first when it's close to
- * expiry (contract §3.5). A dead session clears the cookies and returns 401.
+ * GET /api/auth/me → { user } for the client store, or { user: null } when signed out (not an error,
+ * so anonymous pages don't log failed requests). Rotates the token first when it's close to expiry
+ * (contract §3.5). A dead session clears the cookies and also returns { user: null }.
  */
 export async function GET(request: NextRequest) {
   let session = readSession(request.cookies);
-  if (!session) return jsonError(401, "You're not logged in.", [], "UNAUTHENTICATED");
+  if (!session) return jsonOk({ user: null }, "Not logged in");
 
   const clientIp = clientIpOf(request);
   let rotated = false;
   if (needsRotation(session)) {
     const next = await rotateSession(session, clientIp);
     if (!next) {
-      const response = jsonError(401, "Your session ended. Log in again.", [], "SESSION_EXPIRED");
+      const response = jsonOk({ user: null }, "Session ended");
       clearSession(response.cookies);
       return response;
     }
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     if (ApiError.isApiError(error) && error.isUnauthorized) {
-      const response = jsonError(401, "Your session ended. Log in again.", [], "SESSION_EXPIRED");
+      const response = jsonOk({ user: null }, "Session ended");
       clearSession(response.cookies);
       return response;
     }

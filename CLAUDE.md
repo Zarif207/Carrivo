@@ -88,6 +88,7 @@ Package manager: npm.
 ```
 NEXT_PUBLIC_APP_URL=            # this site's URL, e.g. http://localhost:3000
 API_BASE_URL=                   # https://carrivo-backend.vercel.app/api/v1 (server only)
+SESSION_SECRET=                 # server only, 32+ random chars; signs the role cookie the proxy trusts
 BFF_SHARED_SECRET=              # server only, sent as x-bff-secret with x-client-ip (must match the backend)
 DEMO_PASSWORD=                  # server only, used by /api/auth/demo
 NEXT_PUBLIC_DEMO_ADMIN_EMAIL=admin@carrivo.dev
