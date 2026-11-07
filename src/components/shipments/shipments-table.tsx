@@ -3,11 +3,13 @@
 // Client: table interactions (URL sort, row links) over rows rendered by the server.
 import { ArrowRight, PackagePlus, PackageSearch } from "lucide-react";
 import Link from "next/link";
+import { PayButton } from "@/components/payments/pay-button";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatMoney, formatWeight } from "@/lib/format";
+import { isPayable } from "@/lib/payments/payable";
 import { SERVICE_NAMES } from "@/lib/status";
 import type { ShipmentListItem } from "@/types";
 
@@ -34,32 +36,48 @@ const columns: DataTableColumn<ShipmentListItem>[] = [
       </div>
     ),
   },
-  { id: "service", header: "Service", cell: (row) => SERVICE_NAMES[row.serviceType] },
+  // Secondary columns step aside on narrower screens so the row (and its Pay action) fits without scrolling.
+  { id: "service", header: "Service", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (row) => SERVICE_NAMES[row.serviceType] },
   { id: "status", header: "Status", sortKey: "status", cell: (row) => <StatusBadge kind="shipment" status={row.status} size="sm" /> },
   { id: "payment", header: "Payment", cell: (row) => <StatusBadge kind="shipment-payment" status={row.paymentStatus} size="sm" /> },
-  { id: "weight", header: "Weight", sortKey: "weightKg", align: "right", cell: (row) => <span className="tabular whitespace-nowrap">{formatWeight(row.weightKg)}</span> },
+  { id: "weight", header: "Weight", sortKey: "weightKg", align: "right", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (row) => <span className="tabular whitespace-nowrap">{formatWeight(row.weightKg)}</span> },
   { id: "price", header: "Price", sortKey: "price", align: "right", cell: (row) => <span className="font-semibold tabular">{formatMoney(row.price)}</span> },
-  { id: "created", header: "Booked", sortKey: "createdAt", cell: (row) => <span className="whitespace-nowrap">{formatDate(row.createdAt)}</span> },
+  { id: "created", header: "Booked", sortKey: "createdAt", className: "hidden xl:table-cell", headerClassName: "hidden xl:table-cell", cell: (row) => <span className="whitespace-nowrap">{formatDate(row.createdAt)}</span> },
+  {
+    id: "actions",
+    header: <span className="sr-only">Actions</span>,
+    align: "right",
+    cell: (row) =>
+      isPayable(row) ? <PayButton shipmentId={row.id} amount={row.price} label="Pay now" trackingId={row.trackingId} size="sm" variant="outline" className="whitespace-nowrap" /> : null,
+  },
 ];
 
 function MobileCard(row: ShipmentListItem) {
   return (
-    <Link href={detailHref(row)} className="flex items-start justify-between gap-3 p-4 outline-none focus-visible:bg-accent">
-      <div className="min-w-0 space-y-1.5">
-        <p className="font-id text-sm font-semibold">{row.trackingId}</p>
-        <p className="truncate text-sm text-muted-foreground">
-          To {row.receiverName}, {row.destinationZone.name}
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          <StatusBadge kind="shipment" status={row.status} size="sm" />
-          <StatusBadge kind="shipment-payment" status={row.paymentStatus} size="sm" />
+    <div>
+      <Link href={detailHref(row)} className="flex items-start justify-between gap-3 p-4 outline-none focus-visible:bg-accent">
+        <div className="min-w-0 space-y-1.5">
+          <p className="font-id text-sm font-semibold">{row.trackingId}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            To {row.receiverName}, {row.destinationZone.name}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <StatusBadge kind="shipment" status={row.status} size="sm" />
+            <StatusBadge kind="shipment-payment" status={row.paymentStatus} size="sm" />
+          </div>
         </div>
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="font-semibold tabular">{formatMoney(row.price)}</p>
-        <p className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</p>
-      </div>
-    </Link>
+        <div className="shrink-0 text-right">
+          <p className="font-semibold tabular">{formatMoney(row.price)}</p>
+          <p className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</p>
+        </div>
+      </Link>
+      {/* Outside the link: a button can't sit inside an anchor. */}
+      {isPayable(row) ? (
+        <div className="px-4 pb-4">
+          <PayButton shipmentId={row.id} amount={row.price} label="Pay now" trackingId={row.trackingId} size="sm" variant="outline" className="w-full" />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

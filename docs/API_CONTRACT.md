@@ -153,6 +153,15 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 
 **Stripe redirects** (the backend builds these URLs): success → `FRONTEND_SUCCESS_URL?session_id={CHECKOUT_SESSION_ID}` (= `/payment/success`), cancel → `FRONTEND_CANCEL_URL?shipmentId=<id>` (= `/payment/cancel`). A payment becomes PAID only through the webhook or `/payments/verify`, never because of the redirect. Test cards: `4242 4242 4242 4242` (success), `4000 0000 0000 0002` (decline; the payment stays PENDING with `failureReason` and can be retried).
 
+**How the UI pays (Phase 5, verified against the live API):**
+- *Payable* (`src/lib/payments/payable.ts`, mirrors `initiate`): `paymentStatus === UNPAID` and status not `CANCELLED`/`RETURNED`/`DELIVERED`. Ownership, USD and the $0.50 minimum are left to the API (409/422 → toast).
+- Pay → `POST /api/bff/payments/initiate` → `window.location.assign(checkoutUrl)` (only `https://checkout.stripe.com`). A second Pay while a session is open gets the same session (`reused: true`), so "Try again" after a decline or cancel resumes it.
+- `/payment/success?session_id=cs_…`: the server calls `verify` once; the client polls `verify` every 2 s for up to 15 s while `payment.status` is PENDING and Stripe's `sessionStatus` isn't `open`, then shows "still processing". `verify` reconciles synchronously (Stripe looked up live), so in practice it's PAID on the first call. Refresh-safe.
+- `/payment/cancel?shipmentId=<id>`: re-reads the shipment; "Try again" only while still payable.
+- Both `/payment/*` pages are CUSTOMER-only (proxy + layout) and survive `/login?next=`.
+- Cancelling a paid shipment refunded synchronously in testing (payment straight to `REFUNDED`, shipment `paymentStatus` REFUNDED, `REFUND_COMPLETED` notification); `REFUND_PENDING` is transient.
+- **Backend env:** local `FRONTEND_SUCCESS_URL=http://localhost:3000/payment/success`, `FRONTEND_CANCEL_URL=http://localhost:3000/payment/cancel` (what the live API sends today). Production: `https://<frontend-domain>/payment/success` and `https://<frontend-domain>/payment/cancel`, with no query string (the backend appends `session_id` / `shipmentId`). One backend serves one frontend origin at a time.
+
 ## 6. Courier endpoints (`COURIER`)
 
 | Method | Path | Body / query | Response `data` / notes |

@@ -6,6 +6,8 @@ export const PROTECTED_AREAS: { prefix: string; role: Role }[] = [
   { prefix: "/dashboard", role: "CUSTOMER" },
   { prefix: "/courier", role: "COURIER" },
   { prefix: "/admin", role: "ADMIN" },
+  // Stripe Checkout returns here (/payment/success, /payment/cancel); only customers pay.
+  { prefix: "/payment", role: "CUSTOMER" },
 ];
 
 const inArea = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
