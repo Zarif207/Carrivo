@@ -32,7 +32,8 @@ export async function sniffImageType(file: Blob): Promise<ProofMime | null> {
   return null;
 }
 
-const MB = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+/** "820 KB" under 1 MB, "3.4 MB" above. */
+const MB = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`);
 
 export interface PreparedProof {
   file: File;

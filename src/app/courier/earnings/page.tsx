@@ -61,7 +61,7 @@ async function Overview({ range }: { range: TimeRange }) {
       <ChartCard
         title="Earnings over time"
         description={range === "today" ? "By hour, Dhaka time" : range === "year" ? "By month" : "By day"}
-        summary={`You earned ${formatMoney(summary.totalEarned)} ${label} from ${formatCount(summary.deliveries)} deliveries.`}
+        summary={`You earned ${formatMoney(summary.totalEarned)} ${label} from ${formatCount(summary.deliveries)} ${summary.deliveries === 1 ? "delivery" : "deliveries"}.`}
         footer={capped ? `The chart adds up your latest ${CHART_LIMIT} earnings ${label}; the totals above include all ${formatCount(result.meta.total)}.` : undefined}
       >
         <EarningsChart data={series} />

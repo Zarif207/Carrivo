@@ -165,9 +165,10 @@ export function ProofUploader({ shipmentId, trackingId, canUpload, existing }: P
               {/* eslint-disable-next-line @next/next/no-img-element -- a local blob: preview, not a remote image */}
               <img src={phase.preview} alt="Preview of the photo you're about to upload" className="aspect-4/3 w-full rounded-lg bg-surface object-cover" />
               <p className="text-sm text-muted-foreground tabular">
-                {phase.originalBytes > phase.file.size
+                {/* Only call it shrunk when it saved at least 10 %. */}
+                {phase.file.size < phase.originalBytes * 0.9
                   ? `Shrunk from ${formatMegabytes(phase.originalBytes)} to ${formatMegabytes(phase.file.size)}.`
-                  : `${formatMegabytes(phase.file.size)}.`}
+                  : `${formatMegabytes(phase.file.size)}, ready to upload.`}
               </p>
             </div>
           ) : (
