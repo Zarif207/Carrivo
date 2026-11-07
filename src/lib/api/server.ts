@@ -1,6 +1,7 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers as requestHeaders } from "next/headers";
+import { applyBffHeaders, getClientIp } from "./client-ip";
 import { API_TIMEOUT_MS, AUTH_COOKIES, getApiBaseUrl } from "./config";
 import { ApiError } from "./errors";
 import { toQueryString } from "./search-params";
@@ -21,6 +22,13 @@ export interface ServerFetchOptions {
    * - a string: this exact token (route handlers that just received or rotated one).
    */
   auth?: boolean | string;
+  /**
+   * Visitor IP forwarded as x-client-ip (with x-bff-secret) for per-visitor rate limits.
+   * Default: read from the incoming request, except when `auth: false` (public reads may run
+   * inside "use cache", where request headers are unavailable). Pass a string to override
+   * (the BFF proxy passes the IP of the request it is proxying), or `false` to skip.
+   */
+  clientIp?: string | false;
   /** Throw 401 locally instead of calling the API when no token is available. */
   requireAuth?: boolean;
   headers?: HeadersInit;
@@ -39,6 +47,12 @@ async function resolveToken(auth: ServerFetchOptions["auth"]): Promise<string | 
   if (auth === false) return undefined;
   const store = await cookies();
   return store.get(AUTH_COOKIES.token)?.value || undefined;
+}
+
+async function resolveClientIp(option: ServerFetchOptions["clientIp"], auth: ServerFetchOptions["auth"]): Promise<string | undefined> {
+  if (typeof option === "string") return option || undefined;
+  if (option === false || (option === undefined && auth === false)) return undefined;
+  return getClientIp(await requestHeaders());
 }
 
 async function readBody(response: Response): Promise<unknown> {
@@ -70,6 +84,7 @@ export async function serverFetch<T>(path: string, options: ServerFetchOptions =
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  applyBffHeaders(headers, await resolveClientIp(options.clientIp, auth));
 
   let payload: BodyInit | undefined;
   if (body instanceof FormData) {

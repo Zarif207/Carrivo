@@ -19,7 +19,7 @@ TypeScript shapes live in `src/types` (named in the tables below); endpoint path
 | Dates | ISO strings. Date filters (`fromDate`, `toDate`) take `YYYY-MM-DD` (an **Asia/Dhaka** day, UTC+6) or an ISO date-time with offset |
 | Strict bodies | Every body is a strict object: unknown keys (`role`, `price`, `status`, …) → 400 |
 | Body limit | JSON 100 kB, proof image 4 MB |
-| Rate limits | Global 300 req / 15 min / IP; login, register, change-password and Google: 20 **failed** attempts / 15 min / IP (see §9.2) |
+| Rate limits | Global 300 req / 15 min / IP; login, register, change-password and Google: 20 **failed** attempts / 15 min / IP. The BFF sends **`x-client-ip`** (visitor IP) and **`x-bff-secret`** (`BFF_SHARED_SECRET`) on every server-side call so limits apply per visitor (§9.2) |
 
 ### List queries
 
@@ -93,11 +93,10 @@ Body `LoginInput { email, password }` (password min 1). → **200** `AuthResult`
 
 ### 3.5 Token refresh: `POST /auth/refresh-token` (any role, Bearer, no body)
 → `RefreshResult { token, expiresAt }`: a new 7-day session, and **the token you sent is revoked**.
-**Important:** this is session *rotation*, not an OAuth refresh token. It needs a **still-valid** token. A request that got 401 because the token expired or was revoked can't be revived; a refresh with that token also returns 401. So:
-- **Proactive rotation:** the BFF rotates when `carrivo_session_exp` is less than 24 h away (single-flight per token on the server, so parallel requests trigger one rotation), then rewrites the cookies.
-- **On a 401 from the API:** the client calls `/api/auth/refresh` once (one shared promise for all parallel 401s). That succeeds only if another request already rotated the cookie (a race), in which case the request is retried once with the new cookie. Otherwise the BFF clears the cookies and the UI redirects to `/login` with a toast.
-- Rotation revokes the old token immediately, so avoid rotating from two places at once (e.g. middleware *and* the proxy).
-- Deactivation, a role change and "sign out everywhere" also revoke sessions, which shows up as a 401.
+This is session *rotation*, not an OAuth refresh token: it needs a **still-valid** token, so it can't revive a token that already got a 401. **Agreed approach:**
+- **Refresh proactively before expiry.** When `carrivo_session_exp` is less than 24 h away, the BFF rotates the token and rewrites the cookies. It is single-flight per token on the server (parallel requests share one rotation), and only one place rotates (the BFF proxy and `/api/auth/me`, never middleware), because rotation revokes the old token immediately.
+- **Treat a 401 as logged out after one retry.** Parallel 401s on the client share one call to `/api/auth/refresh`. That call only succeeds if another request already rotated the cookie (a race); then each failed request is retried **once**. If it fails, the BFF clears all auth cookies and the UI redirects to `/login?next=<current path>` with a toast ("Your session ended. Log in again.").
+- Deactivation, a role change and "sign out everywhere" also revoke sessions, which shows up as a 401 and is handled the same way.
 
 ### 3.6 Google sign-in (PKCE handoff, no token in any URL)
 1. Browser → `GET /api/auth/google/start` (our route handler). It creates `codeVerifier` = 32 random bytes as base64url (43 chars, `[A-Za-z0-9._~-]{43,128}`), stores it in `carrivo_google_verifier`, and computes `challenge = base64url(SHA-256(verifier))` without padding (43 chars).
@@ -204,18 +203,18 @@ Render `message` as **plain text**: it contains user-entered text (the example i
 ## 9. Gaps and open questions
 
 1. **`docs/backend/` was missing** at the start of Phase 0. I copied `README.md` and `docs/postman_collection.json` from `../Carrivo-Backend`.
-2. **Rate limits vs the BFF (needs a decision).** The API limits by client IP (`trust proxy 1`). Every BFF call comes from our Vercel server, so all users share **one** 300-requests/15-min bucket and one 20-failed-logins/15-min bucket. A live demo with several graders could hit 429. Options: (a) backend keys the limiter on a header signed by the BFF (shared secret) carrying the real client IP, (b) raise the limits, or (c) the browser calls the API directly for some reads (needs CORS and an exposed token, so it breaks the rule). Recommend (a).
-3. **Refresh semantics differ from CLAUDE.md.** `/auth/refresh-token` only rotates a valid token; it can't recover from a 401. The plan in §3.5 (proactive rotation plus a single-flight retry) follows the rule as closely as the API allows. Please confirm.
-4. **Email link path mismatch.** Backend emails link to `FRONTEND_URL/shipments/:id` (for customer *and* admin), but our customer route is `/dashboard/shipments/:id` and there is no admin detail page. Either add `src/app/shipments/[id]/page.tsx`, which redirects by role (customer → `/dashboard/shipments/:id`, admin → `/admin/shipments?…`), or change `FRONTEND_PATHS` in the backend. The courier link `/courier/tasks/:id` already matches.
-5. **No public pricing table.** `GET /pricing` is ADMIN-only; only `POST /pricing/estimate` (and zones/hubs) are public. `/pricing` can show a live quote calculator and service descriptions, but not the rule list.
-6. **No contact endpoint**, so `/contact` can only show a local success state.
+2. **Rate limits vs the BFF. Decided:** the BFF forwards `x-client-ip` + `x-bff-secret` (env `BFF_SHARED_SECRET`); backend support is being added. Original problem: The API limits by client IP (`trust proxy 1`). Every BFF call comes from our Vercel server, so all users share **one** 300-requests/15-min bucket and one 20-failed-logins/15-min bucket. A live demo with several graders could hit 429. 
+3. **Refresh semantics. Decided:** refresh proactively before expiry; a 401 means logged out after one retry (§3.5, CLAUDE.md updated).
+4. **Email link path mismatch.** Backend emails link to `FRONTEND_URL/shipments/:id` (for customer *and* admin), but our customer route is `/dashboard/shipments/:id` and there is no admin detail page. **Decided and built:** `src/app/shipments/[id]/route.ts` redirects CUSTOMER → `/dashboard/shipments/:id`, COURIER → `/courier/tasks/:id`, ADMIN → `/admin/shipments?view=:id` (the admin list opens a detail sheet for `view`), logged out → `/login?next=/shipments/:id`.
+5. **No public pricing table.** `GET /pricing` is ADMIN-only; only `POST /pricing/estimate` (and zones/hubs) are public. **Decided:** `/pricing` is a live quote calculator.
+6. **No contact endpoint. Decided:** the contact form opens a pre-filled `mailto:` and says so.
 7. **No customer stats endpoint.** Dashboard cards need several list calls: counts from `meta.total` with `status=` filters (one call each), and spend summed from `/payments/my?status=PAID` (up to 100 per page). Refunded payments are excluded.
-8. **No date filter on courier tasks**, so "today's tasks" can't be filtered on the server. The default list is "active tasks".
-9. **No revenue time series.** `dashboard-stats` has totals and `shipmentsPerDay` (counts only; the number of days isn't documented, the example shows about 30). The charts can be shipments per day, shipments by status and payments by status, but not revenue over time.
+8. **No date filter on courier tasks**, so "today's tasks" can't be filtered on the server. **Decided:** the courier home shows "Active tasks".
+9. **No revenue time series.** `dashboard-stats` has totals and `shipmentsPerDay` (counts only; the number of days isn't documented, the example shows about 30). **Decided:** admin charts are shipments per day, shipments by status and payments by status.
 10. **No avatar upload.** `PATCH /users/me` takes an image **URL** only.
 11. **Change-password responses are Better Auth's shape** (not enveloped) and the error body isn't documented. `ApiError.fromBody` falls back to `message`.
 12. **Admin gaps:** there is no `GET /admin/users/:id`, no endpoint to edit a courier's vehicle/zone/hub outside a role change, and no endpoint to mark earnings as paid out (so `paidOut` stays `0.00`).
 13. **Doc inconsistencies found (code is right, examples are stale):** the proof-upload "409 Wrong status" example shows a success body; the "tasks with proof" example has `data: [null]`; `/users/me` courier `hub` lacks `city` (other responses and the src include it); `proofOfDeliveryUploadedAt` is described but missing from detail examples (src returns it); the demo login examples show the name "Ayesha Customer" for admin and courier; audit `entityType` leaves out `PAYMENT`.
 14. **Unknowns typed defensively:** whether `statusHistory[].changedBy` can be null; how many days `shipmentsPerDay` covers; whether `estimatedDeliveryAt` is ever set (every example has null).
 15. **Locale:** zones, hubs and phone numbers are Dhaka/Bangladesh (+880) and date filters use Asia/Dhaka, but money is USD. Format dates in the user's local time and money as `$6.00`.
-16. **Next 16 note:** this app has `cacheComponents: true`. A public, cacheable read (zones, tracking) should be `serverFetch(..., { auth: false })` inside a `"use cache"` function with `cacheLife`. Authenticated reads call `cookies()` and must sit under `<Suspense>`.
+16. **Next 16 note (decided: keep it on):** this app has `cacheComponents: true`. A public, cacheable read (zones, tracking) should be `serverFetch(..., { auth: false })` inside a `"use cache"` function with `cacheLife`. Authenticated reads call `cookies()` and must sit under `<Suspense>`.
