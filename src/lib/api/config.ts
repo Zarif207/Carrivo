@@ -7,9 +7,7 @@
 export const AUTH_COOKIES = {
   /** Bearer token from login/register/Google/refresh. */
   token: "carrivo_session",
-  /** ISO expiry of the token, used to decide when to rotate it. */
-  expiresAt: "carrivo_session_exp",
-  /** The user's role, used by middleware for routing only (the API still enforces every rule). */
+  /** "ROLE.EXP.HMAC": role + token expiry, signed with SESSION_SECRET and bound to the token (lib/auth/session.ts). */
   role: "carrivo_role",
   /** PKCE verifier for Google sign-in, lives for the duration of the redirect only. */
   googleVerifier: "carrivo_google_verifier",

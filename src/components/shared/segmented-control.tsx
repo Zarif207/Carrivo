@@ -16,11 +16,13 @@ interface SegmentedControlProps<T extends string> {
   /** Accessible name of the group, e.g. "Time range". */
   label: string;
   size?: "sm" | "md";
+  /** Stretch to the container and share the width equally (forms on small screens). */
+  fullWidth?: boolean;
   className?: string;
 }
 
 /** Pill-shaped single choice. Arrow keys move and select, like native radios. */
-export function SegmentedControl<T extends string>({ options, value, onValueChange, label, size = "md", className }: SegmentedControlProps<T>) {
+export function SegmentedControl<T extends string>({ options, value, onValueChange, label, size = "md", fullWidth = false, className }: SegmentedControlProps<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -36,7 +38,11 @@ export function SegmentedControl<T extends string>({ options, value, onValueChan
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn("inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-card p-1 shadow-card ring-1 ring-border", className)}
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-card p-1 shadow-card ring-1 ring-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        fullWidth && "flex w-full",
+        className,
+      )}
     >
       {options.map((option, index) => {
         const selected = option.value === value;
@@ -53,8 +59,10 @@ export function SegmentedControl<T extends string>({ options, value, onValueChan
             onClick={() => onValueChange(option.value)}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
-              "shrink-0 rounded-full font-semibold whitespace-nowrap outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-              size === "sm" ? "h-8 px-3 text-xs" : "h-9 px-4 text-sm",
+              "rounded-full font-semibold whitespace-nowrap outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+              fullWidth ? "min-w-0 flex-1" : "shrink-0",
+              size === "sm" ? "h-8 text-xs" : "h-9 text-sm",
+              fullWidth ? "px-2" : size === "sm" ? "px-3" : "px-4",
               selected ? "bg-brand text-brand-foreground shadow-card" : "text-muted-foreground hover:text-foreground",
             )}
           >

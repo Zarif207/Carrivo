@@ -1,9 +1,8 @@
 "use client";
 
-// Client: dropdown state and the logout request.
+// Client: dropdown state and the logout action.
 import { LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ROLE_LABEL, ROLE_PROFILE } from "@/config/nav";
+import { useAuth } from "@/hooks/use-auth";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
@@ -39,19 +39,14 @@ export function UserAvatar({ user, className }: { user: Pick<ShellUser, "name" |
 }
 
 export function UserMenu({ user }: { user: ShellUser }) {
-  const router = useRouter();
+  const { logout } = useAuth();
   const [pending, setPending] = useState(false);
   const profileHref = ROLE_PROFILE[user.role];
 
   const logOut = async () => {
     setPending(true);
     try {
-      // Route handler added in Phase 3; it clears the httpOnly session cookies.
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      if (!response.ok) throw new Error(String(response.status));
-      toast.success("Logged out");
-      router.replace("/login");
-      router.refresh();
+      await logout(); // full page replace to /login on success
     } catch {
       toast.error("Could not log out. Check your connection and try again.");
       setPending(false);

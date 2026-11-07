@@ -15,6 +15,8 @@ const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  // Only small tracking ids and phone numbers use it: don't let it compete with Open Sans for the first paint.
+  preload: false,
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

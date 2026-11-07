@@ -1,0 +1,201 @@
+import { ArrowRight, Building2, MapPin, Phone } from "lucide-react";
+import Link from "next/link";
+import { connection } from "next/server";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getPriceExamples, getPublicHubs, getPublicZones } from "@/lib/data/public";
+import { formatMoney } from "@/lib/format";
+import type { Hub, Zone } from "@/types";
+
+/*
+ * Sections that read live public data. Each awaits connection() so it renders at request time
+ * (inside the page's <Suspense>) instead of at build time: the API being slow or down never
+ * breaks a deploy, and the cached data underneath ("use cache") keeps it fast.
+ */
+
+const SERVICE_NAMES = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" } as const;
+
+function Unavailable({ what }: { what: string }) {
+  return (
+    <p className="rounded-xl bg-card p-6 text-muted-foreground shadow-card">
+      {what} couldn&rsquo;t be loaded right now. Refresh the page to try again.
+    </p>
+  );
+}
+
+/** "From $2.50": real 1 kg quotes from the estimate endpoint. */
+export async function PriceTeaser() {
+  await connection();
+  let examples;
+  try {
+    examples = await getPriceExamples();
+  } catch {
+    return <Unavailable what="Example prices" />;
+  }
+  if (examples.length === 0) return <Unavailable what="Example prices" />;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {examples.map((example) => (
+        <div key={`${example.serviceType}-${example.label}`} className="flex flex-col gap-3 rounded-2xl bg-card p-6 shadow-card">
+          <p className="text-sm font-semibold text-muted-foreground">
+            {SERVICE_NAMES[example.serviceType]}, 1 kg
+          </p>
+          <p className="text-[2.5rem] leading-none font-extrabold tracking-tight tabular">{formatMoney(example.estimate.total)}</p>
+          <p className="text-sm text-muted-foreground">{example.label}</p>
+          <p className="mt-auto border-t border-border pt-3 text-sm text-muted-foreground">
+            Then {formatMoney(example.estimate.perKgFee)} per extra kg
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function PriceTeaserSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex h-[12.5rem] flex-col gap-3 rounded-2xl bg-card p-6 shadow-card">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="mt-auto h-4 w-40" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Facts on the home page: zone and hub counts come from the public API; the rest are product rules. */
+export async function NetworkFacts() {
+  await connection();
+  let zones: Zone[] | null = null;
+  let hubs: Hub[] | null = null;
+  try {
+    [zones, hubs] = await Promise.all([getPublicZones(), getPublicHubs()]);
+  } catch {
+    // Fall back to the product rules only.
+  }
+
+  const facts = [
+    ...(zones && hubs
+      ? [
+          { value: String(zones.length), label: zones.length === 1 ? "delivery zone" : "delivery zones", detail: zones.map((z) => z.name).join(" and ") },
+          { value: String(hubs.length), label: hubs.length === 1 ? "sorting hub" : "sorting hubs", detail: hubs.map((h) => h.name).join(", ") },
+        ]
+      : []),
+    { value: "3", label: "service levels", detail: "Standard, Express and Same day" },
+    { value: "3", label: "delivery attempts", detail: "Before a parcel is returned to the sender" },
+  ];
+
+  return (
+    <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {facts.map((fact) => (
+        <div key={fact.label} className="rounded-2xl bg-white/5 p-6 ring-1 ring-sidebar-border">
+          <dt className="sr-only">{fact.label}</dt>
+          <dd className="space-y-2">
+            <p className="text-[3rem] leading-none font-extrabold tracking-tight tabular">{fact.value}</p>
+            <p className="font-semibold">{fact.label}</p>
+            <p className="text-sm text-sidebar-muted">{fact.detail}</p>
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+export function NetworkFactsSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="h-[10.5rem] rounded-2xl bg-white/5 p-6 ring-1 ring-sidebar-border">
+          <Skeleton className="h-12 w-16 bg-white/10" />
+          <Skeleton className="mt-3 h-4 w-28 bg-white/10" />
+          <Skeleton className="mt-3 h-4 w-40 bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Zones with their hubs (addresses and phones are public on the API). */
+export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
+  await connection();
+  let zones: Zone[];
+  let hubs: Hub[];
+  try {
+    [zones, hubs] = await Promise.all([getPublicZones(), getPublicHubs()]);
+  } catch {
+    return <Unavailable what="Our coverage" />;
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {zones.map((zone) => {
+        const zoneHubs = hubs.filter((hub) => hub.zone.id === zone.id && hub.isActive);
+        return (
+          <article key={zone.id} className="flex flex-col gap-4 rounded-2xl bg-card p-6 shadow-card sm:p-7">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold tracking-tight">{zone.name}</h3>
+                {zone.description ? <p className="text-muted-foreground">{zone.description}</p> : null}
+              </div>
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary">
+                <MapPin className="size-5" aria-hidden="true" />
+              </span>
+            </div>
+            {zoneHubs.length > 0 ? (
+              <ul className="space-y-3 border-t border-border pt-4">
+                {zoneHubs.map((hub) => (
+                  <li key={hub.id} className="space-y-1.5">
+                    <p className="flex items-center gap-2 font-semibold">
+                      <Building2 className="size-4 text-muted-foreground" aria-hidden="true" />
+                      {hub.name}
+                    </p>
+                    <p className="pl-6 text-sm text-muted-foreground">
+                      {hub.address}, {hub.city}
+                    </p>
+                    {hub.phone ? (
+                      <p className="pl-6 text-sm">
+                        <a href={`tel:${hub.phone.replace(/[\s-]/g, "")}`} className="inline-flex items-center gap-1.5 rounded font-id underline-offset-4 hover:underline">
+                          <Phone className="size-3.5" aria-hidden="true" />
+                          {hub.phone}
+                        </a>
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </article>
+        );
+      })}
+      {showCta ? (
+        <div className="flex flex-col justify-between gap-4 rounded-2xl bg-ink p-6 text-ink-foreground sm:p-7 md:col-span-2 md:flex-row md:items-center">
+          <p className="text-lg font-semibold">Check the price between any two zones before you book.</p>
+          <Button asChild size="lg">
+            <Link href="/pricing">
+              Get a price <ArrowRight aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function CoverageSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {Array.from({ length: 2 }, (_, i) => (
+        <div key={i} className="h-64 space-y-4 rounded-2xl bg-card p-7 shadow-card">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="mt-6 h-4 w-48" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+      ))}
+    </div>
+  );
+}

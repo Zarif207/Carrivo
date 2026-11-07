@@ -26,7 +26,7 @@ Package manager: npm.
 ## Architecture rules (these are marked by the assignment)
 
 - **Server Components by default.** Add `"use client"` only for interactivity (forms, charts, filters, dialogs). Say why in a one-line comment on non-obvious ones.
-- **Cache Components is on** (`cacheComponents: true`). Request-time data (anything that reads `cookies()`/`headers()`, authenticated `serverFetch`, `useSearchParams`) must render inside `<Suspense>` with a skeleton fallback. That includes awaiting `params`/`searchParams` in a page: do it in a child component under `<Suspense>` (or the dev overlay flags the route as blocking). Cacheable public reads (zones, hubs, tracking) use `serverFetch(path, { auth: false })` inside a `"use cache"` function with `cacheLife(...)`.
+- **Cache Components is on** (`cacheComponents: true`). Request-time data (anything that reads `cookies()`/`headers()`, authenticated `serverFetch`, `useSearchParams`, and `usePathname` on dynamic routes) must render inside `<Suspense>` with a skeleton fallback. That includes awaiting `params`/`searchParams` in a page: do it in a child component under `<Suspense>` (or the dev overlay flags the route as blocking). Cacheable public reads (zones, hubs, tracking) use `serverFetch(path, { auth: false })` inside a `"use cache"` function with `cacheLife(...)`.
 - Every data page has `loading.tsx` (skeleton, never a full-page spinner) and every route group has `error.tsx`. Add `not-found.tsx` and `global-error.tsx`.
 - **Auth via a thin BFF.** The browser never sees the API token.
   - Route handlers under `src/app/api/auth/*` call the backend, then store the token in an **httpOnly, Secure, SameSite=Lax cookie**.

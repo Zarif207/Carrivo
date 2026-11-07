@@ -1,10 +1,10 @@
 "use client";
 
-// Client: collapsible sidebar (persisted UI state), active nav (usePathname) and the mobile sheet.
+// Client: collapsible sidebar (persisted UI state), active nav (usePathname, streamed under Suspense) and the mobile sheet.
 import { Ellipsis, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { Logo, LogoMark } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -83,11 +83,27 @@ function SidebarLink({
   );
 }
 
+type ActiveRender = (activeHref: string | undefined) => ReactNode;
+
+function LiveActiveHref({ items, children }: { items: NavItem[]; children: ActiveRender }) {
+  return <>{children(findActiveHref(items, usePathname()))}</>;
+}
+
+/**
+ * The pathname is request data on dynamic routes (Cache Components), so highlighted navigation
+ * streams in under <Suspense>. The fallback renders the same items unhighlighted: no layout shift.
+ */
+function WithActiveHref({ items, currentPath, children }: { items: NavItem[]; currentPath?: string; children: ActiveRender }) {
+  if (currentPath) return <>{children(findActiveHref(items, currentPath))}</>;
+  return (
+    <Suspense fallback={children(undefined)}>
+      <LiveActiveHref items={items}>{children}</LiveActiveHref>
+    </Suspense>
+  );
+}
+
 export function DashboardShell({ user, children, headerActions, badges = {}, currentPath }: DashboardShellProps) {
-  const pathname = usePathname();
-  const path = currentPath ?? pathname;
   const items = DASHBOARD_NAV[user.role];
-  const activeHref = findActiveHref(items, path);
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -98,7 +114,6 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
 
   const primary = items.filter((item) => item.primary).slice(0, 4);
   const overflow = items.filter((item) => !primary.includes(item));
-  const overflowActive = overflow.some((item) => item.href === activeHref);
   const overflowCount = overflow.reduce((sum, item) => sum + (badges[item.href] ?? 0), 0);
 
   return (
@@ -123,13 +138,17 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4">
           <p className={cn("px-4 pb-2 text-xs font-semibold text-sidebar-muted", collapsed && "sr-only")}>{SIDEBAR_HEADINGS[user.role]}</p>
-          <ul className="space-y-1">
-            {items.map((item) => (
-              <li key={item.href}>
-                <SidebarLink item={item} active={item.href === activeHref} collapsed={collapsed} count={badges[item.href]} />
-              </li>
-            ))}
-          </ul>
+          <WithActiveHref items={items} currentPath={currentPath}>
+            {(activeHref) => (
+              <ul className="space-y-1">
+                {items.map((item) => (
+                  <li key={item.href}>
+                    <SidebarLink item={item} active={item.href === activeHref} collapsed={collapsed} count={badges[item.href]} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </WithActiveHref>
         </nav>
 
         <div className={cn("p-3", collapsed && "flex justify-center")}>
@@ -176,45 +195,52 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
         aria-label={`${ROLE_LABEL[user.role]} navigation`}
         className="fixed inset-x-0 bottom-0 z-40 bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-foreground lg:hidden"
       >
-        <ul className="mx-auto flex max-w-lg gap-1 px-2 py-2">
-          {primary.map((item) => {
-            const active = item.href === activeHref;
-            const count = badges[item.href];
+        <WithActiveHref items={items} currentPath={currentPath}>
+          {(activeHref) => {
+            const overflowActive = overflow.some((item) => item.href === activeHref);
             return (
-              <li key={item.href} className="flex-1">
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[0.6875rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-                    active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-muted",
-                  )}
-                >
-                  <item.icon className={cn("size-5", active && "text-sidebar-primary")} aria-hidden="true" />
-                  <span className="max-w-full truncate px-1">{item.title}</span>
-                  {count ? <CountBadge count={count} className="absolute top-1 right-[calc(50%-1.5rem)]" /> : null}
-                </Link>
-              </li>
+              <ul className="mx-auto flex max-w-lg gap-1 px-2 py-2">
+                {primary.map((item) => {
+                  const active = item.href === activeHref;
+                  const count = badges[item.href];
+                  return (
+                    <li key={item.href} className="flex-1">
+                      <Link
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[0.6875rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                          active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-muted",
+                        )}
+                      >
+                        <item.icon className={cn("size-5", active && "text-sidebar-primary")} aria-hidden="true" />
+                        <span className="max-w-full truncate px-1">{item.title}</span>
+                        {count ? <CountBadge count={count} className="absolute top-1 right-[calc(50%-1.5rem)]" /> : null}
+                      </Link>
+                    </li>
+                  );
+                })}
+                {overflow.length > 0 ? (
+                  <li className="flex-1">
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen(true)}
+                      aria-haspopup="dialog"
+                      className={cn(
+                        "relative flex h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl text-[0.6875rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                        overflowActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-muted",
+                      )}
+                    >
+                      <Ellipsis className={cn("size-5", overflowActive && "text-sidebar-primary")} aria-hidden="true" />
+                      More
+                      {overflowCount ? <CountBadge count={overflowCount} className="absolute top-1 right-[calc(50%-1.5rem)]" /> : null}
+                    </button>
+                  </li>
+                ) : null}
+              </ul>
             );
-          })}
-          {overflow.length > 0 ? (
-            <li className="flex-1">
-              <button
-                type="button"
-                onClick={() => setMoreOpen(true)}
-                aria-haspopup="dialog"
-                className={cn(
-                  "relative flex h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl text-[0.6875rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-                  overflowActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-muted",
-                )}
-              >
-                <Ellipsis className={cn("size-5", overflowActive && "text-sidebar-primary")} aria-hidden="true" />
-                More
-                {overflowCount ? <CountBadge count={overflowCount} className="absolute top-1 right-[calc(50%-1.5rem)]" /> : null}
-              </button>
-            </li>
-          ) : null}
-        </ul>
+          }}
+        </WithActiveHref>
       </nav>
 
       {overflow.length > 0 ? (
@@ -224,19 +250,23 @@ export function DashboardShell({ user, children, headerActions, badges = {}, cur
               <SheetTitle className="font-display text-sidebar-foreground">More</SheetTitle>
               <SheetDescription className="text-sidebar-muted">Other {ROLE_LABEL[user.role].toLowerCase()} pages</SheetDescription>
             </SheetHeader>
-            <ul className="space-y-1 px-3 pb-6">
-              {overflow.map((item) => (
-                <li key={item.href}>
-                  <SidebarLink
-                    item={item}
-                    active={item.href === activeHref}
-                    collapsed={false}
-                    count={badges[item.href]}
-                    onNavigate={() => setMoreOpen(false)}
-                  />
-                </li>
-              ))}
-            </ul>
+            <WithActiveHref items={items} currentPath={currentPath}>
+              {(activeHref) => (
+                <ul className="space-y-1 px-3 pb-6">
+                  {overflow.map((item) => (
+                    <li key={item.href}>
+                      <SidebarLink
+                        item={item}
+                        active={item.href === activeHref}
+                        collapsed={false}
+                        count={badges[item.href]}
+                        onNavigate={() => setMoreOpen(false)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </WithActiveHref>
           </SheetContent>
         </Sheet>
       ) : null}
