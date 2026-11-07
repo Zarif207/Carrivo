@@ -1,10 +1,11 @@
 import { BUSINESS_TIME_ZONE } from "./format";
 
+/** Short labels so the four pills fit a 375px screen without scrolling ("this week" etc. live in TIME_RANGE_LABELS). */
 export const TIME_RANGES = [
   { value: "today", label: "Today" },
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "year", label: "This year" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
 ] as const;
 
 export type TimeRange = (typeof TIME_RANGES)[number]["value"];

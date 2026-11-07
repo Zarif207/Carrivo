@@ -226,7 +226,7 @@ export function Gallery({ theme }: { theme: "light" | "dark" }) {
           <TimeRangeSwitcher size="sm" />
           <SegmentedDemo />
           <p className="text-sm text-muted-foreground">
-            The time range writes <span className="font-id">?range=</span>. On 7 Nov 2026, &ldquo;This week&rdquo; maps to{" "}
+            The time range writes <span className="font-id">?range=</span>. On 7 Nov 2026, &ldquo;Week&rdquo; maps to{" "}
             <span className="font-id">{JSON.stringify(timeRangeToDates("week", new Date("2026-11-07T06:00:00Z")))}</span> for API filters.
           </p>
         </div>

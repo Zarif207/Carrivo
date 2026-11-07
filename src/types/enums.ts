@@ -144,6 +144,19 @@ export const MAX_DELIVERY_ATTEMPTS = 3;
 
 export const CANCELLABLE_STATUSES = ["PENDING", "PICKUP_SCHEDULED", "COURIER_ASSIGNED"] as const satisfies readonly ShipmentStatus[];
 export const TERMINAL_STATUSES = ["DELIVERED", "RETURNED", "CANCELLED"] as const satisfies readonly ShipmentStatus[];
+/** Statuses a courier's task can be in (assignment onwards); GET /couriers/me/tasks filters by any of them. */
+export const COURIER_TASK_STATUSES = [
+  "COURIER_ASSIGNED",
+  "PICKED_UP",
+  "AT_ORIGIN_HUB",
+  "IN_TRANSIT",
+  "AT_DESTINATION_HUB",
+  "OUT_FOR_DELIVERY",
+  "FAILED_DELIVERY",
+  "DELIVERED",
+  "RETURNED",
+  "CANCELLED",
+] as const satisfies readonly ShipmentStatus[];
 /** Statuses that accept an optional `hubId` on PATCH /status. */
 export const HUB_STATUSES = ["AT_ORIGIN_HUB", "AT_DESTINATION_HUB"] as const satisfies readonly ShipmentStatus[];
 

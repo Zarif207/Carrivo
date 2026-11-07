@@ -1,50 +1,21 @@
-import { Camera, Phone, UserRound } from "lucide-react";
+import { Phone, UserRound } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound, unstable_rethrow } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Suspense } from "react";
 import { LoadError } from "@/components/shared/load-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { Timeline, fromStatusHistory } from "@/components/shared/timeline";
+import { DetailCard as Card, DetailRows as Rows, PhoneLink, ProofImage, type DetailRow } from "@/components/shipments/detail-parts";
+import { ShipmentDetailSkeleton } from "@/components/shipments/detail-skeleton";
 import { ShipmentStatusPanel } from "@/components/shipments/shipment-status-panel";
 import { ApiError } from "@/lib/api/errors";
 import { getMyShipment } from "@/lib/data/customer";
 import { formatDateTime, formatMoney, formatWeight } from "@/lib/format";
+import { UUID } from "@/lib/ids";
 import { SERVICE_NAMES } from "@/lib/status";
 import type { ShipmentDetail } from "@/types";
-import { ShipmentDetailSkeleton } from "./detail-skeleton";
 
 export const metadata: Metadata = { title: "Shipment", robots: { index: false } };
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function Card({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
-  return (
-    <section className={`space-y-4 rounded-xl bg-card p-6 shadow-card ${className ?? ""}`}>
-      <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function Rows({ rows }: { rows: [string, ReactNode][] }) {
-  return (
-    <dl className="divide-y divide-border">
-      {rows.map(([label, value]) => (
-        <div key={label} className="flex flex-col gap-0.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:justify-between sm:gap-6">
-          <dt className="text-sm text-muted-foreground">{label}</dt>
-          <dd className="font-medium sm:text-right">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-const tel = (phone: string) => (
-  <a href={`tel:${phone.replace(/[\s-]/g, "")}`} className="font-id underline-offset-4 hover:underline">
-    {phone}
-  </a>
-);
 
 function Detail({ s }: { s: ShipmentDetail }) {
   const b = s.priceBreakdown;
@@ -61,20 +32,7 @@ function Detail({ s }: { s: ShipmentDetail }) {
 
           {s.proofOfDeliveryUrl ? (
             <Card title="Proof of delivery">
-              <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-surface">
-                <Image
-                  src={s.proofOfDeliveryUrl}
-                  alt={`Photo taken by the courier when ${s.trackingId} was handed over`}
-                  fill
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-              {s.proofOfDeliveryUploadedAt ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Camera className="size-4" aria-hidden="true" /> Uploaded {formatDateTime(s.proofOfDeliveryUploadedAt)}
-                </p>
-              ) : null}
+              <ProofImage url={s.proofOfDeliveryUrl} uploadedAt={s.proofOfDeliveryUploadedAt} trackingId={s.trackingId} />
             </Card>
           ) : null}
         </div>
@@ -90,7 +48,7 @@ function Detail({ s }: { s: ShipmentDetail }) {
                   <p className="font-bold">{s.courier.name}</p>
                   {s.courier.phone ? (
                     <p className="flex items-center gap-1.5 text-sm">
-                      <Phone className="size-3.5" aria-hidden="true" /> {tel(s.courier.phone)}
+                      <Phone className="size-3.5" aria-hidden="true" /> <PhoneLink phone={s.courier.phone} />
                     </p>
                   ) : null}
                 </div>
@@ -104,8 +62,8 @@ function Detail({ s }: { s: ShipmentDetail }) {
                 rows={[
                   ["Window", `${formatDateTime(s.pickupRequest.scheduledAt)} to ${formatDateTime(s.pickupRequest.scheduledUntil)}`],
                   ["Address", s.pickupRequest.pickupAddress],
-                  ["Contact", <span key="c">{s.pickupRequest.contactName}, {tel(s.pickupRequest.contactPhone)}</span>],
-                  ...(s.pickupRequest.notes ? [["Notes", s.pickupRequest.notes] as [string, ReactNode]] : []),
+                  ["Contact", <span key="c">{s.pickupRequest.contactName}, <PhoneLink phone={s.pickupRequest.contactPhone} /></span>],
+                  ...(s.pickupRequest.notes ? [["Notes", s.pickupRequest.notes] as DetailRow] : []),
                 ]}
               />
             </Card>
@@ -126,10 +84,10 @@ function Detail({ s }: { s: ShipmentDetail }) {
           <Card title="From and to">
             <Rows
               rows={[
-                ["Sender", <span key="s">{s.senderName}, {tel(s.senderPhone)}</span>],
+                ["Sender", <span key="s">{s.senderName}, <PhoneLink phone={s.senderPhone} /></span>],
                 ["Pickup", `${s.pickupAddress} (${s.originZone.name})`],
-                ["Receiver", <span key="r">{s.receiverName}, {tel(s.receiverPhone)}</span>],
-                ...(s.receiverEmail ? [["Receiver email", s.receiverEmail] as [string, ReactNode]] : []),
+                ["Receiver", <span key="r">{s.receiverName}, <PhoneLink phone={s.receiverPhone} /></span>],
+                ...(s.receiverEmail ? [["Receiver email", s.receiverEmail] as DetailRow] : []),
                 ["Delivery", `${s.deliveryAddress} (${s.destinationZone.name})`],
               ]}
             />
@@ -150,9 +108,9 @@ function Detail({ s }: { s: ShipmentDetail }) {
             <Card title="Notes">
               <Rows
                 rows={[
-                  ...(s.cancelledAt ? [["Cancelled", formatDateTime(s.cancelledAt)] as [string, ReactNode]] : []),
-                  ...(s.cancelReason ? [["Reason", s.cancelReason] as [string, ReactNode]] : []),
-                  ...(s.failureReason ? [[`Failed attempts (${s.failedAttempts})`, s.failureReason] as [string, ReactNode]] : []),
+                  ...(s.cancelledAt ? [["Cancelled", formatDateTime(s.cancelledAt)] as DetailRow] : []),
+                  ...(s.cancelReason ? [["Reason", s.cancelReason] as DetailRow] : []),
+                  ...(s.failureReason ? [[`Failed attempts (${s.failedAttempts})`, s.failureReason] as DetailRow] : []),
                 ]}
               />
             </Card>

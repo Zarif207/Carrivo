@@ -4,9 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { estimatePrice } from "@/app/(public)/pricing/actions";
 import { ApiError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
+import { UUID } from "@/lib/ids";
 import type { PriceEstimate, PriceEstimateInput, ServiceType } from "@/types";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface EstimateFields {
   originZoneId?: string;

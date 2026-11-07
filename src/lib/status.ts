@@ -20,7 +20,7 @@ import {
   Warehouse,
   type LucideIcon,
 } from "lucide-react";
-import type { PaymentStatus, ServiceType, ShipmentPaymentStatus, ShipmentStatus } from "@/types";
+import type { EarningStatus, PaymentStatus, ServiceType, ShipmentPaymentStatus, ShipmentStatus, VehicleType } from "@/types";
 
 /** Colour families defined as --tone-* tokens in globals.css (light + dark). Brand orange is never a status colour. */
 export type Tone =
@@ -113,6 +113,12 @@ export const SHIPMENT_PAYMENT_STATUS_META: Record<ShipmentPaymentStatus, StatusM
   REFUNDED: { label: "Refunded", tone: "sky", icon: RotateCcw, description: "Refunded." },
 };
 
+/** Courier earnings (20 % of a delivered shipment). */
+export const EARNING_STATUS_META: Record<EarningStatus, StatusMeta> = {
+  PENDING: { label: "Awaiting payout", tone: "amber", icon: Hourglass, description: "Earned; not paid out yet." },
+  PAID: { label: "Paid out", tone: "green", icon: BadgeCheck, description: "Paid out to you." },
+};
+
 /** The normal path a parcel takes, used to show upcoming stops. */
 export const SHIPMENT_MAIN_PATH: readonly ShipmentStatus[] = [
   "PENDING",
@@ -125,5 +131,7 @@ export const SHIPMENT_MAIN_PATH: readonly ShipmentStatus[] = [
   "OUT_FOR_DELIVERY",
   "DELIVERED",
 ];
+
+export const VEHICLE_NAMES: Record<VehicleType, string> = { BICYCLE: "Bicycle", MOTORCYCLE: "Motorcycle", CAR: "Car", VAN: "Van", TRUCK: "Truck" };
 
 export const SERVICE_NAMES: Record<ServiceType, string> = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" };

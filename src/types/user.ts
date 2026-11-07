@@ -22,7 +22,8 @@ export interface CourierProfile {
   vehicleNumber: string | null;
   isAvailable: boolean;
   zone: ZoneRef;
-  hub: HubRef | null;
+  /** GET /users/me leaves out `city` here (contract §9.13); other responses include it. */
+  hub: (Omit<HubRef, "city"> & { city?: string }) | null;
 }
 
 /** GET/PATCH /users/me and admin user rows: user + courier profile (null unless COURIER). */

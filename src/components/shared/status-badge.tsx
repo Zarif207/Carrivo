@@ -1,4 +1,5 @@
 import {
+  EARNING_STATUS_META,
   PAYMENT_STATUS_META,
   SHIPMENT_PAYMENT_STATUS_META,
   SHIPMENT_STATUS_META,
@@ -6,12 +7,13 @@ import {
   type StatusMeta,
 } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import type { PaymentStatus, ShipmentPaymentStatus, ShipmentStatus } from "@/types";
+import type { EarningStatus, PaymentStatus, ShipmentPaymentStatus, ShipmentStatus } from "@/types";
 
 type StatusBadgeProps = (
   | { kind: "shipment"; status: ShipmentStatus }
   | { kind: "payment"; status: PaymentStatus }
   | { kind: "shipment-payment"; status: ShipmentPaymentStatus }
+  | { kind: "earning"; status: EarningStatus }
 ) & {
   size?: "sm" | "md";
   className?: string;
@@ -25,6 +27,8 @@ function metaFor(props: StatusBadgeProps): StatusMeta {
       return PAYMENT_STATUS_META[props.status];
     case "shipment-payment":
       return SHIPMENT_PAYMENT_STATUS_META[props.status];
+    case "earning":
+      return EARNING_STATUS_META[props.status];
   }
 }
 

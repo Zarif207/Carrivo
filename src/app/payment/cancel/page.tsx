@@ -10,13 +10,12 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/errors";
 import { getMyShipment } from "@/lib/data/customer";
 import { formatMoney } from "@/lib/format";
+import { UUID } from "@/lib/ids";
 import { firstParam, type RawSearchParams } from "@/lib/list-params";
 import { isPayable } from "@/lib/payments/payable";
 import type { ShipmentDetail } from "@/types";
 
 export const metadata: Metadata = { title: "Payment cancelled", robots: { index: false } };
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const NOTHING_CHARGED = "You left Stripe's checkout before paying, so nothing was charged.";
 

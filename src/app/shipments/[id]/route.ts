@@ -1,13 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { readSession } from "@/lib/auth/session";
+import { UUID } from "@/lib/ids";
 import type { Role } from "@/types";
 
 /**
  * Landing URL used in the API's emails: FRONTEND_URL/shipments/:id.
  * Sends each role to its own view of the shipment; logged-out visitors go to /login and come back here.
  */
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function targetFor(role: Role, id: string): string {
   switch (role) {

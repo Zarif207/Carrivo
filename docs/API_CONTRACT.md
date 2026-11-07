@@ -175,6 +175,14 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 | GET | `/couriers/me/earnings` | `status` PENDING\|PAID, `fromDate`, `toDate`, `sortBy` createdAt\|amount | `EarningsResult { summary { totalEarned, pending, paidOut, deliveries }, earnings: Earning[] }` + meta (paginates `earnings`) |
 | PATCH | `/couriers/me/availability` | `{ isAvailable: boolean }` | `CourierProfile`. Unavailable couriers keep their tasks but get no new assignments |
 
+**How the courier UI uses this (Phase 6, checked against the live API):**
+- Buttons come from `getAllowedNextStatuses(status, failedAttempts, "COURIER")` (`src/lib/courier/actions.ts`): PICKED_UP, DELIVERED, FAILED_DELIVERY (note required 3-500) and the retry to OUT_FOR_DELIVERY. Hub steps are admin-only, so the courier sees a hint instead of buttons.
+- Another courier's shipment and unknown ids both answer **404** on `GET /shipments/:id`; the page shows the same "not yours" state.
+- Proof: the client checks the magic bytes (JPEG/PNG/WebP), shrinks to ≤ 3.5 MB (`browser-image-compression`, max 2560 px; PNG → JPEG), then uploads with XHR to `/api/bff/shipments/:id/proof` (the BFF streams multipart). Wrong status answers **409** "Proof of delivery can only be uploaded when the shipment is OUT_FOR_DELIVERY or DELIVERED (current status: …)".
+- **No endpoint deletes a proof image.** Re-uploading replaces it and the backend deletes the old Cloudinary file; `DELETE /shipments/:id` is a soft delete and leaves the image.
+- `GET /users/me` returns `courierProfile.hub` **without `city`**; the type marks it optional.
+- Earnings stats: all-time from `summary` (limit=1); the chart buckets up to 100 earnings in the range by Dhaka hour/day/month.
+
 ## 7. Admin endpoints (`ADMIN`)
 
 | Method | Path | Body / query | Response `data` / notes |

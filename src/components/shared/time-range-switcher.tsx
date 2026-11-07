@@ -16,7 +16,7 @@ interface TimeRangeSwitcherProps {
   className?: string;
 }
 
-/** Today / This week / This month / This year. Convert with `timeRangeToDates()` for API filters. */
+/** Today / Week / Month / Year. Convert with `timeRangeToDates()` for API filters. */
 export function TimeRangeSwitcher({ value, onValueChange, param = "range", defaultValue = "month", size, className }: TimeRangeSwitcherProps) {
   const { get, set } = useUrlState();
   const fromUrl = get(param);
