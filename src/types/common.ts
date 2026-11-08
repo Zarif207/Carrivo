@@ -6,7 +6,7 @@ export type ISODateString = string;
 /** USD amount as a 2-decimal string, e.g. "6.00". Never cents, never a number. */
 export type Money = string;
 
-/** Prisma Decimal serialized as a string without fixed scale, e.g. weightKg "2.3" or baseWeightKg "1". */
+/** Prisma Decimal serialized as a string without fixed scale, e.g. weightLb "5.5" or baseWeightLb "2". */
 export type DecimalString = string;
 
 /** UUID (v7 for domain rows, v4 for users). */

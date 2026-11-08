@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 };
 
 const RULES = [
-  { icon: <BadgeDollarSign />, title: "Base fee", body: "Covers the first kilogram on that route and service." },
-  { icon: <Scale />, title: "Per extra kilogram", body: "Each started kilogram above that adds a fixed amount, so 2.3 kg is charged as 2 extra kg." },
+  { icon: <BadgeDollarSign />, title: "Base fee", body: "Covers the first pounds (the rule's base weight) on that route and service." },
+  { icon: <Scale />, title: "Per extra pound", body: "Each started pound above that adds a fixed amount, so 4.3 lb on a 2 lb base is charged as 3 extra lb." },
   { icon: <Route />, title: "Route and service", body: "Prices depend on the start and end zones and the service. Same day runs inside one zone." },
   { icon: <Lock />, title: "Fixed once you pay", body: "The price is saved with your booking. A paid shipment can't change weight or service." },
 ];

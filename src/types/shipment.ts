@@ -33,7 +33,7 @@ export interface ShipmentListItem {
   receiverPhone: string;
   pickupAddress: string;
   deliveryAddress: string;
-  weightKg: DecimalString;
+  weightLb: DecimalString;
   price: Money;
   currency: Currency;
   originZone: ZoneRef;
@@ -100,7 +100,7 @@ export interface DeletedShipment {
   deletedAt: ISODateString;
 }
 
-export type ShipmentSortBy = "createdAt" | "updatedAt" | "price" | "weightKg" | "status" | "trackingId";
+export type ShipmentSortBy = "createdAt" | "updatedAt" | "price" | "weightLb" | "status" | "trackingId";
 
 /** searchTerm matches trackingId, receiver name or receiver phone. */
 export type ShipmentListQuery = ListQuery<ShipmentSortBy> & {
@@ -128,7 +128,7 @@ export type CreateShipmentInput = {
   originHubId: Id;
   destinationZoneId: Id;
   destinationHubId: Id;
-  weightKg: number;
+  weightLb: number;
   serviceType: ServiceType;
   description?: string | null;
   declaredValue?: number | null;

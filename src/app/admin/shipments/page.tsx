@@ -15,7 +15,7 @@ import { SHIPMENT_STATUSES, type ShipmentListQuery, type ShipmentSortBy } from "
 
 export const metadata: Metadata = { title: "Shipments", robots: { index: false } };
 
-const SORT_FIELDS: readonly ShipmentSortBy[] = ["createdAt", "updatedAt", "price", "weightKg", "status", "trackingId"];
+const SORT_FIELDS: readonly ShipmentSortBy[] = ["createdAt", "updatedAt", "price", "weightLb", "status", "trackingId"];
 
 function toQuery(params: RawSearchParams): ShipmentListQuery {
   const courierId = firstParam(params.courierId);

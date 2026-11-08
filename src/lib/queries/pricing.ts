@@ -6,20 +6,21 @@ import { ApiError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
 import { UUID } from "@/lib/ids";
 import type { PriceEstimate, PriceEstimateInput, ServiceType } from "@/types";
+import { MAX_WEIGHT_LB } from "@/lib/weight";
 
 export interface EstimateFields {
   originZoneId?: string;
   destinationZoneId?: string;
-  weightKg?: number;
+  weightLb?: number;
   serviceType?: ServiceType;
 }
 
 /** The complete estimate input, or null while something is missing or out of range. */
 export function toEstimateInput(fields: EstimateFields): PriceEstimateInput | null {
-  const { originZoneId, destinationZoneId, weightKg, serviceType } = fields;
+  const { originZoneId, destinationZoneId, weightLb, serviceType } = fields;
   if (!originZoneId || !destinationZoneId || !UUID.test(originZoneId) || !UUID.test(destinationZoneId)) return null;
-  if (typeof weightKg !== "number" || !Number.isFinite(weightKg) || weightKg <= 0 || weightKg > 1000 || !serviceType) return null;
-  return { originZoneId, destinationZoneId, weightKg: Math.round(weightKg * 100) / 100, serviceType };
+  if (typeof weightLb !== "number" || !Number.isFinite(weightLb) || weightLb <= 0 || weightLb > MAX_WEIGHT_LB || !serviceType) return null;
+  return { originZoneId, destinationZoneId, weightLb: Math.round(weightLb * 100) / 100, serviceType };
 }
 
 /**

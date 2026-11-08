@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPriceExamples, getPublicHubs, getPublicZones } from "@/lib/data/public";
+import { PRICE_EXAMPLE_WEIGHT_LB, getPriceExamples, getPublicHubs, getPublicZones } from "@/lib/data/public";
 import { formatMoney } from "@/lib/format";
 import { SERVICE_NAMES } from "@/lib/status";
 import type { Hub, Zone } from "@/types";
@@ -22,7 +22,7 @@ function Unavailable({ what }: { what: string }) {
   );
 }
 
-/** "From $2.50": real 1 kg quotes from the estimate endpoint. */
+/** "From $6.50": real quotes for a 2 lb parcel from the estimate endpoint. */
 export async function PriceTeaser() {
   await connection();
   let examples;
@@ -38,12 +38,12 @@ export async function PriceTeaser() {
       {examples.map((example) => (
         <div key={`${example.serviceType}-${example.label}`} className="flex flex-col gap-3 rounded-2xl bg-card p-6 shadow-card">
           <p className="text-sm font-semibold text-muted-foreground">
-            {SERVICE_NAMES[example.serviceType]}, 1 kg
+            {SERVICE_NAMES[example.serviceType]}, {PRICE_EXAMPLE_WEIGHT_LB} lb
           </p>
           <p className="text-[2.5rem] leading-none font-extrabold tracking-tight tabular">{formatMoney(example.estimate.total)}</p>
           <p className="text-sm text-muted-foreground">{example.label}</p>
           <p className="mt-auto border-t border-border pt-3 text-sm text-muted-foreground">
-            Then {formatMoney(example.estimate.perKgFee)} per extra kg
+            Then {formatMoney(example.estimate.perLbFee)} per extra lb
           </p>
         </div>
       ))}
@@ -152,9 +152,8 @@ export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
                       <Building2 className="size-4 text-muted-foreground" aria-hidden="true" />
                       {hub.name}
                     </p>
-                    <p className="pl-6 text-sm text-muted-foreground">
-                      {hub.address}, {hub.city}
-                    </p>
+                    {/* US addresses already end in "City, ST ZIP". */}
+                    <p className="pl-6 text-sm text-muted-foreground">{hub.address}</p>
                     {hub.phone ? (
                       <p className="pl-6 text-sm">
                         <a href={`tel:${hub.phone.replace(/[\s-]/g, "")}`} className="inline-flex items-center gap-1.5 rounded font-id underline-offset-4 hover:underline">

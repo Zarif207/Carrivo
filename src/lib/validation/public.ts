@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
+import { MAX_WEIGHT_LB } from "@/lib/weight";
 
 /* Zod rules for the public forms. They mirror the API's validation (docs/API_CONTRACT.md). */
 
@@ -17,14 +18,14 @@ export const trackingSchema = z.object({
 });
 export type TrackingValues = z.infer<typeof trackingSchema>;
 
-/** POST /pricing/estimate: weight > 0, ≤ 1000 kg, rounded to 2 decimals by the API. */
+/** POST /pricing/estimate: weight > 0, ≤ 2,000 lb, rounded to 2 decimals by the API. */
 export const estimateSchema = z.object({
   originZoneId: z.uuid("Choose where the parcel starts"),
   destinationZoneId: z.uuid("Choose where it's going"),
-  weightKg: z
-    .number({ error: "Enter the weight in kg" })
-    .positive("Weight must be more than 0 kg")
-    .max(1000, "Weight can't be more than 1000 kg"),
+  weightLb: z
+    .number({ error: "Enter the weight in pounds" })
+    .positive("Weight must be more than 0 lb")
+    .max(MAX_WEIGHT_LB, "Weight can't be more than 2,000 lb"),
   serviceType: z.enum(SERVICE_TYPES, { error: "Choose a service" }),
 });
 export type EstimateValues = z.infer<typeof estimateSchema>;

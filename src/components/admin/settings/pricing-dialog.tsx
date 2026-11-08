@@ -17,7 +17,7 @@ import { pricingSchema, type PricingValues } from "@/lib/validation/settings";
 import { SERVICE_TYPES, type PricingRule, type Zone } from "@/types";
 import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 
-const FIELDS = ["name", "serviceType", "originZoneId", "destinationZoneId", "baseFee", "baseWeightKg", "perKgFee", "maxWeightKg", "isActive"] as const;
+const FIELDS = ["name", "serviceType", "originZoneId", "destinationZoneId", "baseFee", "baseWeightLb", "perLbFee", "maxWeightLb", "isActive"] as const;
 const NONE = "none";
 
 export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zones: Pick<Zone, "id" | "name" | "isActive">[]; trigger: ReactNode }) {
@@ -31,14 +31,14 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
     originZoneId: rule?.originZone?.id ?? "",
     destinationZoneId: rule?.destinationZone?.id ?? "",
     baseFee: rule ? Number(rule.baseFee) : undefined,
-    baseWeightKg: rule ? Number(rule.baseWeightKg) : 1,
-    perKgFee: rule ? Number(rule.perKgFee) : undefined,
-    maxWeightKg: rule?.maxWeightKg ? Number(rule.maxWeightKg) : undefined,
+    baseWeightLb: rule ? Number(rule.baseWeightLb) : 1,
+    perLbFee: rule ? Number(rule.perLbFee) : undefined,
+    maxWeightLb: rule?.maxWeightLb ? Number(rule.maxWeightLb) : undefined,
     isActive: rule?.isActive ?? true,
   };
   const form = useForm<PricingValues>({ resolver: zodResolver(pricingSchema), defaultValues: defaults });
   const zoneOptions = [{ value: NONE, label: "Any zone (default rule)" }, ...zones.filter((z) => z.isActive).map((z) => ({ value: z.id, label: z.name }))];
-  const [base, perKg, baseKg] = useWatch({ control: form.control, name: ["baseFee", "perKgFee", "baseWeightKg"] });
+  const [base, perLb, baseLb] = useWatch({ control: form.control, name: ["baseFee", "perLbFee", "baseWeightLb"] });
 
   const onOpenChange = (next: boolean) => {
     if (next) {
@@ -57,9 +57,9 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
       originZoneId: v.originZoneId || null,
       destinationZoneId: v.destinationZoneId || null,
       baseFee: v.baseFee,
-      baseWeightKg: v.baseWeightKg,
-      perKgFee: v.perKgFee,
-      maxWeightKg: v.maxWeightKg ?? null,
+      baseWeightLb: v.baseWeightLb,
+      perLbFee: v.perLbFee,
+      maxWeightLb: v.maxWeightLb ?? null,
       isActive: v.isActive,
     };
     try {
@@ -84,7 +84,7 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
       onOpenChange={onOpenChange}
       trigger={trigger}
       title={rule ? `Edit ${rule.name}` : "New pricing rule"}
-      description="Price = base fee + every started kg over the base weight × fee per kg. A route rule beats the service's default rule."
+      description="Price = base fee + every started pound over the base weight × fee per pound. A route rule beats the service's default rule."
       submitLabel={rule ? "Save rule" : "Create rule"}
       formError={formError}
       onSubmit={onSubmit}
@@ -99,13 +99,13 @@ export function PricingDialog({ rule, zones, trigger }: { rule?: PricingRule; zo
       </div>
       <div className="grid gap-5 sm:grid-cols-3">
         <NumberField control={form.control} name="baseFee" label="Base fee" min={0} step="0.01" suffix="USD" />
-        <NumberField control={form.control} name="baseWeightKg" label="Base weight" min={0} step="0.1" suffix="kg" />
-        <NumberField control={form.control} name="perKgFee" label="Per extra kg" min={0} step="0.01" suffix="USD" />
+        <NumberField control={form.control} name="baseWeightLb" label="Base weight" min={0} step="0.1" suffix="lb" />
+        <NumberField control={form.control} name="perLbFee" label="Per extra lb" min={0} step="0.01" suffix="USD" />
       </div>
-      <NumberField control={form.control} name="maxWeightKg" label="Weight cap" optional min={0} step="0.1" suffix="kg" description="Heavier parcels get no quote on this rule." />
-      {typeof base === "number" && typeof perKg === "number" && typeof baseKg === "number" ? (
+      <NumberField control={form.control} name="maxWeightLb" label="Weight cap" optional min={0} step="0.1" suffix="lb" description="Heavier parcels get no quote on this rule." />
+      {typeof base === "number" && typeof perLb === "number" && typeof baseLb === "number" ? (
         <p className="rounded-lg bg-secondary px-3 py-2 text-sm tabular">
-          Example: a {baseKg + 2} kg parcel costs {formatMoney(base + 2 * perKg)}.
+          Example: a {baseLb + 2} lb parcel costs {formatMoney(base + 2 * perLb)}.
         </p>
       ) : null}
       <SwitchField control={form.control} name="isActive" label="Active" description="Only one active rule per service and route." />

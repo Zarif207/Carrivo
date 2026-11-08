@@ -63,7 +63,7 @@ function Detail({ s }: { s: ShipmentDetail }) {
             <Rows
               rows={[
                 ["Service", SERVICE_NAMES[s.serviceType]],
-                ["Weight", formatWeight(s.weightKg)],
+                ["Weight", formatWeight(s.weightLb)],
                 ["Contents", s.description ?? "Not described"],
                 ["Fragile", s.isFragile ? "Yes, handle with care" : "No"],
                 ["Declared value", s.declaredValue ? formatMoney(s.declaredValue) : "Not declared"],
@@ -86,8 +86,8 @@ function Detail({ s }: { s: ShipmentDetail }) {
           <Card title="Price">
             <Rows
               rows={[
-                [`Base fee (first ${formatWeight(b.baseWeightKg)})`, formatMoney(b.baseFee)],
-                [`Extra weight (${Number(b.chargeableExtraKg)} kg × ${formatMoney(b.perKgFee)})`, formatMoney(b.weightCharge)],
+                [`Base fee (first ${formatWeight(b.baseWeightLb)})`, formatMoney(b.baseFee)],
+                [`Extra weight (${Number(b.chargeableExtraLb)} lb × ${formatMoney(b.perLbFee)})`, formatMoney(b.weightCharge)],
                 ["Total", <span key="t" className="text-lg font-extrabold tabular">{formatMoney(s.price)}</span>],
               ]}
             />

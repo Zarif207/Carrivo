@@ -100,7 +100,7 @@ function Task({ s }: { s: ShipmentDetail }) {
             <DetailRows
               rows={[
                 ["Service", SERVICE_NAMES[s.serviceType]],
-                ["Weight", formatWeight(s.weightKg)],
+                ["Weight", formatWeight(s.weightLb)],
                 ["Fragile", s.isFragile ? <strong key="f" className="text-danger">Yes, handle with care</strong> : "No"],
                 ["Contents", s.description ?? "Not described"],
                 ...(s.declaredValue ? [["Declared value", formatMoney(s.declaredValue)] as DetailRow] : []),

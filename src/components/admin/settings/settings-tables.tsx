@@ -153,7 +153,7 @@ export function PricingTable({ rows, zones, filtered }: { rows: PricingRule[]; z
   );
   const price = (r: PricingRule) => (
     <span className="text-sm whitespace-nowrap tabular">
-      {formatMoney(r.baseFee)} for {formatWeight(r.baseWeightKg)}, +{formatMoney(r.perKgFee)}/kg
+      {formatMoney(r.baseFee)} for {formatWeight(r.baseWeightLb)}, +{formatMoney(r.perLbFee)}/lb
     </span>
   );
   const columns: DataTableColumn<PricingRule>[] = [
@@ -170,7 +170,7 @@ export function PricingTable({ rows, zones, filtered }: { rows: PricingRule[]; z
     },
     { id: "service", header: "Service", sortKey: "serviceType", cell: (r) => SERVICE_NAMES[r.serviceType] },
     { id: "price", header: "Price", sortKey: "baseFee", cell: price },
-    { id: "cap", header: "Weight cap", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (r) => (r.maxWeightKg ? formatWeight(r.maxWeightKg) : "None") },
+    { id: "cap", header: "Weight cap", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (r) => (r.maxWeightLb ? formatWeight(r.maxWeightLb) : "None") },
     { id: "status", header: "Status", cell: (r) => <ActiveBadge active={r.isActive} /> },
     { id: "actions", header: <span className="sr-only">Actions</span>, align: "right", cell: actions },
   ];

@@ -38,9 +38,9 @@ export function EstimateCard({ query, ready }: { query: EstimateQuery; ready: bo
           <p className="text-sm font-semibold text-muted-foreground">Price</p>
           <p className="text-[2.25rem] leading-tight font-extrabold tracking-tight text-brand tabular">{formatMoney(query.data.total)}</p>
           <p className="text-sm text-muted-foreground">
-            {formatMoney(query.data.baseFee)} for the first {formatWeight(query.data.baseWeightKg)}
-            {Number(query.data.chargeableExtraKg) > 0
-              ? `, plus ${Number(query.data.chargeableExtraKg)} kg × ${formatMoney(query.data.perKgFee)}`
+            {formatMoney(query.data.baseFee)} for the first {formatWeight(query.data.baseWeightLb)}
+            {Number(query.data.chargeableExtraLb) > 0
+              ? `, plus ${Number(query.data.chargeableExtraLb)} lb × ${formatMoney(query.data.perLbFee)}`
               : ""}
           </p>
         </div>

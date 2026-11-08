@@ -10,11 +10,11 @@ export function formatMoney(value: Money | number | null | undefined): string {
   return Number.isFinite(amount) ? usd.format(amount) : "—";
 }
 
-/** "2.3" → "2.3 kg" */
+/** "5.5" → "5.5 lb" (weights are pounds) */
 export function formatWeight(value: DecimalString | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
-  const kg = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(kg) ? `${kg.toLocaleString("en-US", { maximumFractionDigits: 2 })} kg` : "—";
+  const lb = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(lb) ? `${lb.toLocaleString("en-US", { maximumFractionDigits: 2 })} lb` : "—";
 }
 
 const toDate = (value: ISODateString | Date): Date | null => {

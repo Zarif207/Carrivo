@@ -130,7 +130,7 @@ export function NewShipmentWizard({ zones, hubs, senderDefaults }: NewShipmentWi
       originHubId: p.originHubId,
       destinationZoneId: p.destinationZoneId,
       destinationHubId: p.destinationHubId,
-      weightKg: p.weightKg,
+      weightLb: p.weightLb,
       serviceType: p.serviceType,
       ...(p.description ? { description: p.description } : {}),
       ...(p.declaredValue !== undefined ? { declaredValue: p.declaredValue } : {}),

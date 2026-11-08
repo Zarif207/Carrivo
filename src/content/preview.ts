@@ -5,20 +5,21 @@
  */
 import type { ShipmentListItem } from "@/types";
 
-const north = { id: "z-n", name: "Dhaka North", code: "DHK-N" };
-const south = { id: "z-s", name: "Dhaka South", code: "DHK-S" };
-const northHub = { id: "h-n", name: "Dhaka North Hub", code: "HUB-DHK-N", city: "Dhaka" };
-const southHub = { id: "h-s", name: "Dhaka South Hub", code: "HUB-DHK-S", city: "Dhaka" };
-const customer = { id: "c-1", name: "Ayesha Rahman" };
+const north = { id: "z-n", name: "New York Metro", code: "NYC" };
+const south = { id: "z-s", name: "Los Angeles Metro", code: "LA" };
+const northHub = { id: "h-n", name: "Queens Hub", code: "HUB-NYC", city: "Long Island City" };
+const southHub = { id: "h-s", name: "Downtown LA Hub", code: "HUB-LA", city: "Los Angeles" };
+const customer = { id: "c-1", name: "Emily Carter" };
 
+/* Fictional people; phone numbers use the reserved 555-0100 to 555-0199 range. */
 const base = {
-  senderName: "Ayesha Rahman",
-  pickupAddress: "House 10, Road 3, Sector 7, Uttara",
+  senderName: "Emily Carter",
+  pickupAddress: "120 W 45th St, New York, NY 10036",
   currency: "usd",
   originZone: north,
   originHub: northHub,
   customer,
-  courier: { id: "r-1", name: "Rahim" },
+  courier: { id: "r-1", name: "Marcus" },
 } as const;
 
 export const PREVIEW_SHIPMENTS: ShipmentListItem[] = [
@@ -29,11 +30,11 @@ export const PREVIEW_SHIPMENTS: ShipmentListItem[] = [
     status: "IN_TRANSIT",
     paymentStatus: "PAID",
     serviceType: "EXPRESS",
-    receiverName: "Nusrat Jahan",
-    receiverPhone: "+8801811000005",
-    deliveryAddress: "House 5, Road 27, Dhanmondi",
-    weightKg: "2.3",
-    price: "6.50",
+    receiverName: "Mia Davis",
+    receiverPhone: "(323) 555-0144",
+    deliveryAddress: "1520 N Vine St, Los Angeles, CA 90028",
+    weightLb: "5.1",
+    price: "34.00",
     destinationZone: south,
     destinationHub: southHub,
     createdAt: "2026-11-02T16:45:49.827Z",
@@ -46,11 +47,11 @@ export const PREVIEW_SHIPMENTS: ShipmentListItem[] = [
     status: "OUT_FOR_DELIVERY",
     paymentStatus: "PAID",
     serviceType: "SAME_DAY",
-    receiverName: "Imran Hossain",
-    receiverPhone: "+8801811000002",
-    deliveryAddress: "Flat 3B, Road 11, Banani",
-    weightKg: "1",
-    price: "7.00",
+    receiverName: "Ethan Garcia",
+    receiverPhone: "(347) 555-0145",
+    deliveryAddress: "31-15 Steinway St, Astoria, NY 11103",
+    weightLb: "1.8",
+    price: "18.00",
     destinationZone: north,
     destinationHub: northHub,
     createdAt: "2026-11-04T03:10:00.000Z",
@@ -63,11 +64,11 @@ export const PREVIEW_SHIPMENTS: ShipmentListItem[] = [
     status: "DELIVERED",
     paymentStatus: "PAID",
     serviceType: "STANDARD",
-    receiverName: "Shirin Akhter",
-    receiverPhone: "+8801811000010",
-    deliveryAddress: "Road 12, Sector 10, Uttara",
-    weightKg: "1.5",
-    price: "3.25",
+    receiverName: "Benjamin Clark",
+    receiverPhone: "(646) 555-0149",
+    deliveryAddress: "410 E 61st St, New York, NY 10065",
+    weightLb: "3.3",
+    price: "7.70",
     destinationZone: north,
     destinationHub: northHub,
     createdAt: "2026-11-03T05:00:00.000Z",

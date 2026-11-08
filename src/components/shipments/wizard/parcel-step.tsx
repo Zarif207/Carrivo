@@ -18,7 +18,7 @@ import type { Hub, ServiceType, Zone } from "@/types";
 import { EstimateCard } from "./estimate-card";
 import { useServerErrors } from "./use-server-errors";
 
-const FIELDS = ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightKg", "serviceType", "description", "declaredValue", "isFragile"] as const;
+const FIELDS = ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightLb", "serviceType", "description", "declaredValue", "isFragile"] as const;
 
 const SERVICE_OPTIONS = [
   { value: "STANDARD", label: "Standard" },
@@ -50,7 +50,7 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
       originHubId: "",
       destinationZoneId: zones[1]?.id ?? zones[0]?.id ?? "",
       destinationHubId: "",
-      weightKg: undefined,
+      weightLb: undefined,
       serviceType: "STANDARD",
       description: "",
       declaredValue: undefined,
@@ -66,9 +66,9 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
     saveParcel(typed as Partial<ParcelStepInput>);
   }, [typed, saveParcel]);
 
-  const [originZoneId, originHubId, destinationZoneId, destinationHubId, weightKg, serviceType] = useWatch({
+  const [originZoneId, originHubId, destinationZoneId, destinationHubId, weightLb, serviceType] = useWatch({
     control: form.control,
-    name: ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightKg", "serviceType"],
+    name: ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightLb", "serviceType"],
   });
 
   const originHubs = useMemo(() => hubs.filter((hub) => hub.zone.id === originZoneId && hub.isActive), [hubs, originZoneId]);
@@ -87,15 +87,15 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
     if (wanted !== destinationHubId) form.setValue("destinationHubId", wanted);
   }, [destinationHubs, destinationHubId, form]);
 
-  const debouncedWeight = useDebounce(weightKg, 400);
-  const estimateInput = toEstimateInput({ originZoneId, destinationZoneId, weightKg: debouncedWeight, serviceType });
+  const debouncedWeight = useDebounce(weightLb, 400);
+  const estimateInput = toEstimateInput({ originZoneId, destinationZoneId, weightLb: debouncedWeight, serviceType });
   const estimate = useEstimate(estimateInput);
 
   const next = form.handleSubmit((values) => {
     if (estimate.isError && ApiError.isApiError(estimate.error) && estimate.error.status === 422) {
-      const onWeight = estimate.error.errors.some((e) => e.path.endsWith("weightKg"));
-      form.setError(onWeight ? "weightKg" : "serviceType", { message: estimate.error.message });
-      form.setFocus(onWeight ? "weightKg" : "serviceType");
+      const onWeight = estimate.error.errors.some((e) => e.path.endsWith("weightLb"));
+      form.setError(onWeight ? "weightLb" : "serviceType", { message: estimate.error.message });
+      form.setFocus(onWeight ? "weightLb" : "serviceType");
       return;
     }
     saveParcel(values);
@@ -139,7 +139,7 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
             Parcel and service
           </h3>
           <div className="grid gap-5 sm:grid-cols-[minmax(0,14rem)_1fr]">
-            <NumberField control={form.control} name="weightKg" label="Weight" suffix="kg" step="0.01" min={0} placeholder="e.g. 2.5" />
+            <NumberField control={form.control} name="weightLb" label="Weight" suffix="lb" step="0.01" min={0} placeholder="e.g. 5.5" />
             <FormField
               control={form.control}
               name="serviceType"

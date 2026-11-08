@@ -53,7 +53,7 @@ const columns: DataTableColumn<ShipmentListItem>[] = [
   { id: "service", header: "Service", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (row) => SERVICE_NAMES[row.serviceType] },
   { id: "status", header: "Status", sortKey: "status", cell: (row) => <StatusBadge kind="shipment" status={row.status} size="sm" /> },
   { id: "payment", header: "Payment", cell: (row) => <StatusBadge kind="shipment-payment" status={row.paymentStatus} size="sm" /> },
-  { id: "weight", header: "Weight", sortKey: "weightKg", align: "right", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (row) => <span className="tabular whitespace-nowrap">{formatWeight(row.weightKg)}</span> },
+  { id: "weight", header: "Weight", sortKey: "weightLb", align: "right", className: "hidden 2xl:table-cell", headerClassName: "hidden 2xl:table-cell", cell: (row) => <span className="tabular whitespace-nowrap">{formatWeight(row.weightLb)}</span> },
   { id: "price", header: "Price", sortKey: "price", align: "right", cell: (row) => <span className="font-semibold tabular">{formatMoney(row.price)}</span> },
   { id: "created", header: "Booked", sortKey: "createdAt", className: "hidden xl:table-cell", headerClassName: "hidden xl:table-cell", cell: (row) => <span className="whitespace-nowrap">{formatDate(row.createdAt)}</span> },
   {

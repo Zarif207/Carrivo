@@ -16,7 +16,8 @@ interface DraftState {
   reset: () => void;
 }
 
-export const SHIPMENT_DRAFT_KEY = "carrivo-shipment-draft";
+/** v2: weights moved to pounds (weightLb); older drafts with weightKg are ignored. */
+export const SHIPMENT_DRAFT_KEY = "carrivo-shipment-draft-v2";
 
 /**
  * The new-shipment draft survives a refresh. sessionStorage (not localStorage): the draft holds

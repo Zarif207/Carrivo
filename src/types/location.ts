@@ -76,16 +76,16 @@ export interface PricingRule {
   originZone: ZoneRef | null;
   destinationZone: ZoneRef | null;
   baseFee: Money;
-  baseWeightKg: DecimalString;
-  perKgFee: Money;
+  baseWeightLb: DecimalString;
+  perLbFee: Money;
   /** null = no weight cap. */
-  maxWeightKg: DecimalString | null;
+  maxWeightLb: DecimalString | null;
   isActive: boolean;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }
 
-export type PricingSortBy = "name" | "serviceType" | "baseFee" | "perKgFee" | "createdAt";
+export type PricingSortBy = "name" | "serviceType" | "baseFee" | "perLbFee" | "createdAt";
 
 export type PricingListQuery = ListQuery<PricingSortBy> & {
   serviceType?: ServiceType;
@@ -103,10 +103,10 @@ export type CreatePricingRuleInput = {
   destinationZoneId?: Id | null;
   baseFee: number;
   /** Default 1. */
-  baseWeightKg?: number;
-  perKgFee: number;
-  /** Default null (no cap); must be ≥ baseWeightKg. */
-  maxWeightKg?: number | null;
+  baseWeightLb?: number;
+  perLbFee: number;
+  /** Default null (no cap); must be ≥ baseWeightLb. */
+  maxWeightLb?: number | null;
   /** Default true. Only one active rule per service + route. */
   isActive?: boolean;
 };
@@ -115,20 +115,20 @@ export type UpdatePricingRuleInput = Partial<CreatePricingRuleInput>;
 
 /** POST /pricing/estimate (public). */
 export type PriceEstimateInput = {
-  weightKg: number;
+  weightLb: number;
   serviceType: ServiceType;
   originZoneId: Id;
   destinationZoneId: Id;
 };
 
-/** total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKgFee. All values are strings. */
+/** total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLbFee. All values are strings. */
 export interface PriceEstimate {
   currency: Currency;
-  weightKg: DecimalString;
-  baseWeightKg: DecimalString;
-  chargeableExtraKg: DecimalString;
+  weightLb: DecimalString;
+  baseWeightLb: DecimalString;
+  chargeableExtraLb: DecimalString;
   baseFee: Money;
-  perKgFee: Money;
+  perLbFee: Money;
   weightCharge: Money;
   total: Money;
   serviceType: ServiceType;

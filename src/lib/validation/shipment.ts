@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
+import { MAX_WEIGHT_LB } from "@/lib/weight";
 
 /*
  * New-shipment wizard, one schema per step. Rules mirror POST /shipments (contract §5):
  * names 2-100, phones 7-20 digits (+, spaces, dashes), addresses 5-300, receiver email optional,
- * description ≤ 500, declared value 0-99,999,999, weight > 0 and ≤ 1000 kg, UUID zones and hubs.
+ * description ≤ 500, declared value 0-99,999,999, weight > 0 and ≤ 2,000 lb, UUID zones and hubs.
  */
 
 const name = z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name can be at most 100 characters");
@@ -30,7 +31,7 @@ export const parcelStepSchema = z.object({
   originHubId: z.uuid("Choose the pickup hub"),
   destinationZoneId: z.uuid("Choose the delivery zone"),
   destinationHubId: z.uuid("Choose the delivery hub"),
-  weightKg: z.number({ error: "Enter the weight in kg" }).positive("Weight must be more than 0 kg").max(1000, "Weight can't be more than 1000 kg"),
+  weightLb: z.number({ error: "Enter the weight in pounds" }).positive("Weight must be more than 0 lb").max(MAX_WEIGHT_LB, "Weight can't be more than 2,000 lb"),
   serviceType: z.enum(SERVICE_TYPES, { error: "Choose a service" }),
   description: z.string().trim().max(500, "Keep it under 500 characters"),
   declaredValue: z.number().min(0, "Must be 0 or more").max(99_999_999, "That value is too large").optional(),
@@ -54,7 +55,7 @@ export const FIELD_STEP: Record<string, 1 | 2> = {
   originHubId: 2,
   destinationZoneId: 2,
   destinationHubId: 2,
-  weightKg: 2,
+  weightLb: 2,
   serviceType: 2,
   description: 2,
   declaredValue: 2,

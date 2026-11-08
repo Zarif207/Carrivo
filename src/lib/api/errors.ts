@@ -12,7 +12,7 @@ const toDetails = (value: unknown): ApiErrorDetail[] => {
   );
 };
 
-/** Strips the validator's location prefix: "body.weightKg" → "weightKg", "query.sortBy" → "sortBy". */
+/** Strips the validator's location prefix: "body.weightLb" → "weightLb", "query.sortBy" → "sortBy". */
 const toFieldName = (path: string): string => path.replace(/^(body|query|params)\.?/, "");
 
 /**

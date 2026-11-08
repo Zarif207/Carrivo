@@ -27,7 +27,7 @@ const TABS = SETTINGS_TABS.map((t) => t.value);
 const SORTS = {
   zones: ["name", "code", "createdAt"] as const satisfies readonly ZoneSortBy[],
   hubs: ["name", "code", "city", "createdAt"] as const satisfies readonly HubSortBy[],
-  pricing: ["name", "serviceType", "baseFee", "perKgFee", "createdAt"] as const satisfies readonly PricingSortBy[],
+  pricing: ["name", "serviceType", "baseFee", "perLbFee", "createdAt"] as const satisfies readonly PricingSortBy[],
 };
 
 const SEARCH_HINT: Record<SettingsTab, string> = { zones: "Name or code", hubs: "Name, code or city", pricing: "Rule name" };

@@ -35,7 +35,10 @@ export interface PriceExample {
   estimate: PriceEstimate;
 }
 
-/** Real 1 kg quotes from the estimate endpoint (same zone and cross zone) for the pricing teaser. */
+/** Weight used for the example quotes: the seeded rules' base weight, so the total is the base fee. */
+export const PRICE_EXAMPLE_WEIGHT_LB = 2;
+
+/** Real quotes for a 2 lb parcel from the estimate endpoint (same zone and cross zone) for the pricing teaser. */
 export async function getPriceExamples(): Promise<PriceExample[]> {
   "use cache";
   cacheLife("hours");
@@ -49,7 +52,7 @@ export async function getPriceExamples(): Promise<PriceExample[]> {
       const { data } = await serverFetch<PriceEstimate>(endpoints.pricing.estimate, {
         method: "POST",
         auth: false,
-        body: { weightKg: 1, serviceType, originZoneId: origin.id, destinationZoneId: destination.id },
+        body: { weightLb: PRICE_EXAMPLE_WEIGHT_LB, serviceType, originZoneId: origin.id, destinationZoneId: destination.id },
       });
       const sameZone = origin.id === destination.id;
       return { label: sameZone ? `Within ${origin.name}` : `${origin.name} to ${destination.name}`, serviceType, sameZone, estimate: data };

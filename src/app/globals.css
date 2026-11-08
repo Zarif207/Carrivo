@@ -410,6 +410,83 @@
   animation: beacon 2.2s ease-out infinite;
 }
 
+/* ───────────────────────── Public site motion ───────────────────────── */
+
+/* Lenis (public pages only; the class is set on <html> by components/motion/lenis-scroll.tsx). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/*
+ * Hero words rise into place with CSS only (no JS), and only move: opacity stays 1, so the
+ * headline is visible from the first paint and stays the LCP element.
+ */
+@keyframes word-rise {
+  from {
+    transform: translateY(0.32em);
+  }
+  to {
+    transform: none;
+  }
+}
+@utility animate-word-rise {
+  display: inline-block;
+  animation: word-rise 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Route stops on the hero corridor. */
+@keyframes stop-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@utility animate-stop-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: stop-pulse 2.4s ease-out infinite;
+  animation-delay: calc(var(--i, 0) * 400ms);
+}
+
+/* FAQ accordion (Radix sets --radix-accordion-content-height). */
+@keyframes accordion-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-close {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+@utility animate-accordion-open {
+  animation: accordion-open 0.28s cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+@utility animate-accordion-close {
+  animation: accordion-close 0.22s ease-in;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

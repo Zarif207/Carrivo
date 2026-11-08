@@ -140,7 +140,7 @@ function Detail({ s, payments, hubs }: { s: ShipmentDetail; payments: AdminPayme
             <DetailRows
               rows={[
                 ["Service", SERVICE_NAMES[s.serviceType]],
-                ["Weight", formatWeight(s.weightKg)],
+                ["Weight", formatWeight(s.weightLb)],
                 ["Contents", s.description ?? "Not described"],
                 ["Fragile", s.isFragile ? "Yes" : "No"],
                 ["Declared value", s.declaredValue ? formatMoney(s.declaredValue) : "Not declared"],
@@ -148,7 +148,7 @@ function Detail({ s, payments, hubs }: { s: ShipmentDetail; payments: AdminPayme
               ]}
             />
             <p className="text-xs text-muted-foreground">
-              {b.ruleName}: {formatMoney(b.baseFee)} for the first {formatWeight(b.baseWeightKg)}, then {formatMoney(b.perKgFee)} per kg.
+              {b.ruleName}: {formatMoney(b.baseFee)} for the first {formatWeight(b.baseWeightLb)}, then {formatMoney(b.perLbFee)} per lb.
             </p>
           </DetailCard>
 

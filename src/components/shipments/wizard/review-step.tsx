@@ -65,7 +65,7 @@ export function ReviewStep({ contact, parcel, zones, hubs, pending, formError, o
         <Section title="Parcel and service" step={2}>
           <Row label="From" value={`${zone(parcel.originZoneId)} (${hub(parcel.originHubId)})`} />
           <Row label="To" value={`${zone(parcel.destinationZoneId)} (${hub(parcel.destinationHubId)})`} />
-          <Row label="Weight" value={formatWeight(parcel.weightKg)} />
+          <Row label="Weight" value={formatWeight(parcel.weightLb)} />
           <Row label="Service" value={SERVICE_NAMES[parcel.serviceType]} />
           {parcel.description ? <Row label="Contents" value={parcel.description} /> : null}
           {parcel.declaredValue !== undefined ? <Row label="Declared value" value={formatMoney(parcel.declaredValue)} /> : null}

@@ -14,7 +14,7 @@ TypeScript shapes live in `src/types` (named in the tables below); endpoint path
 | Failure | `{ success: false, message, errors: [{ path, message }] }`. `path` looks like `body.email`, `query.sortBy`, `image` or `""` |
 | Status codes | 200/201 ok · 400 validation or illegal transition · 401 no/invalid/expired token or deactivated · 403 wrong role · 404 unknown **or not yours** · 409 conflict (state machine, duplicate, in use, concurrent) · 413/415 upload · 422 pricing (no rule, over max weight, below Stripe minimum) · 429 rate limit |
 | Money | USD, 2-decimal **strings** (`"6.00"`), `currency: "usd"`. Inputs (fees, declaredValue) are numbers. Never show cents. |
-| Decimals | `weightKg`, `baseWeightKg`, `maxWeightKg` are Decimal strings without fixed scale (`"2.3"`, `"1"`) |
+| Decimals | `weightLb`, `baseWeightLb`, `maxWeightLb` are Decimal strings in **pounds** without fixed scale (`"5.5"`, `"2"`) |
 | Ids | UUIDs (v7 domain rows, v4 users). Tracking id: `CRV-YYMMDD-XXXXXX`, regex `^CRV-\d{6}-[A-Z0-9]{6}$`, case-insensitive on lookup |
 | Dates | ISO strings. Date filters (`fromDate`, `toDate`) take `YYYY-MM-DD` (an **Asia/Dhaka** day, UTC+6) or an ISO date-time with offset |
 | Strict bodies | Every body is a strict object: unknown keys (`role`, `price`, `status`, …) → 400 |
@@ -125,10 +125,10 @@ Body `ChangePasswordInput { currentPassword, newPassword (8-128), revokeOtherSes
 | GET | `/zones/:id` | | `Zone { id, name, code, description, isActive, createdAt, updatedAt }` |
 | GET | `/hubs` | `zoneId`, `city` (exact, case-insensitive), `searchTerm` (name, code, city), `sortBy` name\|code\|city\|createdAt, `isActive` | `Hub[]` + meta |
 | GET | `/hubs/:id` | | `Hub { id, name, code, address, city, phone, isActive, zone: ZoneRef, … }` |
-| POST | `/pricing/estimate` | `PriceEstimateInput { weightKg (>0, ≤1000, 2 dp), serviceType, originZoneId, destinationZoneId }` | `PriceEstimate { currency, weightKg, baseWeightKg, chargeableExtraKg, baseFee, perKgFee, weightCharge, total, serviceType }`. 422 if no rule exists for the route (seeded SAME_DAY is within one zone only) or the weight is over the rule's max |
+| POST | `/pricing/estimate` | `PriceEstimateInput { weightLb (pounds, >0, ≤2000, 2 dp), serviceType, originZoneId, destinationZoneId }` | `PriceEstimate { currency, weightLb, baseWeightLb, chargeableExtraLb, baseFee, perLbFee, weightCharge, total, serviceType }`. 422 if no rule exists for the route (seeded SAME_DAY is within one zone only) or the weight is over the rule's max |
 | GET | `/tracking/:trackingId` | | `TrackingInfo { trackingId, status, serviceType, origin{city}, destination{city}, createdAt, estimatedDeliveryAt, deliveredAt, timeline[{status, city, at}] }`. No personal data. 400 bad format, 404 unknown |
 
-Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKgFee`. The rule is the active (service, origin, destination) rule if there is one, otherwise the service's default rule (both zones null).
+Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLbFee`. The rule is the active (service, origin, destination) rule if there is one, otherwise the service's default rule (both zones null).
 
 ## 5. Customer endpoints (`CUSTOMER`)
 
@@ -136,7 +136,7 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 |---|---|---|---|
 | GET/PATCH | `/users/me` | PATCH `UpdateProfileInput`: `name` 2-100, `phone` (regex above) \| null, `address` 3-300 \| null, `image` (URL) \| null; at least one field | `UserProfile` |
 | POST | `/shipments` | `CreateShipmentInput` (rules below) | **201** `ShipmentDetail` (PENDING, UNPAID, server-priced, new trackingId) |
-| GET | `/shipments` | `ShipmentListQuery`: `searchTerm` (trackingId, receiver name/phone), `status`, `serviceType`, `paymentStatus`, `fromDate`, `toDate`, `sortBy` createdAt\|updatedAt\|price\|weightKg\|status\|trackingId | `ShipmentListItem[]` + meta (own only) |
+| GET | `/shipments` | `ShipmentListQuery`: `searchTerm` (trackingId, receiver name/phone), `status`, `serviceType`, `paymentStatus`, `fromDate`, `toDate`, `sortBy` createdAt\|updatedAt\|price\|weightLb\|status\|trackingId | `ShipmentListItem[]` + meta (own only) |
 | GET | `/shipments/:id` | | `ShipmentDetail` (incl. `statusHistory`, `pickupRequest`, `priceBreakdown`, `proofOfDeliveryUrl`/`UploadedAt`) |
 | PATCH | `/shipments/:id` | `UpdateShipmentInput` (any editable field, ≥ 1) | `ShipmentDetail`. Only while PENDING. Weight or service change re-prices; both are locked once PAID (409) or while a checkout is open (409) |
 | POST | `/shipments/:id/cancel` | `{ reason? }` 3-500 (body optional) | `ShipmentDetail`. Before PICKED_UP. If paid: payment → REFUND_PENDING → Stripe refund → `paymentStatus` REFUNDED |
@@ -147,7 +147,7 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 | GET | `/payments/:id` | | `Payment` (`checkoutUrl` only while the session is open) |
 | * | notifications | see §8 | |
 
-**Create shipment validation** (src): `senderName`, `receiverName` 2-100; `senderPhone`, `receiverPhone` match `^\+?[0-9\s-]{7,20}$`; `pickupAddress`, `deliveryAddress` 5-300; `receiverEmail?` email \| null; `description?` ≤500 \| null; `declaredValue?` number 0-99,999,999 \| null; `isFragile?` boolean; `weightKg` > 0, ≤ 1000 (rounded to 2 dp; the rule's max may be lower → 422); `serviceType`; `originZoneId`, `originHubId`, `destinationZoneId`, `destinationHubId` UUIDs. Each hub must be active and in its zone (400 `Hub does not belong to originZoneId`).
+**Create shipment validation** (src): `senderName`, `receiverName` 2-100; `senderPhone`, `receiverPhone` match `^\+?[0-9\s-]{7,20}$`; `pickupAddress`, `deliveryAddress` 5-300; `receiverEmail?` email \| null; `description?` ≤500 \| null; `declaredValue?` number 0-99,999,999 \| null; `isFragile?` boolean; `weightLb` (pounds) > 0, ≤ 2000 (rounded to 2 dp; the rule's max may be lower → 422); `serviceType`; `originZoneId`, `originHubId`, `destinationZoneId`, `destinationHubId` UUIDs. Each hub must be active and in its zone (400 `Hub does not belong to originZoneId`).
 
 **Pickup validation** (src): `windowStart`, `windowEnd` are ISO date-times **with offset** (e.g. `2026-11-10T10:00:00+06:00`); start must be in the future and ≤ 30 days ahead; end after start; window ≤ 12 h. Optional: `pickupAddress` 5-300, `contactName` 2-100, `contactPhone`, `notes` ≤500 (defaults come from the shipment).
 
@@ -208,8 +208,8 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightKg)) × perKg
 | GET | `/zones`, `/hubs` | as §4 (`isActive=all` to include inactive) | |
 | POST / PATCH / DELETE | `/zones`, `/zones/:id` | `CreateZoneInput { name 2-100, code ^[A-Z0-9-]{2,20}$ (upper-cased), description? ≤500 \| null, isActive? }`, PATCH any field | `Zone`. DELETE is a soft delete (`deletedAt` set: gone from every list, even `isActive=all`); 409 lists what still uses it in `errors[]` (hubs, couriers); 409 duplicate code. Deactivate with PATCH `isActive:false` |
 | POST / PATCH / DELETE | `/hubs`, `/hubs/:id` | `CreateHubInput { name 2-100, code ^[A-Z0-9-]{2,30}$, address 3-300, city 2-100, phone? \| null, zoneId (active), isActive? }` | `Hub`. DELETE is a soft delete like zones (gone from every list); 409 on zone change or delete while in use. Deactivate with PATCH `isActive:false` |
-| GET | `/pricing`, `/pricing/:id` | `serviceType`, `originZoneId`, `destinationZoneId`, `isActive` true\|false (omit = both), `searchTerm` (name), `sortBy` name\|serviceType\|baseFee\|perKgFee\|createdAt | `PricingRule[]` + meta / `PricingRule` |
-| POST / PATCH / DELETE | `/pricing`, `/pricing/:id` | `CreatePricingRuleInput { name 2-100, serviceType, originZoneId? \| null, destinationZoneId? \| null (both or neither), baseFee, baseWeightKg? (default 1), perKgFee, maxWeightKg? \| null (≥ baseWeightKg), isActive? (default true) }` | `PricingRule`. 409 when an active rule already exists for that service + route |
+| GET | `/pricing`, `/pricing/:id` | `serviceType`, `originZoneId`, `destinationZoneId`, `isActive` true\|false (omit = both), `searchTerm` (name), `sortBy` name\|serviceType\|baseFee\|perLbFee\|createdAt | `PricingRule[]` + meta / `PricingRule` |
+| POST / PATCH / DELETE | `/pricing`, `/pricing/:id` | `CreatePricingRuleInput { name 2-100, serviceType, originZoneId? \| null, destinationZoneId? \| null (both or neither), baseFee, baseWeightLb? (default 1), perLbFee, maxWeightLb? \| null (≥ baseWeightLb), isActive? (default true) }` | `PricingRule`. 409 when an active rule already exists for that service + route |
 
 **How the admin UI uses this (Phase 7, checked against the live API):**
 - Overview: one `dashboard-stats` call (cached 60 s by the API) gives the cards and all three charts; its `shipmentsPerDay` is a fixed 30 Dhaka days with **no date filter**, so the 7 / 14 / 30-day switch only trims that series. Plus one `requiresReview=true` count and the latest 8 audit entries.

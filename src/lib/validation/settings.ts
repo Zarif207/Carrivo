@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
+import { MAX_WEIGHT_LB } from "@/lib/weight";
 
 /* Admin settings forms. Rules mirror the API's zone / hub / pricing validators (contract §7). */
 
@@ -49,17 +50,17 @@ export const pricingSchema = z
     originZoneId: z.string(),
     destinationZoneId: z.string(),
     baseFee: money("base fee"),
-    baseWeightKg: z.number({ error: "Enter the weight the base fee covers" }).min(0, "Must be 0 or more").max(1000, "At most 1000 kg"),
-    perKgFee: money("fee per extra kg"),
-    maxWeightKg: z.number().positive("Must be more than 0").max(1000, "At most 1000 kg").optional(),
+    baseWeightLb: z.number({ error: "Enter the weight the base fee covers" }).min(0, "Must be 0 or more").max(MAX_WEIGHT_LB, "At most 2,000 lb"),
+    perLbFee: money("fee per extra lb"),
+    maxWeightLb: z.number().positive("Must be more than 0").max(MAX_WEIGHT_LB, "At most 2,000 lb").optional(),
     isActive: z.boolean(),
   })
   .refine((v) => (v.originZoneId === "") === (v.destinationZoneId === ""), {
     message: "Pick both zones for a route rule, or neither for the default rule",
     path: ["destinationZoneId"],
   })
-  .refine((v) => v.maxWeightKg === undefined || v.maxWeightKg >= v.baseWeightKg, {
+  .refine((v) => v.maxWeightLb === undefined || v.maxWeightLb >= v.baseWeightLb, {
     message: "The weight cap must be at least the base weight",
-    path: ["maxWeightKg"],
+    path: ["maxWeightLb"],
   });
 export type PricingValues = z.input<typeof pricingSchema>;
