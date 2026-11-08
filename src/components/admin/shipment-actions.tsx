@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { RoleGate } from "@/components/auth/role-gate";
+import { CanMutate } from "@/components/auth/role-gate";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -197,7 +197,7 @@ export function AdminShipmentActions({ shipment, originHubs, destinationHubs }: 
         </p>
       </div>
 
-      <RoleGate allow="ADMIN">
+      <CanMutate readOnly={<p className="text-sm text-muted-foreground">View-only access: shipment actions are hidden.</p>}>
         {actions.length ? (
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
             {actions.map((a) => {
@@ -212,7 +212,7 @@ export function AdminShipmentActions({ shipment, originHubs, destinationHubs }: 
         ) : (
           <p className="text-sm text-muted-foreground">{status === "OUT_FOR_DELIVERY" || status === "COURIER_ASSIGNED" ? "Waiting on the courier." : "No admin steps from here."}</p>
         )}
-      </RoleGate>
+      </CanMutate>
 
       {/* One dialog, mounted while open: the optimistic status hides the buttons, never the dialog. */}
       {active ? (

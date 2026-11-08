@@ -1,7 +1,7 @@
 "use client";
 
 // Client: collapsible sidebar (persisted UI state), active nav (usePathname, streamed under Suspense) and the mobile sheet.
-import { Ellipsis, House, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
+import { Ellipsis, Eye, House, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState, type MouseEvent, type ReactNode } from "react";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DASHBOARD_NAV, PUBLIC_HOME, ROLE_LABEL, findActiveHref, type NavItem } from "@/config/nav";
+import { isReadOnly, isStaff } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui-store";
 import { LogoutProvider, useRequestLogout } from "./logout-dialog";
@@ -25,7 +26,7 @@ interface DashboardShellProps {
   badges?: Partial<Record<string, number>>;
 }
 
-const SIDEBAR_HEADINGS = { CUSTOMER: "Shipping", COURIER: "Deliveries", ADMIN: "Operations" } as const;
+const SIDEBAR_HEADINGS = { CUSTOMER: "Shipping", COURIER: "Deliveries", ADMIN: "Operations", ADMIN_VIEWER: "Operations" } as const;
 
 function CountBadge({ count, className }: { count: number; className?: string }) {
   return (
@@ -148,6 +149,23 @@ function AccountActions({ collapsed, onNavigate }: { collapsed: boolean; onNavig
   );
 }
 
+/** Shown at the top of every admin page for read-only accounts (ADMIN_VIEWER). */
+function ViewOnlyBanner() {
+  return (
+    <div role="note" className="mb-6 flex items-start gap-3 rounded-xl bg-surface p-4 ring-1 ring-border">
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-ink text-ink-foreground dark:bg-foreground dark:text-background" aria-hidden="true">
+        <Eye className="size-4" />
+      </span>
+      <p className="text-sm">
+        <span className="font-bold">View-only access.</span>{" "}
+        <span className="text-muted-foreground">
+          You can see everything in the admin console (filters, search, charts and exports work), but you can&rsquo;t make changes.
+        </span>
+      </p>
+    </div>
+  );
+}
+
 type ActiveRender = (activeHref: string | undefined) => ReactNode;
 
 function LiveActiveHref({ items, children }: { items: NavItem[]; children: ActiveRender }) {
@@ -257,7 +275,7 @@ function ShellFrame({ user, children, headerActions, badges = {} }: DashboardShe
               <Logo href={PUBLIC_HOME} showWordmark={false} prefetch={false} />
             </div>
             <p className="truncate text-sm font-semibold text-muted-foreground">
-              {ROLE_LABEL[user.role]} {user.role === "ADMIN" ? "console" : "account"}
+              {ROLE_LABEL[user.role]} {isStaff(user.role) ? "console" : "account"}
             </p>
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
               {headerActions}
@@ -267,6 +285,7 @@ function ShellFrame({ user, children, headerActions, badges = {} }: DashboardShe
           </header>
 
           <main id="main" className="mx-auto w-full max-w-7xl min-w-0 flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-4 lg:pb-12">
+            {isReadOnly(user.role) ? <ViewOnlyBanner /> : null}
             {children}
           </main>
         </div>

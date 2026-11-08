@@ -12,11 +12,14 @@ TypeScript shapes live in `src/types` (named in the tables below); endpoint path
 | Auth | `Authorization: Bearer <token>`. The browser never holds the token (see §3). |
 | Success | `{ success: true, message, data, meta? }`, where `meta = { page, limit, total, totalPages }` on lists |
 | Failure | `{ success: false, message, errors: [{ path, message }] }`. `path` looks like `body.email`, `query.sortBy`, `image` or `""` |
-| Status codes | 200/201 ok · 400 validation or illegal transition · 401 no/invalid/expired token or deactivated · 403 wrong role · 404 unknown **or not yours** · 409 conflict (state machine, duplicate, in use, concurrent) · 413/415 upload · 422 pricing (no rule, over max weight, below Stripe minimum) · 429 rate limit |
+| Status codes | 200/201 ok · 400 validation or illegal transition · 401 no/invalid/expired token or deactivated · 403 wrong role, or any write by `ADMIN_VIEWER` (message `This account is read-only`) · 404 unknown **or not yours** · 409 conflict (state machine, duplicate, in use, concurrent) · 413/415 upload · 422 pricing (no rule, over max weight, below Stripe minimum) · 429 rate limit |
 | Money | USD, 2-decimal **strings** (`"6.00"`), `currency: "usd"`. Inputs (fees, declaredValue) are numbers. Never show cents. |
 | Decimals | `weightLb`, `baseWeightLb`, `maxWeightLb` are Decimal strings in **pounds** without fixed scale (`"5.5"`, `"2"`) |
 | Ids | UUIDs (v7 domain rows, v4 users). Tracking id: `CRV-YYMMDD-XXXXXX`, regex `^CRV-\d{6}-[A-Z0-9]{6}$`, case-insensitive on lookup |
-| Dates | ISO strings. Date filters (`fromDate`, `toDate`) take `YYYY-MM-DD` (an **Asia/Dhaka** day, UTC+6) or an ISO date-time with offset |
+| Dates | ISO strings. Date filters (`fromDate`, `toDate`) take `YYYY-MM-DD` (an **America/New_York** day; the offset is -05:00 or -04:00 with daylight saving) or an ISO date-time with offset. The UI shows US formats (`11/08/2026`, `3:45 PM`) in the same zone (`BUSINESS_TIME_ZONE`) |
+| Locale | US only: weights in **pounds**, money in **USD**, phones are North American numbers, addresses are one line `street, City, ST 12345` (or ZIP+4) |
+| US phone | `^(?:\+?1[\s.-]?)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]?[2-9]\d{2}[\s.-]?\d{4}$`, e.g. `(212) 555-0142`, `212-555-0142`, `+1 212 555 0142` (area code and exchange can't start with 0/1). Message: `Enter a US phone number, e.g. (212) 555-0142 or +1 212-555-0142` |
+| US address | One string, 5-300 chars, matching `^(.+?),\s*([A-Za-z][A-Za-z .'-]*?)\s*,\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$` with a valid USPS state code (50 states + DC) and a street of 3+ chars. The API stores it with the state upper-cased. Message: `Use a US address: street, city, state, ZIP (e.g. 350 5th Ave, New York, NY 10118)`. The UI collects street, city, state (select) and ZIP and joins them into this line |
 | Strict bodies | Every body is a strict object: unknown keys (`role`, `price`, `status`, …) → 400 |
 | Body limit | JSON 100 kB, proof image 4 MB |
 | Rate limits | Global 300 req / 15 min / IP; login, register, change-password and Google: 20 **failed** attempts / 15 min / IP. The BFF sends **`x-client-ip`** (visitor IP) and **`x-bff-secret`** (`BFF_SHARED_SECRET`) on every server-side call so limits apply per visitor (§9.2) |
@@ -31,7 +34,7 @@ Defined in `src/types/enums.ts` as readonly tuples (usable with `z.enum`).
 
 | Enum | Values |
 |---|---|
-| `Role` | `CUSTOMER`, `COURIER`, `ADMIN`. Self-registration and Google sign-up are always CUSTOMER. |
+| `Role` | `CUSTOMER`, `COURIER`, `ADMIN`, `ADMIN_VIEWER`. Self-registration and Google sign-up are always CUSTOMER. `ADMIN_VIEWER` is a read-only admin created only by the seed (`viewer@carrivo.dev`); it can't be granted through the API. |
 | `UserStatus` | `ACTIVE`, `INACTIVE` |
 | `ShipmentStatus` | `PENDING`, `PICKUP_SCHEDULED`, `COURIER_ASSIGNED`, `PICKED_UP`, `AT_ORIGIN_HUB`, `IN_TRANSIT`, `AT_DESTINATION_HUB`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_DELIVERY`, `RETURNED`, `CANCELLED` |
 | `ShipmentPaymentStatus` (`shipment.paymentStatus`) | `UNPAID`, `PAID`, `REFUNDED` |
@@ -83,12 +86,12 @@ The API is Bearer-only and has no cookies the frontend can use. Our Next.js serv
 Server Components call the API with `serverFetch` (`src/lib/api/server.ts`), which reads `carrivo_session`. Client Components call `/api/bff/[...path]`, which attaches the same token server-side.
 
 ### 3.1 Register: `POST /auth/register` (public, auth rate limit)
-Body `RegisterInput`: `name` 2-100 (trimmed), `email` (valid, lower-cased), `password` 8-128, `phone?` matching `^\+?[0-9\s-]{7,20}$`. → **201** `AuthResult { token, expiresAt, user }` (the user is signed in immediately). 409 when the email exists (`USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`).
+Body `RegisterInput`: `name` 2-100 (trimmed), `email` (valid, lower-cased), `password` 8-128, `phone?` (US phone, §1). A `role` field is rejected (strict body). → **201** `AuthResult { token, expiresAt, user }` (the user is signed in immediately). 409 when the email exists (`USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`).
 **BFF:** `POST /api/auth/register` forwards the body, sets the 3 cookies and returns `{ user }` (never the token).
 
 ### 3.2 Login: `POST /auth/login` (public, auth rate limit)
 Body `LoginInput { email, password }` (password min 1). → **200** `AuthResult`. Tokens last 7 days. Errors: 401 `Invalid email or password`, 403 `Account is deactivated`, 429.
-**BFF:** `POST /api/auth/login` sets the cookies and returns `{ user }`. **Demo login:** `POST /api/auth/demo { role }` maps the role to `NEXT_PUBLIC_DEMO_<ROLE>_EMAIL`, takes the password from server-only `DEMO_PASSWORD`, and then does the same as login.
+**BFF:** `POST /api/auth/login` sets the cookies and returns `{ user }`. **Demo login:** `POST /api/auth/demo { role }` accepts only `CUSTOMER`, `COURIER` or `ADMIN_VIEWER` (anything else, including `ADMIN`, is a 400), maps it to `NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL`, `NEXT_PUBLIC_DEMO_COURIER_EMAIL` or `NEXT_PUBLIC_DEMO_VIEWER_EMAIL`, takes the password from server-only `DEMO_PASSWORD`, and then does the same as login. The real admin signs in with the normal form only.
 
 ### 3.3 Current user: `GET /users/me` (any role)
 → `UserProfile` (`User` + `courierProfile`, which is null unless COURIER). `/api/auth/me` uses this to rebuild the client's user store. Better Auth's `GET /auth/get-session` is reachable too, but the UI doesn't need it.
@@ -147,9 +150,9 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 | GET | `/payments/:id` | | `Payment` (`checkoutUrl` only while the session is open) |
 | * | notifications | see §8 | |
 
-**Create shipment validation** (src): `senderName`, `receiverName` 2-100; `senderPhone`, `receiverPhone` match `^\+?[0-9\s-]{7,20}$`; `pickupAddress`, `deliveryAddress` 5-300; `receiverEmail?` email \| null; `description?` ≤500 \| null; `declaredValue?` number 0-99,999,999 \| null; `isFragile?` boolean; `weightLb` (pounds) > 0, ≤ 2000 (rounded to 2 dp; the rule's max may be lower → 422); `serviceType`; `originZoneId`, `originHubId`, `destinationZoneId`, `destinationHubId` UUIDs. Each hub must be active and in its zone (400 `Hub does not belong to originZoneId`).
+**Create shipment validation** (src): `senderName`, `receiverName` 2-100; `senderPhone`, `receiverPhone` US phones; `pickupAddress`, `deliveryAddress` US addresses (§1); `receiverEmail?` email \| null; `description?` ≤500 \| null; `declaredValue?` number 0-99,999,999 \| null; `isFragile?` boolean; `weightLb` (pounds) > 0, ≤ 2000 (rounded to 2 dp; the rule's max may be lower → 422); `serviceType`; `originZoneId`, `originHubId`, `destinationZoneId`, `destinationHubId` UUIDs. Each hub must be active and in its zone (400 `Hub does not belong to originZoneId`).
 
-**Pickup validation** (src): `windowStart`, `windowEnd` are ISO date-times **with offset** (e.g. `2026-11-10T10:00:00+06:00`); start must be in the future and ≤ 30 days ahead; end after start; window ≤ 12 h. Optional: `pickupAddress` 5-300, `contactName` 2-100, `contactPhone`, `notes` ≤500 (defaults come from the shipment).
+**Pickup validation** (src): `windowStart`, `windowEnd` are ISO date-times **with offset** (e.g. `2026-11-10T10:00:00-05:00`, the New York offset for that date); start must be in the future and ≤ 30 days ahead; end after start; window ≤ 12 h. Optional: `pickupAddress` (US address), `contactName` 2-100, `contactPhone` (US phone), `notes` ≤500 (defaults come from the shipment).
 
 **Stripe redirects** (the backend builds these URLs): success → `FRONTEND_SUCCESS_URL?session_id={CHECKOUT_SESSION_ID}` (= `/payment/success`), cancel → `FRONTEND_CANCEL_URL?shipmentId=<id>` (= `/payment/cancel`). A payment becomes PAID only through the webhook or `/payments/verify`, never because of the redirect. Test cards: `4242 4242 4242 4242` (success), `4000 0000 0000 0002` (decline; the payment stays PENDING with `failureReason` and can be retried).
 
@@ -181,9 +184,12 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 - Proof: the client checks the magic bytes (JPEG/PNG/WebP), shrinks to ≤ 3.5 MB (`browser-image-compression`, max 2560 px; PNG → JPEG), then uploads with XHR to `/api/bff/shipments/:id/proof` (the BFF streams multipart). Wrong status answers **409** "Proof of delivery can only be uploaded when the shipment is OUT_FOR_DELIVERY or DELIVERED (current status: …)".
 - **No endpoint deletes a proof image.** Re-uploading replaces it and the backend deletes the old Cloudinary file; `DELETE /shipments/:id` is a soft delete and leaves the image.
 - `GET /users/me` returns `courierProfile.hub` **without `city`**; the type marks it optional.
-- Earnings stats: all-time from `summary` (limit=1); the chart buckets up to 100 earnings in the range by Dhaka hour/day/month.
+- Earnings stats: all-time from `summary` (limit=1); the chart buckets up to 100 earnings in the range by New York hour/day/month.
 
-## 7. Admin endpoints (`ADMIN`)
+## 7. Admin endpoints (`ADMIN`; reads also `ADMIN_VIEWER`)
+
+**ADMIN_VIEWER** may call every admin **GET** below (dashboard stats, users, shipments, payments, audit logs, zones, hubs, pricing rules, couriers) and gets the same data as ADMIN. Every POST/PUT/PATCH/DELETE, anywhere in the API, answers **403 `This account is read-only`**, including `PATCH /users/me`, `POST /auth/change-password` and marking notifications read; only `POST /auth/logout` and `POST /auth/refresh-token` are allowed. `GET /payments/verify` is not allowed (it can write). The frontend hides every write control for this role, shows a "View-only access" banner, and the BFF refuses its writes before they reach the API.
+
 
 | Method | Path | Body / query | Response `data` / notes |
 |---|---|---|---|
@@ -212,7 +218,7 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 | POST / PATCH / DELETE | `/pricing`, `/pricing/:id` | `CreatePricingRuleInput { name 2-100, serviceType, originZoneId? \| null, destinationZoneId? \| null (both or neither), baseFee, baseWeightLb? (default 1), perLbFee, maxWeightLb? \| null (≥ baseWeightLb), isActive? (default true) }` | `PricingRule`. 409 when an active rule already exists for that service + route |
 
 **How the admin UI uses this (Phase 7, checked against the live API):**
-- Overview: one `dashboard-stats` call (cached 60 s by the API) gives the cards and all three charts; its `shipmentsPerDay` is a fixed 30 Dhaka days with **no date filter**, so the 7 / 14 / 30-day switch only trims that series. Plus one `requiresReview=true` count and the latest 8 audit entries.
+- Overview: one `dashboard-stats` call (cached 60 s by the API) gives the cards and all three charts; its `shipmentsPerDay` is a fixed 30 New York (US Eastern) days with **no date filter**, so the 7 / 14 / 30-day switch only trims that series. Plus one `requiresReview=true` count and the latest 8 audit entries.
 - **No map panel:** zones and hubs have no coordinates in the contract.
 - Assign lists `/couriers?zoneId=<origin zone>&available=true` (the API also requires an active account). **Reassign = `unassign` then `assign`** (no single call); if the second call fails the UI shows the shipment as unassigned and offers Assign.
 - Users: there's no `GET /admin/users/:id`, so the side sheet uses the list row (`?view=<id>`; a user not on the page costs one `limit=100` lookup).
@@ -226,6 +232,8 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 | GET | `/notifications/my` | `unread` true\|false (omit = all), `page`, `limit`, `sortOrder` | `AppNotification[] { id, type, title, message, readAt, isRead, createdAt, shipment{id, trackingId} \| null }` + meta. `meta.total` with `unread=true` gives the badge count |
 | PATCH | `/notifications/:id/read` | | `AppNotification` (keeps the original `readAt`) |
 | PATCH | `/notifications/read-all` | | `{ updated: number }` |
+
+`ADMIN_VIEWER` can read its notifications but both PATCH calls answer 403 (read-only), so the UI hides "mark read" for that role.
 
 Render `message` as **plain text**: it contains user-entered text (the example includes `<b>`).
 
@@ -247,6 +255,6 @@ Render `message` as **plain text**: it contains user-entered text (the example i
 12. **Admin gaps:** there is no `GET /admin/users/:id`, no endpoint to edit a courier's vehicle/zone/hub outside a role change, and no endpoint to mark earnings as paid out (so `paidOut` stays `0.00`).
 13. **Doc inconsistencies found (code is right, examples are stale):** the proof-upload "409 Wrong status" example shows a success body; the "tasks with proof" example has `data: [null]`; `/users/me` courier `hub` lacks `city` (other responses and the src include it); `proofOfDeliveryUploadedAt` is described but missing from detail examples (src returns it); the demo login examples show the name "Ayesha Customer" for admin and courier; audit `entityType` leaves out `PAYMENT`.
 14. **Unknowns typed defensively:** whether `statusHistory[].changedBy` can be null; how many days `shipmentsPerDay` covers; whether `estimatedDeliveryAt` is ever set (every example has null).
-15. **Locale:** zones, hubs and phone numbers are Dhaka/Bangladesh (+880) and date filters use Asia/Dhaka, but money is USD. Format dates in the user's local time and money as `$6.00`.
+15. **Locale (US):** zones, hubs, addresses and phones are US; weights are pounds, money USD (`$6.00`). Business dates (filters, pickup windows, charts) are America/New_York, set once in `BUSINESS_TIME_ZONE` (`src/lib/timezone.ts`, overridable with `NEXT_PUBLIC_BUSINESS_TIME_ZONE`, which must match the API). Dates show as `11/08/2026, 3:45 PM`.
 16. **Next 16 note (decided: keep it on):** this app has `cacheComponents: true`. A public, cacheable read (zones, tracking) should be `serverFetch(..., { auth: false })` inside a `"use cache"` function with `cacheLife`. Authenticated reads call `cookies()` and must sit under `<Suspense>`.
 17. **Backend config for Google sign-in (found in Phase 3):** the live API sends Google `redirect_uri=http://localhost:5000/api/v1/auth/callback/google`, so `BETTER_AUTH_URL` on the backend's Vercel project is still the local value. Set it to `https://carrivo-backend.vercel.app`, add that callback URL in Google Cloud Console, and set `FRONTEND_URL` to the frontend origin. Until then Google sign-in can't complete.

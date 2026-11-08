@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
-import { RoleGate } from "@/components/auth/role-gate";
+import { CanMutate } from "@/components/auth/role-gate";
 import { HubDialog } from "@/components/admin/settings/hub-dialog";
 import { PricingDialog } from "@/components/admin/settings/pricing-dialog";
 import { HubsTable, PricingTable, ZonesTable } from "@/components/admin/settings/settings-tables";
@@ -107,7 +107,7 @@ function Section({ action, hint, children }: { action: ReactNode; hint: string; 
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput label="Search" placeholder={hint} className="sm:max-w-sm" />
-        <RoleGate allow="ADMIN">{action}</RoleGate>
+        <CanMutate>{action}</CanMutate>
       </div>
       {children}
     </div>

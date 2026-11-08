@@ -5,14 +5,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { TextareaField, TextField } from "@/components/shared/form-fields";
+import { TextField } from "@/components/shared/form-fields";
+import { UsAddressFields } from "@/components/shared/us-address-fields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { EMPTY_US_ADDRESS, US_PHONE_PLACEHOLDER } from "@/lib/us";
 import { contactStepSchema, type ContactStep } from "@/lib/validation/shipment";
 import { useShipmentDraft } from "@/stores/shipment-draft";
 import { useServerErrors } from "./use-server-errors";
 
-const FIELDS = ["senderName", "senderPhone", "pickupAddress", "receiverName", "receiverPhone", "receiverEmail", "deliveryAddress"] as const;
+const FIELDS = ["senderName", "senderPhone", "pickupAddress.street", "receiverName", "receiverPhone", "receiverEmail", "deliveryAddress.street"] as const;
+
+/** The API checks each address as one line; its message goes on the street input. */
+const toFormErrors = (errors?: Record<string, string>) =>
+  errors && Object.fromEntries(Object.entries(errors).map(([name, message]) => [name.endsWith("Address") ? `${name}.street` : name, message]));
 
 export function ContactStepForm({ defaults, serverErrors }: { defaults: Partial<ContactStep>; serverErrors?: Record<string, string> }) {
   const draft = useShipmentDraft((s) => s.contact);
@@ -24,16 +30,16 @@ export function ContactStepForm({ defaults, serverErrors }: { defaults: Partial<
     defaultValues: {
       senderName: "",
       senderPhone: "",
-      pickupAddress: "",
+      pickupAddress: EMPTY_US_ADDRESS,
       receiverName: "",
       receiverPhone: "",
       receiverEmail: "",
-      deliveryAddress: "",
+      deliveryAddress: EMPTY_US_ADDRESS,
       ...defaults,
       ...draft,
     },
   });
-  useServerErrors(form, serverErrors, FIELDS);
+  useServerErrors(form, toFormErrors(serverErrors), FIELDS);
 
   // Autosave as you type, so a refresh keeps the step exactly as it was.
   const typed = useWatch({ control: form.control });
@@ -56,9 +62,9 @@ export function ContactStepForm({ defaults, serverErrors }: { defaults: Partial<
           </h3>
           <div className="grid gap-5 sm:grid-cols-2">
             <TextField control={form.control} name="senderName" label="Name" autoComplete="name" />
-            <TextField control={form.control} name="senderPhone" label="Phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+8801711000000" />
+            <TextField control={form.control} name="senderPhone" label="Phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={US_PHONE_PLACEHOLDER} />
           </div>
-          <TextareaField control={form.control} name="pickupAddress" label="Pickup address" rows={2} maxLength={300} description="House, road and area. The courier collects from here." />
+          <UsAddressFields control={form.control} name="pickupAddress" legend="Pickup address" description="The courier collects from here." autofillSection="pickup" />
         </fieldset>
 
         <fieldset className="space-y-5 rounded-xl bg-card p-6 shadow-card">
@@ -68,10 +74,10 @@ export function ContactStepForm({ defaults, serverErrors }: { defaults: Partial<
           </h3>
           <div className="grid gap-5 sm:grid-cols-2">
             <TextField control={form.control} name="receiverName" label="Name" />
-            <TextField control={form.control} name="receiverPhone" label="Phone" type="tel" inputMode="tel" placeholder="+8801811000000" />
+            <TextField control={form.control} name="receiverPhone" label="Phone" type="tel" inputMode="tel" placeholder="(323) 555-0144" />
           </div>
           <TextField control={form.control} name="receiverEmail" label="Email" optional type="email" inputMode="email" description="We'll only use it for delivery updates." />
-          <TextareaField control={form.control} name="deliveryAddress" label="Delivery address" rows={2} maxLength={300} />
+          <UsAddressFields control={form.control} name="deliveryAddress" legend="Delivery address" autofillSection="delivery" />
         </fieldset>
 
         <div className="flex justify-end">

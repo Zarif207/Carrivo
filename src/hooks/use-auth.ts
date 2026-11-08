@@ -4,8 +4,8 @@ import { useCallback, useEffect } from "react";
 import { ApiError } from "@/lib/api/errors";
 import { toSessionUser, useAuthStore, type SessionUser } from "@/stores/auth-store";
 import { SHIPMENT_DRAFT_KEY } from "@/stores/shipment-draft";
-import type { Role, User } from "@/types";
-import type { LoginValues } from "@/lib/validation/auth";
+import type { User } from "@/types";
+import type { DemoRole, LoginValues } from "@/lib/validation/auth";
 
 interface SignedIn {
   user: User;
@@ -103,7 +103,7 @@ export function useAuth() {
   );
 
   const demoLogin = useCallback(
-    async (role: Role, next?: string | null) => finishSignIn(await postAuth<SignedIn>("/api/auth/demo", { role, next: next ?? undefined })),
+    async (role: DemoRole, next?: string | null) => finishSignIn(await postAuth<SignedIn>("/api/auth/demo", { role, next: next ?? undefined })),
     [finishSignIn],
   );
 

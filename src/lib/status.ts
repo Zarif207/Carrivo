@@ -1,6 +1,6 @@
 import {
-  Ban,
   BadgeCheck,
+  Ban,
   Bike,
   Building2,
   CalendarClock,
@@ -9,19 +9,20 @@ import {
   CircleDollarSign,
   CircleX,
   ClipboardList,
+  Eye,
   Hourglass,
+  type LucideIcon,
   PackageCheck,
   RefreshCw,
   RotateCcw,
+  ShieldCheck,
   TimerOff,
   Truck,
   Undo2,
   UserCheck,
-  Warehouse,
-  ShieldCheck,
   UserRound,
   UserX,
-  type LucideIcon,
+  Warehouse,
 } from "lucide-react";
 import type { EarningStatus, PaymentStatus, Role, ServiceType, ShipmentPaymentStatus, ShipmentStatus, UserStatus, VehicleType } from "@/types";
 
@@ -116,6 +117,7 @@ export const ROLE_META: Record<Role, StatusMeta> = {
   CUSTOMER: { label: "Customer", tone: "slate", icon: UserRound, description: "Books and pays for shipments." },
   COURIER: { label: "Courier", tone: "indigo", icon: Bike, description: "Picks up and delivers." },
   ADMIN: { label: "Admin", tone: "violet", icon: ShieldCheck, description: "Runs operations." },
+  ADMIN_VIEWER: { label: "Admin (view-only)", tone: "teal", icon: Eye, description: "Sees operations, changes nothing." },
 };
 
 /** The normal path a parcel takes, used to show upcoming stops. */

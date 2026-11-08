@@ -41,12 +41,14 @@ export const ROLE_HOME: Record<Role, string> = {
   CUSTOMER: "/dashboard",
   COURIER: "/courier",
   ADMIN: "/admin",
+  ADMIN_VIEWER: "/admin",
 };
 
 export const ROLE_LABEL: Record<Role, string> = {
   CUSTOMER: "Customer",
   COURIER: "Courier",
   ADMIN: "Admin",
+  ADMIN_VIEWER: "Admin (view-only)",
 };
 
 /** Profile page per role (admins have none). */
@@ -54,7 +56,17 @@ export const ROLE_PROFILE: Record<Role, string | null> = {
   CUSTOMER: "/dashboard/profile",
   COURIER: "/courier/profile",
   ADMIN: null,
+  ADMIN_VIEWER: null,
 };
+
+const ADMIN_NAV: NavItem[] = [
+  { title: "Overview", href: "/admin", icon: LayoutDashboard, primary: true },
+  { title: "Shipments", href: "/admin/shipments", icon: Package, primary: true },
+  { title: "Users", href: "/admin/users", icon: Users, primary: true },
+  { title: "Payments", href: "/admin/payments", icon: CreditCard, primary: true },
+  { title: "Reports", href: "/admin/reports", icon: FileClock },
+  { title: "Settings", href: "/admin/settings", icon: Settings2 },
+];
 
 export const DASHBOARD_NAV: Record<Role, NavItem[]> = {
   CUSTOMER: [
@@ -71,14 +83,9 @@ export const DASHBOARD_NAV: Record<Role, NavItem[]> = {
     { title: "Notifications", href: "/courier/notifications", icon: Bell, primary: true },
     { title: "Profile", href: "/courier/profile", icon: UserRound, primary: true },
   ],
-  ADMIN: [
-    { title: "Overview", href: "/admin", icon: LayoutDashboard, primary: true },
-    { title: "Shipments", href: "/admin/shipments", icon: Package, primary: true },
-    { title: "Users", href: "/admin/users", icon: Users, primary: true },
-    { title: "Payments", href: "/admin/payments", icon: CreditCard, primary: true },
-    { title: "Reports", href: "/admin/reports", icon: FileClock },
-    { title: "Settings", href: "/admin/settings", icon: Settings2 },
-  ],
+  ADMIN: ADMIN_NAV,
+  // Same pages, read-only (write controls are hidden; see lib/auth/permissions.ts).
+  ADMIN_VIEWER: ADMIN_NAV,
 };
 
 /** Longest-prefix match so /dashboard/shipments/new highlights "New shipment", not "Shipments". */
@@ -93,6 +100,7 @@ export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
   CUSTOMER: "/dashboard/notifications",
   COURIER: "/courier/notifications",
   ADMIN: null,
+  ADMIN_VIEWER: null,
 };
 
 /** The public site's home page (reachable from every dashboard). */

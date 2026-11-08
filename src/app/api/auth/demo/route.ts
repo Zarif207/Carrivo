@@ -6,11 +6,14 @@ import { checkOrigin, clientIpOf, jsonError, readJson } from "@/lib/auth/http";
 import { demoBodySchema, type DemoRole } from "@/lib/validation/auth";
 import type { AuthResult } from "@/types";
 
-/** The fixed seeded accounts. Only a role comes from the browser; email and password never do. */
+/**
+ * The fixed seeded accounts. Only a role comes from the browser; email and password never do.
+ * There is no ADMIN entry: the demo "Admin" is the read-only viewer, and `role: "ADMIN"` fails validation.
+ */
 const DEMO_EMAILS: Record<DemoRole, string | undefined> = {
-  ADMIN: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL,
-  COURIER: process.env.NEXT_PUBLIC_DEMO_COURIER_EMAIL,
   CUSTOMER: process.env.NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL,
+  COURIER: process.env.NEXT_PUBLIC_DEMO_COURIER_EMAIL,
+  ADMIN_VIEWER: process.env.NEXT_PUBLIC_DEMO_VIEWER_EMAIL,
 };
 
 /** POST /api/auth/demo { role } → signs in as that role's demo account using the server-only DEMO_PASSWORD. */
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (blocked) return blocked;
 
   const parsed = demoBodySchema.safeParse(await readJson(request));
-  if (!parsed.success) return jsonError(400, "Choose Admin, Courier or Customer.", [{ path: "body.role", message: "Invalid role" }]);
+  if (!parsed.success) return jsonError(400, "Choose Customer, Courier or Admin (view-only).", [{ path: "body.role", message: "Invalid role" }]);
 
   const password = process.env.DEMO_PASSWORD;
   const email = DEMO_EMAILS[parsed.data.role];
@@ -29,12 +32,19 @@ export async function POST(request: NextRequest) {
 
   try {
     assertSessionConfigured();
+    const clientIp = clientIpOf(request);
     const { data } = await serverFetch<AuthResult>(endpoints.auth.login, {
       method: "POST",
       auth: false,
-      clientIp: clientIpOf(request),
+      clientIp,
       body: { email, password },
     });
+    // Never hand out a session for a different role than asked for (e.g. a misconfigured env var
+    // pointing at the real admin): revoke it at once and refuse.
+    if (data.user.role !== parsed.data.role) {
+      await serverFetch(endpoints.auth.logout, { method: "POST", auth: data.token, clientIp }).catch(() => undefined);
+      return jsonError(503, "This demo account isn't set up correctly on the server. Sign in with your own account.", [], "DEMO_MISCONFIGURED");
+    }
     return signedInResponse(data, parsed.data.next, "Login successful");
   } catch (error) {
     return authErrorResponse(error);

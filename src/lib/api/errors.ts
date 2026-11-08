@@ -1,4 +1,8 @@
+import { READ_ONLY_MESSAGE } from "@/lib/auth/permissions";
 import type { ApiErrorDetail } from "./types";
+
+/** The API's refusal for a read-only account (ADMIN_VIEWER), reworded the same way the BFF words it. */
+const API_READ_ONLY = "This account is read-only";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -33,7 +37,8 @@ export class ApiError extends Error {
   /** Builds an ApiError from a parsed error body (our envelope, Better Auth's `{ message }`, or anything else). */
   static fromBody(status: number, body: unknown, fallbackMessage = "Something went wrong. Please try again."): ApiError {
     if (isRecord(body)) {
-      const message = typeof body.message === "string" && body.message.trim() ? body.message : fallbackMessage;
+      const raw = typeof body.message === "string" && body.message.trim() ? body.message : fallbackMessage;
+      const message = status === 403 && raw === API_READ_ONLY ? READ_ONLY_MESSAGE : raw;
       return new ApiError(status, message, toDetails(body.errors));
     }
     return new ApiError(status, fallbackMessage);
@@ -51,6 +56,11 @@ export class ApiError extends Error {
   /** Wrong role (or own role/status change). */
   get isForbidden(): boolean {
     return this.status === 403;
+  }
+
+  /** A write refused because the account is read-only (ADMIN_VIEWER). */
+  get isReadOnly(): boolean {
+    return this.status === 403 && this.message === READ_ONLY_MESSAGE;
   }
 
   /** Unknown id, or a resource that is not yours (the API never reveals which). */

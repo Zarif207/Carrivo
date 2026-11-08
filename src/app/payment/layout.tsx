@@ -9,7 +9,7 @@ import { DashboardShellSkeleton } from "@/components/layout/dashboard-shell-skel
 export default function PaymentLayout({ children }: LayoutProps<"/payment">) {
   return (
     <Suspense fallback={<DashboardShellSkeleton />}>
-      <AuthedShell role="CUSTOMER">{children}</AuthedShell>
+      <AuthedShell roles="CUSTOMER">{children}</AuthedShell>
     </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { endpoints } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server";
 import { checkOrigin, clientIpOf, jsonError, jsonOk, readJson } from "@/lib/auth/http";
+import { READ_ONLY_MESSAGE, isReadOnly } from "@/lib/auth/permissions";
 import { readSession, writeSession } from "@/lib/auth/session";
 import type { ChangePasswordResult } from "@/types";
 
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest) {
 
   const session = readSession(request.cookies, Date.now());
   if (!session) return jsonError(401, "You're not logged in.", [], "UNAUTHENTICATED");
+  // Read-only accounts can't change their password (the API refuses it too).
+  if (isReadOnly(session.role)) return jsonError(403, READ_ONLY_MESSAGE, [], "READ_ONLY");
 
   const parsed = bodySchema.safeParse(await readJson(request));
   if (!parsed.success) {

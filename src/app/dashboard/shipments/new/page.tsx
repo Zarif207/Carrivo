@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { parseUsAddress } from "@/lib/us";
 import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
 import { LoadError } from "@/components/shared/load-error";
@@ -28,7 +29,7 @@ async function Wizard() {
     <NewShipmentWizard
       zones={data.zones}
       hubs={data.hubs}
-      senderDefaults={user ? { senderName: user.name, senderPhone: user.phone ?? "", pickupAddress: user.address ?? "" } : {}}
+      senderDefaults={user ? { senderName: user.name, senderPhone: user.phone ?? "", ...(user.address ? { pickupAddress: parseUsAddress(user.address) } : {}) } : {}}
     />
   );
 }

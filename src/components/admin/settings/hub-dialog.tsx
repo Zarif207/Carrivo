@@ -7,13 +7,17 @@ import { useState, useTransition, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { SelectField, SwitchField, TextField } from "@/components/shared/form-fields";
+import { UsAddressFields } from "@/components/shared/us-address-fields";
 import { apiFetch } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
+import { US_PHONE_PLACEHOLDER, formatUsAddress, parseUsAddress } from "@/lib/us";
 import { hubSchema, type HubValues } from "@/lib/validation/settings";
 import type { Hub, Zone } from "@/types";
 import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 
-const FIELDS = ["name", "code", "address", "city", "phone", "zoneId", "isActive"] as const;
+const FIELDS = ["name", "code", "phone", "zoneId", "isActive"] as const;
+/** The API checks the address as one line (and `city` separately): both messages go on the address inputs. */
+const API_FIELD = { address: "address.street", city: "address.city" } as const;
 
 export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone, "id" | "name" | "isActive">[]; trigger: ReactNode }) {
   const router = useRouter();
@@ -23,8 +27,7 @@ export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone
   const defaults: HubValues = {
     name: hub?.name ?? "",
     code: hub?.code ?? "",
-    address: hub?.address ?? "",
-    city: hub?.city ?? "",
+    address: parseUsAddress(hub?.address),
     phone: hub?.phone ?? "",
     zoneId: hub?.zone.id ?? "",
     isActive: hub?.isActive ?? true,
@@ -44,14 +47,22 @@ export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone
   const onSubmit = form.handleSubmit(async (raw) => {
     setFormError(null);
     const v = hubSchema.parse(raw);
-    const body = { name: v.name, code: v.code, address: v.address, city: v.city, phone: v.phone || null, zoneId: v.zoneId, isActive: v.isActive };
+    const body = {
+      name: v.name,
+      code: v.code,
+      address: formatUsAddress(v.address),
+      city: v.address.city,
+      phone: v.phone || null,
+      zoneId: v.zoneId,
+      isActive: v.isActive,
+    };
     try {
       await apiFetch<Hub>(hub ? endpoints.hubs.detail(hub.id) : endpoints.hubs.create, { method: hub ? "PATCH" : "POST", body });
       toast.success(hub ? "Hub saved" : "Hub created", { description: `${v.name} (${v.code})` });
       setOpen(false);
       startTransition(() => router.refresh());
     } catch (error) {
-      setFormError(applyApiError(form, error, FIELDS, "hub"));
+      setFormError(applyApiError(form, error, FIELDS, "hub", API_FIELD));
     }
   });
 
@@ -72,11 +83,8 @@ export function HubDialog({ hub, zones, trigger }: { hub?: Hub; zones: Pick<Zone
         <TextField control={form.control} name="code" label="Code" maxLength={30} description="Stored in capitals." />
       </div>
       <SelectField control={form.control} name="zoneId" label="Zone" options={options} placeholder="Choose a zone" />
-      <TextField control={form.control} name="address" label="Address" maxLength={300} />
-      <div className="grid gap-5 sm:grid-cols-2">
-        <TextField control={form.control} name="city" label="City" maxLength={100} />
-        <TextField control={form.control} name="phone" label="Phone" optional type="tel" inputMode="tel" placeholder="+8802..." />
-      </div>
+      <UsAddressFields control={form.control} name="address" legend="Hub address" />
+      <TextField control={form.control} name="phone" label="Phone" optional type="tel" inputMode="tel" placeholder={US_PHONE_PLACEHOLDER} className="sm:max-w-xs" />
       <SwitchField control={form.control} name="isActive" label="Active" description="Inactive hubs can't be picked for new shipments." />
     </FormDialog>
   );

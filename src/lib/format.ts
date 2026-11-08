@@ -1,5 +1,8 @@
 import { formatDistanceToNowStrict, isValid, parseISO } from "date-fns";
+import { BUSINESS_TIME_ZONE } from "@/lib/timezone";
 import type { DecimalString, ISODateString, Money } from "@/types";
+
+export { BUSINESS_TIME_ZONE } from "@/lib/timezone";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
@@ -22,33 +25,54 @@ const toDate = (value: ISODateString | Date): Date | null => {
   return isValid(date) ? date : null;
 };
 
-/**
- * All dates render in the business timezone (Asia/Dhaka, like the API's date filters), so the
- * server and the browser produce identical text: no hydration mismatches, no UTC surprises.
+/*
+ * All dates render in the business time zone (BUSINESS_TIME_ZONE, America/New_York like the API's
+ * date filters) in US formats, so the server and the browser produce identical text: no hydration
+ * mismatches, no UTC surprises.
  */
-export const BUSINESS_TIME_ZONE = "Asia/Dhaka";
-
-const dateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: BUSINESS_TIME_ZONE });
-const dateTimeFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
+const dateFormat = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: BUSINESS_TIME_ZONE });
+const dateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  month: "2-digit",
+  day: "2-digit",
   year: "numeric",
   hour: "numeric",
   minute: "2-digit",
   hour12: true,
   timeZone: BUSINESS_TIME_ZONE,
 });
+const timeFormat = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: BUSINESS_TIME_ZONE });
+const zoneNameFormat = new Intl.DateTimeFormat("en-US", { timeZone: BUSINESS_TIME_ZONE, timeZoneName: "longGeneric" });
 
-/** 6 Nov 2026 */
+/** "Eastern Time": the business time zone's everyday name, for labels such as "Times are Eastern Time". */
+export const BUSINESS_TIME_ZONE_NAME: string =
+  zoneNameFormat.formatToParts(new Date(Date.UTC(2026, 0, 1))).find((part) => part.type === "timeZoneName")?.value ?? BUSINESS_TIME_ZONE;
+
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Chart axis label for a calendar day: (11, 7) → "Nov 7". */
+export const shortDayLabel = (month: number, day: number): string => `${MONTHS_SHORT[month - 1]} ${day}`;
+
+/** Chart axis label for an hour of the day: 0 → "12 AM", 13 → "1 PM". */
+export const hourLabel = (hour: number): string => `${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? "AM" : "PM"}`;
+
+export const monthLabel = (month: number): string => MONTHS_SHORT[month - 1];
+
+/** 11/06/2026 */
 export function formatDate(value: ISODateString | Date | null | undefined): string {
   const date = value ? toDate(value) : null;
   return date ? dateFormat.format(date) : "—";
 }
 
-/** 6 Nov 2026, 10:49 am (Dhaka time) */
+/** 11/06/2026, 10:49 AM (business time zone) */
 export function formatDateTime(value: ISODateString | Date | null | undefined): string {
   const date = value ? toDate(value) : null;
   return date ? dateTimeFormat.format(date) : "—";
+}
+
+/** 10:49 AM (business time zone) */
+export function formatTime(value: ISODateString | Date | null | undefined): string {
+  const date = value ? toDate(value) : null;
+  return date ? timeFormat.format(date) : "—";
 }
 
 /** "3 hours ago" */
@@ -57,7 +81,7 @@ export function formatRelative(value: ISODateString | Date | null | undefined): 
   return date ? formatDistanceToNowStrict(date, { addSuffix: true }) : "—";
 }
 
-/** "Ayesha Rahman" → "AR" */
+/** "Emily Carter" → "EC" */
 export function initials(name: string | null | undefined): string {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/).filter(Boolean);

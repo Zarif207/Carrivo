@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container, FeatureCard, Section } from "@/components/public/section";
 import { Button } from "@/components/ui/button";
+import { SITE } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Carrivo is a courier service for people and small businesses sending parcels across Dhaka, with clear prices and tracking at every stop.",
+  description: "Carrivo is a US courier service for people and small businesses sending parcels within and between our metro zones, with clear prices and tracking at every stop.",
   alternates: { canonical: "/about" },
   openGraph: { title: "About Carrivo", url: "/about" },
 };
@@ -59,8 +60,8 @@ export default function AboutPage() {
         <Container className="max-w-4xl space-y-6">
           <h1 className="font-display text-display-1">Delivery you can follow, at a price you see first.</h1>
           <p className="text-xl text-muted-foreground">
-            Carrivo is a courier service for people and small businesses sending parcels across Dhaka. We collect from your door, sort at our hubs
-            and deliver to the receiver, and you can see each step as it happens.
+            Carrivo is a US courier service for people and small businesses sending parcels within and between our metro zones. We collect
+            from your door, sort at our hubs and deliver to the receiver, and you can see each step as it happens.
           </p>
         </Container>
       </section>
@@ -94,7 +95,9 @@ export default function AboutPage() {
               </span>
               <div className="space-y-1">
                 <h2 className="text-2xl font-extrabold tracking-tight">Questions about a delivery?</h2>
-                <p className="text-sidebar-muted">Our support team answers by email, seven days a week.</p>
+                <p className="text-sidebar-muted">
+                  Our support team answers by email, Monday to Saturday ({SITE.timeZoneLabel}).
+                </p>
               </div>
             </div>
             <Button asChild size="lg">

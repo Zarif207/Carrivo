@@ -62,5 +62,5 @@ export type PageQuery = {
   sortOrder?: SortOrder;
 };
 
-/** `YYYY-MM-DD` (Asia/Dhaka calendar day) or a full ISO date-time with offset. */
+/** `YYYY-MM-DD` (America/New_York calendar day) or a full ISO date-time with offset. */
 export type DateFilter = string;

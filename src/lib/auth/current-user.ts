@@ -38,11 +38,12 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
  * Layout guard. Server Components can't change cookies, so a dead or out-of-date session is sent
  * through /api/auth/session-expired, which clears the cookies and lands on /login.
  */
-export async function requireRole(role: Role): Promise<UserProfile> {
+export async function requireRole(allowed: Role | readonly Role[]): Promise<UserProfile> {
+  const roles: readonly Role[] = typeof allowed === "string" ? [allowed] : allowed;
   const current = await getCurrentUser();
   if (!current) redirect(`/api/auth/session-expired?reason=expired`);
   // Role changed on the server since login (sessions are revoked then, but be safe).
-  if (current.user.role !== role || current.session.role !== current.user.role) {
+  if (!roles.includes(current.user.role) || current.session.role !== current.user.role) {
     redirect(`/api/auth/session-expired?reason=role-changed`);
   }
   return current.user;

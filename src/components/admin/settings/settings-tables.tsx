@@ -3,7 +3,7 @@
 // Client: the three settings tables with their edit / deactivate / delete actions.
 import { Building2, MapPinned, Pencil, Tags } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
-import { RoleGate } from "@/components/auth/role-gate";
+import { CanMutate, useCanMutate } from "@/components/auth/role-gate";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,17 @@ function EditButton({ name, ...props }: { name: string } & ComponentProps<typeof
   );
 }
 
+/** Read-only accounts get no actions column at all (not an empty one screen readers would announce). */
+function useVisibleColumns<T>(columns: DataTableColumn<T>[]): DataTableColumn<T>[] {
+  const canWrite = useCanMutate();
+  return canWrite ? columns : columns.filter((column) => column.id !== "actions");
+}
+
 function Actions({ children }: { children: ReactNode }) {
   return (
-    <RoleGate allow="ADMIN">
+    <CanMutate>
       <div className="flex justify-end gap-1">{children}</div>
-    </RoleGate>
+    </CanMutate>
   );
 }
 
@@ -61,10 +67,11 @@ export function ZonesTable({ rows, filtered }: { rows: Zone[]; filtered: boolean
       ),
     },
   ];
+  const visibleColumns = useVisibleColumns(columns);
   return (
     <DataTable
       caption="Zones"
-      columns={columns}
+      columns={visibleColumns}
       data={rows}
       getRowId={(z) => z.id}
       defaultSort={{ key: "name", order: "asc" }}
@@ -115,10 +122,11 @@ export function HubsTable({ rows, zones, filtered }: { rows: Hub[]; zones: ZoneO
     { id: "status", header: "Status", cell: (h) => <ActiveBadge active={h.isActive} /> },
     { id: "actions", header: <span className="sr-only">Actions</span>, align: "right", cell: actions },
   ];
+  const visibleColumns = useVisibleColumns(columns);
   return (
     <DataTable
       caption="Hubs"
-      columns={columns}
+      columns={visibleColumns}
       data={rows}
       getRowId={(h) => h.id}
       defaultSort={{ key: "name", order: "asc" }}
@@ -131,7 +139,7 @@ export function HubsTable({ rows, zones, filtered }: { rows: Hub[]; zones: ZoneO
             <ActiveBadge active={h.isActive} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {h.zone.name}, {h.address}, {h.city}
+            {h.zone.name}, {h.address}
           </p>
           {actions(h)}
         </div>
@@ -174,10 +182,11 @@ export function PricingTable({ rows, zones, filtered }: { rows: PricingRule[]; z
     { id: "status", header: "Status", cell: (r) => <ActiveBadge active={r.isActive} /> },
     { id: "actions", header: <span className="sr-only">Actions</span>, align: "right", cell: actions },
   ];
+  const visibleColumns = useVisibleColumns(columns);
   return (
     <DataTable
       caption="Pricing rules"
-      columns={columns}
+      columns={visibleColumns}
       data={rows}
       getRowId={(r) => r.id}
       defaultSort={{ key: "createdAt", order: "desc" }}

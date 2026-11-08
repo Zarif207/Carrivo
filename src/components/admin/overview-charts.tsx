@@ -9,7 +9,7 @@ import type { CategoryPoint } from "@/components/charts/category-bar-chart";
 import { ChartCard } from "@/components/shared/chart-card";
 import { SegmentedControl } from "@/components/shared/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCount } from "@/lib/format";
+import { BUSINESS_TIME_ZONE_NAME, formatCount } from "@/lib/format";
 
 const CategoryBarChart = dynamic(() => import("@/components/charts/category-bar-chart").then((m) => m.CategoryBarChart), {
   ssr: false,
@@ -30,7 +30,7 @@ export function ShipmentsPerDayCard({ points }: { points: TrendPoint[] }) {
   return (
     <ChartCard
       title="Shipments booked per day"
-      description={`Last ${window} days, Dhaka time`}
+      description={`Last ${window} days, ${BUSINESS_TIME_ZONE_NAME}`}
       value={formatCount(total)}
       action={<SegmentedControl options={WINDOWS} value={window} onValueChange={setWindow} label="Days shown" size="sm" />}
       summary={`${formatCount(total)} shipments booked in the last ${window} days.`}

@@ -6,7 +6,7 @@ import { DashboardShellSkeleton } from "@/components/layout/dashboard-shell-skel
 export default function CourierLayout({ children }: LayoutProps<"/courier">) {
   return (
     <Suspense fallback={<DashboardShellSkeleton />}>
-      <AuthedShell role="COURIER">{children}</AuthedShell>
+      <AuthedShell roles="COURIER">{children}</AuthedShell>
     </Suspense>
   );
 }

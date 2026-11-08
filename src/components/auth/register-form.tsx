@@ -1,6 +1,7 @@
 "use client";
 
 // Client: validated sign-up form; posts to /api/auth/register (always a customer account).
+import { US_PHONE_PLACEHOLDER } from "@/lib/us";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -59,7 +60,7 @@ export function RegisterForm({ next }: { next?: string | null }) {
           type="tel"
           autoComplete="tel"
           inputMode="tel"
-          placeholder="+8801711000000"
+          placeholder={US_PHONE_PLACEHOLDER}
           description="Couriers call this number about pickups."
         />
         <div className="grid gap-5 sm:grid-cols-2">

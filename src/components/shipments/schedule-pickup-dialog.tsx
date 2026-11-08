@@ -9,23 +9,25 @@ import { useState, useTransition } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { TextareaField, TextField } from "@/components/shared/form-fields";
+import { UsAddressFields } from "@/components/shared/us-address-fields";
 import { FormDialog, applyApiError } from "@/components/shared/form-dialog";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import { ApiError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
-import { BUSINESS_TIME_ZONE } from "@/lib/format";
-import { PICKUP_MAX_DAYS_AHEAD, pickupSchema, toDhakaIso, type PickupValues } from "@/lib/validation/pickup";
+import { BUSINESS_TIME_ZONE_NAME } from "@/lib/format";
+import { zonedDayFrom } from "@/lib/timezone";
+import { US_PHONE_PLACEHOLDER, formatUsAddress, parseUsAddress } from "@/lib/us";
+import { PICKUP_MAX_DAYS_AHEAD, pickupSchema, toBusinessIso, type PickupValues } from "@/lib/validation/pickup";
 import type { ShipmentDetail } from "@/types";
 
-const FIELDS = ["date", "start", "end", "pickupAddress", "contactName", "contactPhone", "notes"] as const;
-/** The API names the window fields windowStart / windowEnd. */
-const API_FIELD: Record<string, (typeof FIELDS)[number]> = { windowStart: "start", windowEnd: "end" };
+const FIELDS = ["date", "start", "end", "contactName", "contactPhone", "notes"] as const;
+/** API names that differ from the form: the window fields, and the address (checked as one line). */
+const API_FIELD = { windowStart: "start", windowEnd: "end", pickupAddress: "pickupAddress.street" } as const;
 
-/** YYYY-MM-DD for a Dhaka day `offset` days from now (called from event handlers only). */
-function dhakaDay(offset: number): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() + offset * 86_400_000));
+/** YYYY-MM-DD for the business-time-zone day `offset` days from today (called from event handlers only). */
+function businessDay(offset: number): string {
+  return zonedDayFrom(new Date(), offset);
 }
 
 interface Props {
@@ -46,12 +48,12 @@ export function SchedulePickupDialog({ shipment }: Props) {
 
   const onOpenChange = (next: boolean) => {
     if (next) {
-      setLimits({ min: dhakaDay(0), max: dhakaDay(PICKUP_MAX_DAYS_AHEAD - 1) });
+      setLimits({ min: businessDay(0), max: businessDay(PICKUP_MAX_DAYS_AHEAD - 1) });
       form.reset({
-        date: dhakaDay(1),
+        date: businessDay(1),
         start: "10:00",
         end: "14:00",
-        pickupAddress: shipment.pickupAddress,
+        pickupAddress: parseUsAddress(shipment.pickupAddress),
         contactName: shipment.senderName,
         contactPhone: shipment.senderPhone,
         notes: "",
@@ -64,10 +66,10 @@ export function SchedulePickupDialog({ shipment }: Props) {
   const onSubmit = form.handleSubmit(async (v) => {
     setFormError(null);
     const body = {
-      windowStart: toDhakaIso(v.date, v.start),
-      windowEnd: toDhakaIso(v.date, v.end),
+      windowStart: toBusinessIso(v.date, v.start),
+      windowEnd: toBusinessIso(v.date, v.end),
       // Only send what differs from the shipment's own details (the API defaults to those).
-      ...(v.pickupAddress.trim() !== shipment.pickupAddress ? { pickupAddress: v.pickupAddress.trim() } : {}),
+      ...(formatUsAddress(v.pickupAddress) !== shipment.pickupAddress ? { pickupAddress: formatUsAddress(v.pickupAddress) } : {}),
       ...(v.contactName.trim() !== shipment.senderName ? { contactName: v.contactName.trim() } : {}),
       ...(v.contactPhone.trim() !== shipment.senderPhone ? { contactPhone: v.contactPhone.trim() } : {}),
       ...(v.notes.trim() ? { notes: v.notes.trim() } : {}),
@@ -79,13 +81,7 @@ export function SchedulePickupDialog({ shipment }: Props) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       startTransition(() => router.refresh());
     } catch (error) {
-      // windowStart / windowEnd errors land on the matching time inputs.
-      if (ApiError.isApiError(error)) {
-        for (const [field, message] of Object.entries(error.fieldErrors())) {
-          if (API_FIELD[field]) form.setError(API_FIELD[field], { message });
-        }
-      }
-      setFormError(applyApiError(form, error, FIELDS, "pickup"));
+      setFormError(applyApiError(form, error, FIELDS, "pickup", API_FIELD));
     }
   });
 
@@ -100,7 +96,7 @@ export function SchedulePickupDialog({ shipment }: Props) {
         </Button>
       }
       title="Schedule a pickup"
-      description={`Choose when a courier can collect ${shipment.trackingId}. Times are Dhaka time. Once booked, the window can't be changed.`}
+      description={`Choose when a courier can collect ${shipment.trackingId}. Times are ${BUSINESS_TIME_ZONE_NAME}. Once booked, the window can't be changed.`}
       submitLabel="Schedule pickup"
       formError={formError}
       onSubmit={onSubmit}
@@ -110,10 +106,10 @@ export function SchedulePickupDialog({ shipment }: Props) {
         <TextField control={form.control} name="start" label="From" type="time" />
         <TextField control={form.control} name="end" label="Until" type="time" description="Up to 12 hours." />
       </div>
-      <TextareaField control={form.control} name="pickupAddress" label="Pickup address" rows={2} maxLength={300} />
+      <UsAddressFields control={form.control} name="pickupAddress" legend="Pickup address" autofillSection="pickup" />
       <div className="grid gap-5 sm:grid-cols-2">
         <TextField control={form.control} name="contactName" label="Contact name" autoComplete="name" maxLength={100} />
-        <TextField control={form.control} name="contactPhone" label="Contact phone" type="tel" inputMode="tel" autoComplete="tel" />
+        <TextField control={form.control} name="contactPhone" label="Contact phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={US_PHONE_PLACEHOLDER} />
       </div>
       <TextareaField control={form.control} name="notes" label="Notes for the courier" optional rows={2} maxLength={500} placeholder="e.g. Ring the bell twice, gate code 4521" />
     </FormDialog>

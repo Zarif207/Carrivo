@@ -45,7 +45,7 @@ Browser ──POST /api/auth/login──▶ Route Handler ──▶ API /auth/lo
 - **Cookies** `src/lib/auth/session.ts`: the role cookie is `ROLE.EXP.HMAC(SESSION_SECRET, …sha256(token))`,
   so it can't be forged or moved to another token.
 - **Route protection** `src/proxy.ts` (Next 16's middleware): `/dashboard`, `/payment` → CUSTOMER,
-  `/courier` → COURIER, `/admin` → ADMIN, read from the signed cookie only (no API call). Wrong role →
+  `/courier` → COURIER, `/admin` → ADMIN or ADMIN_VIEWER (read-only), read from the signed cookie only (no API call). Wrong role →
   that role's home; no session → `/login?next=…`.
 - **Re-verification** `src/lib/auth/current-user.ts`: `getCurrentUser()` (React `cache()`, one
   `GET /users/me` per request) and `requireRole()`, called by `src/components/layout/authed-shell.tsx`

@@ -38,6 +38,10 @@ a phone; admins run zones, hubs, pricing, assignments, payments and users. This 
 - Reports: audit log with filters and CSV export of the rows on screen
 - Settings: zones, hubs and pricing rules (create, edit, deactivate, delete as the API allows)
 
+**Admin (view-only)** (`/admin`, role `ADMIN_VIEWER`)
+- Every admin page, filter, search, sort, chart, side sheet and CSV export, with a "View-only access" banner
+- No write controls at all (create, edit, delete, assign, status steps, refunds, activation); the BFF and the API refuse viewer writes as well
+
 ## Tech stack
 
 Next.js 16 (App Router, Cache Components, `proxy.ts`), React 19, TypeScript (strict), Tailwind CSS 4,
@@ -67,12 +71,13 @@ Names only; never commit real values (`.env*` files other than `.env.example` ar
 | `NEXT_PUBLIC_APP_URL` | public | This site's origin, no trailing slash | Your Vercel domain. Used for metadata and the Origin check on every mutating route |
 | `API_BASE_URL` | server | API base including `/api/v1` | `https://carrivo-backend.vercel.app/api/v1` |
 | `SESSION_SECRET` | server | Signs the role cookie (32+ random chars) | Generate a new one (`openssl rand -base64 48`); changing it signs everyone out |
-| `BFF_SHARED_SECRET` | server | Sent as `x-bff-secret` with `x-client-ip` | Must equal the backend's value, **and** the backend's rate limiter must use `x-client-ip` when the secret matches (today it keys on `req.ip` only, so all visitors share the frontend server's 300 requests / 15 min) |
+| `BFF_SHARED_SECRET` | server | Sent as `x-bff-secret` with `x-client-ip` | Must equal the backend's value (the API then rate-limits per visitor) |
 | `DEMO_PASSWORD` | server | Password of the seeded demo accounts | Same as the backend seed; used only by `/api/auth/demo` |
-| `NEXT_PUBLIC_DEMO_ADMIN_EMAIL` | public | Demo admin email | `admin@carrivo.dev` |
+| `NEXT_PUBLIC_DEMO_VIEWER_EMAIL` | public | Read-only admin demo account (the "Admin (view-only)" button) | `viewer@carrivo.dev` |
 | `NEXT_PUBLIC_DEMO_COURIER_EMAIL` | public | Demo courier email | `courier1@carrivo.dev` |
 | `NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL` | public | Demo customer email | `customer1@carrivo.dev` |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | public | Address the contact form opens | Optional (defaults to `support@carrivo.dev`) |
+| `NEXT_PUBLIC_BUSINESS_TIME_ZONE` | public | Time zone for dates, filters and pickup windows | Optional (defaults to `America/New_York`; must match the API) |
 
 The backend must point back at this site: its `FRONTEND_URL`, `FRONTEND_SUCCESS_URL`
 (`<site>/payment/success`) and `FRONTEND_CANCEL_URL` (`<site>/payment/cancel`) use your frontend domain.
@@ -81,11 +86,12 @@ The backend must point back at this site: its `FRONTEND_URL`, `FRONTEND_SUCCESS_
 
 | Role | Email |
 |---|---|
-| Admin | `admin@carrivo.dev` |
+| Admin (view-only) | `viewer@carrivo.dev` |
 | Courier | `courier1@carrivo.dev` |
 | Customer | `customer1@carrivo.dev` |
 
-Use the **demo buttons on `/login`**: the password stays on the server. Stripe test card:
+Use the **demo buttons on `/login`**: the password stays on the server. "Admin (view-only)" opens every
+admin page with all write controls hidden; the real admin account is not a demo and signs in with the form. Stripe test card:
 `4242 4242 4242 4242`, any future date, any CVC (decline: `4000 0000 0000 0002`).
 
 ## Scripts
@@ -97,6 +103,7 @@ Use the **demo buttons on `/login`**: the password stays on the server. Stripe t
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint (Next + React Compiler rules) |
 | `npm run typecheck` | Generate route types, then `tsc --noEmit` |
+| `npm test` | Unit tests (`node --test`): US phone/ZIP/address rules, the business time zone (DST), admin permissions |
 
 ## Project structure
 

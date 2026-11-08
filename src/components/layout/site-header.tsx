@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PUBLIC_NAV, ROLE_HOME, ROLE_LABEL } from "@/config/nav";
 import { useAuth } from "@/hooks/use-auth";
+import { isStaff } from "@/lib/auth/permissions";
 import { useActiveSection, useScrollChrome } from "@/hooks/use-scroll-chrome";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +78,7 @@ export function SiteHeader() {
   const hidden = useScrollChrome({ headerRef, progressRef, pinned: open });
   // Signed-in visitors (e.g. after "Back to home") get a way back to their dashboard instead of "Log in".
   const { user } = useAuth();
-  const dashboard = user ? { href: ROLE_HOME[user.role], label: user.role === "ADMIN" ? "Admin console" : `${ROLE_LABEL[user.role]} dashboard` } : null;
+  const dashboard = user ? { href: ROLE_HOME[user.role], label: isStaff(user.role) ? "Admin console" : `${ROLE_LABEL[user.role]} dashboard` } : null;
 
   return (
     <header

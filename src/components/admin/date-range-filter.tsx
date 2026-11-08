@@ -1,6 +1,6 @@
 "use client";
 
-// Client: two native date inputs that write ?fromDate= / ?toDate= (YYYY-MM-DD, Dhaka days).
+// Client: two native date inputs that write ?fromDate= / ?toDate= (YYYY-MM-DD, business-time-zone days).
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUrlState } from "@/hooks/use-url-state";

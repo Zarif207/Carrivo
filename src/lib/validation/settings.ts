@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
 import { MAX_WEIGHT_LB } from "@/lib/weight";
+import { optionalUsPhone, usAddress } from "./us";
 
 /* Admin settings forms. Rules mirror the API's zone / hub / pricing validators (contract §7). */
 
@@ -12,7 +13,7 @@ export const zoneSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(/^[A-Z0-9-]{2,20}$/, "2-20 letters, digits or dashes, e.g. DHK-N"),
+    .regex(/^[A-Z0-9-]{2,20}$/, "2-20 letters, digits or dashes, e.g. NYC"),
   description: optionalText(500, "Keep it under 500 characters"),
   isActive: z.boolean(),
 });
@@ -24,13 +25,10 @@ export const hubSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(/^[A-Z0-9-]{2,30}$/, "2-30 letters, digits or dashes, e.g. HUB-DHK-N"),
-  address: z.string().trim().min(3, "At least 3 characters").max(300, "Keep it under 300 characters"),
-  city: z.string().trim().min(2, "At least 2 characters").max(100, "Keep it under 100 characters"),
-  phone: z
-    .string()
-    .trim()
-    .refine((v) => v === "" || /^\+?[0-9\s-]{7,20}$/.test(v), "7-20 digits, optionally with +, spaces or dashes"),
+    .regex(/^[A-Z0-9-]{2,30}$/, "2-30 letters, digits or dashes, e.g. HUB-NYC"),
+  /** Street, city, state and ZIP. The API's separate `city` field is taken from it. */
+  address: usAddress,
+  phone: optionalUsPhone,
   zoneId: z.uuid("Choose the zone this hub serves"),
   isActive: z.boolean(),
 });

@@ -15,6 +15,7 @@ function targetFor(role: Role, id: string): string {
     case "COURIER":
       return `/courier/tasks/${id}`;
     case "ADMIN":
+    case "ADMIN_VIEWER":
       return `/admin/shipments/${id}`;
   }
 }

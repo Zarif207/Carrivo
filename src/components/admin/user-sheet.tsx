@@ -6,7 +6,7 @@ import { UserCheck, UserX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { RoleGate } from "@/components/auth/role-gate";
+import { CanMutate } from "@/components/auth/role-gate";
 import { UserAvatar } from "@/components/layout/user-menu";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -127,9 +127,9 @@ function UserSheetBody({ user }: { user: AdminUser }) {
             />
           </div>
         ) : null}
-        <RoleGate allow="ADMIN">
+        <CanMutate readOnly={<p className="text-sm text-muted-foreground">View-only access: only an admin can activate or deactivate accounts.</p>}>
           <StatusAction user={user} status={status} onStatus={setStatus} />
-        </RoleGate>
+        </CanMutate>
       </div>
     </>
   );

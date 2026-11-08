@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/errors";
 import { earningsSeries } from "@/lib/courier/earnings-series";
 import { getMyEarnings } from "@/lib/data/courier";
-import { formatCount, formatMoney } from "@/lib/format";
+import { BUSINESS_TIME_ZONE_NAME, formatCount, formatMoney } from "@/lib/format";
 import { firstParam, parseListParams, pickEnum, type RawSearchParams } from "@/lib/list-params";
 import { TIME_RANGE_LABELS, isTimeRange, timeRangeToDates, type TimeRange } from "@/lib/time-range";
 import { EARNING_STATUSES, type EarningQuery } from "@/types";
@@ -60,7 +60,7 @@ async function Overview({ range }: { range: TimeRange }) {
       </div>
       <ChartCard
         title="Earnings over time"
-        description={range === "today" ? "By hour, Dhaka time" : range === "year" ? "By month" : "By day"}
+        description={range === "today" ? `By hour, ${BUSINESS_TIME_ZONE_NAME}` : range === "year" ? "By month" : "By day"}
         summary={`You earned ${formatMoney(summary.totalEarned)} ${label} from ${formatCount(summary.deliveries)} ${summary.deliveries === 1 ? "delivery" : "deliveries"}.`}
         footer={capped ? `The chart adds up your latest ${CHART_LIMIT} earnings ${label}; the totals above include all ${formatCount(result.meta.total)}.` : undefined}
       >

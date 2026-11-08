@@ -1,20 +1,21 @@
 import { ROLE_HOME } from "@/config/nav";
 import type { Role } from "@/types";
 
-/** Which role owns each protected area. */
-export const PROTECTED_AREAS: { prefix: string; role: Role }[] = [
-  { prefix: "/dashboard", role: "CUSTOMER" },
-  { prefix: "/courier", role: "COURIER" },
-  { prefix: "/admin", role: "ADMIN" },
+/** Which roles may open each protected area. */
+export const PROTECTED_AREAS: { prefix: string; roles: readonly Role[] }[] = [
+  { prefix: "/dashboard", roles: ["CUSTOMER"] },
+  { prefix: "/courier", roles: ["COURIER"] },
+  // ADMIN_VIEWER sees the same pages read-only (lib/auth/permissions.ts).
+  { prefix: "/admin", roles: ["ADMIN", "ADMIN_VIEWER"] },
   // Stripe Checkout returns here (/payment/success, /payment/cancel); only customers pay.
-  { prefix: "/payment", role: "CUSTOMER" },
+  { prefix: "/payment", roles: ["CUSTOMER"] },
 ];
 
 const inArea = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 
-/** The role a path requires, or null for public paths. */
-export function requiredRoleFor(pathname: string): Role | null {
-  return PROTECTED_AREAS.find((area) => inArea(pathname, area.prefix))?.role ?? null;
+/** The roles allowed on a path, or null for public paths. */
+export function allowedRolesFor(pathname: string): readonly Role[] | null {
+  return PROTECTED_AREAS.find((area) => inArea(pathname, area.prefix))?.roles ?? null;
 }
 
 /**
@@ -43,8 +44,8 @@ export function postLoginPath(role: Role, next: string | null | undefined): stri
   if (!safe) return ROLE_HOME[role];
   const pathname = safe.split(/[?#]/)[0];
   if (pathname === "/login" || pathname === "/register" || pathname.startsWith("/api/") || pathname.startsWith("/auth/")) return ROLE_HOME[role];
-  const required = requiredRoleFor(pathname);
-  if (required && required !== role) return ROLE_HOME[role];
+  const allowed = allowedRolesFor(pathname);
+  if (allowed && !allowed.includes(role)) return ROLE_HOME[role];
   // Email links land on /shipments/:id, which re-routes by role itself.
   return safe;
 }

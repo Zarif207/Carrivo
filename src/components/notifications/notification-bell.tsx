@@ -4,6 +4,7 @@
 import { Bell, CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useIsReadOnly } from "@/components/auth/role-gate";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,8 @@ export function NotificationBell({ allHref }: { allHref?: string | null }) {
   const latest = useLatestNotifications(open);
   const markRead = useMarkRead();
   const markAll = useMarkAllRead();
+  // Read-only accounts can read notifications but the API refuses marking them read.
+  const readOnly = useIsReadOnly();
   const count = unread.data ?? 0;
 
   return (
@@ -43,9 +46,11 @@ export function NotificationBell({ allHref }: { allHref?: string | null }) {
       <DropdownMenuContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between gap-2 px-4 py-3">
           <DropdownMenuLabel className="p-0 text-base font-bold text-foreground">Notifications</DropdownMenuLabel>
-          <Button variant="ghost" size="sm" disabled={!count || markAll.isPending} onClick={() => markAll.mutate()}>
-            <CheckCheck aria-hidden="true" /> Mark all read
-          </Button>
+          {readOnly ? null : (
+            <Button variant="ghost" size="sm" disabled={!count || markAll.isPending} onClick={() => markAll.mutate()}>
+              <CheckCheck aria-hidden="true" /> Mark all read
+            </Button>
+          )}
         </div>
         <DropdownMenuSeparator className="m-0" />
         <DropdownMenuGroup className="max-h-88 overflow-y-auto p-1">
@@ -77,7 +82,7 @@ export function NotificationBell({ allHref }: { allHref?: string | null }) {
                 </>
               );
               const onSelect = () => {
-                if (!n.isRead) markRead.mutate(n.id);
+                if (!n.isRead && !readOnly) markRead.mutate(n.id);
               };
               return (
                 <DropdownMenuItem key={n.id} asChild={Boolean(n.shipment)} onSelect={onSelect} className="items-start gap-3 rounded-lg p-3">

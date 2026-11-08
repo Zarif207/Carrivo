@@ -12,18 +12,17 @@ import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/errors";
 import { countAdminPayments, getDashboardStats, listAuditLogs } from "@/lib/data/admin";
-import { formatCount, formatDateTime, formatMoney } from "@/lib/format";
+import { formatCount, formatDateTime, formatMoney, shortDayLabel } from "@/lib/format";
 import { PAYMENT_STATUS_META, SHIPMENT_STATUS_META, TONE_CLASSES } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { PAYMENT_STATUSES, SHIPMENT_STATUSES } from "@/types";
 
 export const metadata: Metadata = { title: "Operations overview", robots: { index: false } };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-/** "2026-11-07" → "7 Nov" (the API's dates are already Dhaka days). */
+/** "2026-11-07" → "Nov 7" (the API's dates are already business-time-zone days). */
 const dayLabel = (date: string) => {
   const [, m, d] = date.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1]}`;
+  return shortDayLabel(m, d);
 };
 
 function Panel({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {

@@ -1,19 +1,17 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
 import { MAX_WEIGHT_LB } from "@/lib/weight";
+import { usAddress, usPhone } from "./us";
 
 /*
  * New-shipment wizard, one schema per step. Rules mirror POST /shipments (contract §5):
- * names 2-100, phones 7-20 digits (+, spaces, dashes), addresses 5-300, receiver email optional,
- * description ≤ 500, declared value 0-99,999,999, weight > 0 and ≤ 2,000 lb, UUID zones and hubs.
+ * names 2-100, US phones, US addresses (street, city, state, ZIP; sent as one line), receiver email
+ * optional, description ≤ 500, declared value 0-99,999,999, weight > 0 and ≤ 2,000 lb, UUID zones and hubs.
  */
 
 const name = z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name can be at most 100 characters");
-const phone = z
-  .string()
-  .trim()
-  .regex(/^\+?[0-9\s-]{7,20}$/, "Phone must be 7-20 digits, optionally with +, spaces or dashes");
-const address = z.string().trim().min(5, "Address must be at least 5 characters").max(300, "Address can be at most 300 characters");
+const phone = usPhone;
+const address = usAddress;
 
 export const contactStepSchema = z.object({
   senderName: name,

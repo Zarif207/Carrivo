@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <aside className="hidden w-[38%] max-w-xl flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex" aria-label="Why Carrivo">
         <Logo href={null} tone="inverse" />
         <div className="space-y-8">
-          <p className="text-[2.75rem] leading-[1.05] font-extrabold tracking-tight">Parcels across Dhaka, tracked to the door.</p>
+          <p className="text-[2.75rem] leading-[1.05] font-extrabold tracking-tight">Door-to-door delivery, tracked at every stop.</p>
           <ul className="space-y-4">
             {POINTS.map((point) => (
               <li key={point.text} className="flex items-start gap-3 text-sidebar-muted [&_svg]:mt-0.5 [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-brand">

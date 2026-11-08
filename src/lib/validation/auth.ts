@@ -1,17 +1,14 @@
 import { z } from "zod";
-import { ROLES } from "@/types";
+import { usPhone } from "./us";
 
 /*
  * Mirrors the API's auth validation (docs/API_CONTRACT.md §3.1-3.2):
- * name 2-100, email (trimmed, lower-cased), password 8-128 on register, phone 7-20 digits with
- * optional +, spaces or dashes. Strict objects: unknown keys (e.g. `role`) are rejected.
+ * name 2-100, email (trimmed, lower-cased), password 8-128 on register, an optional US phone.
+ * Strict objects: unknown keys (e.g. `role`) are rejected.
  */
 
 const email = z.email("Enter a valid email address").trim().toLowerCase();
-const phone = z
-  .string()
-  .trim()
-  .regex(/^\+?[0-9\s-]{7,20}$/, "Phone must be 7-20 digits, optionally with +, spaces or dashes");
+const phone = usPhone;
 const next = z.string().max(512).optional();
 
 export const loginSchema = z.strictObject({
@@ -43,8 +40,14 @@ export const registerBodySchema = z.strictObject({
   next,
 });
 
+/**
+ * The only accounts the one-click demo may sign in as. ADMIN is deliberately absent: the real admin
+ * signs in with the normal form; the demo "Admin" is the read-only ADMIN_VIEWER.
+ */
+export const DEMO_ROLES = ["CUSTOMER", "COURIER", "ADMIN_VIEWER"] as const;
+
 export const demoBodySchema = z.strictObject({
-  role: z.enum(ROLES, { error: "Choose Admin, Courier or Customer" }),
+  role: z.enum(DEMO_ROLES, { error: "Choose Customer, Courier or Admin (view-only)" }),
   next,
 });
 export type DemoRole = z.infer<typeof demoBodySchema>["role"];

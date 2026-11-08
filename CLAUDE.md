@@ -4,7 +4,8 @@ Carrivo is a Courier & Logistics Platform. This repo is the **Next.js frontend**
 The backend is already built and live. This repo only consumes it.
 
 - Live API base: `https://carrivo-backend.vercel.app/api/v1`
-- Roles: `CUSTOMER`, `COURIER`, `ADMIN` (3 fixed roles; the assignment calls them User / Provider / Admin)
+- Roles: `CUSTOMER`, `COURIER`, `ADMIN` (the assignment calls them User / Provider / Admin), plus `ADMIN_VIEWER`: a read-only admin that sees all of `/admin` and can change nothing. Gate every admin write control with `<CanMutate>` / `canMutate()` (`src/lib/auth/permissions.ts`); the BFF refuses viewer writes too.
+- Locale: US only. Weights in pounds (lb), money USD, US phones and addresses (`src/lib/us.ts`, `src/lib/validation/us.ts`), dates in `BUSINESS_TIME_ZONE` (America/New_York, `src/lib/timezone.ts`) shown as MM/DD/YYYY and 12-hour time.
 - Currency: USD. The API returns money as strings/numbers in dollars; never show cents or BDT.
 
 ## Source of truth for the API
@@ -38,7 +39,7 @@ Package manager: npm.
   - A **401 means logged out after one retry**: parallel 401s share one `/api/auth/refresh` attempt (it only helps if another request already rotated the cookie), retry once, then clear cookies and redirect to `/login` with a toast. See `docs/API_CONTRACT.md` §3.5.
   - Every server-side API call sends `x-client-ip` (the visitor's IP) and `x-bff-secret` (`BFF_SHARED_SECRET`, server only) so the API rate-limits per visitor, not per Vercel server. `serverFetch` does this; the BFF proxy must pass the proxied request's IP.
 - `middleware.ts` (or `proxy.ts`) protects `/admin/*`, `/courier/*`, `/dashboard/*` by role and redirects to the right home. Also hide or show UI by role.
-- **Demo login buttons** call `POST /api/auth/demo` with `{ role }`. The demo password lives only in a server env var (`DEMO_PASSWORD`), never in client code or the bundle.
+- **Demo login buttons** (Customer, Courier, Admin (view-only)) call `POST /api/auth/demo` with `{ role }`; it accepts only CUSTOMER, COURIER and ADMIN_VIEWER. The demo password lives only in a server env var (`DEMO_PASSWORD`), never in client code or the bundle.
 - Filters, search, sort and pagination live in the URL (`useSearchParams`), so every list is bookmarkable.
 - Forms: React Hook Form + Zod. Zod rules must match backend validation (check the docs). Show field errors inline and a toast for API errors.
 - Reuse: `DataTable`, `StatCard`, `StatusBadge`, `SearchInput`, `EmptyState`, `PageHeader`, `ConfirmDialog`. No copy-pasted UI. Extract hooks (`useAuth`, `useDebounce`, `usePagination`).
@@ -52,7 +53,7 @@ Package manager: npm.
 - Contact form opens a pre-filled `mailto:` and says so honestly (there is no contact endpoint).
 - Courier home shows **active tasks**, never "today's tasks" (no date filter exists).
 - Admin charts: shipments per day, shipments by status, payments by status (no revenue time series).
-- `/shipments/[id]` (email link target) redirects by role: CUSTOMER → `/dashboard/shipments/:id`, COURIER → `/courier/tasks/:id`, ADMIN → `/admin/shipments/:id`; logged out → `/login?next=/shipments/:id`.
+- `/shipments/[id]` (email link target) redirects by role: CUSTOMER → `/dashboard/shipments/:id`, COURIER → `/courier/tasks/:id`, ADMIN / ADMIN_VIEWER → `/admin/shipments/:id`; logged out → `/login?next=/shipments/:id`.
 
 ## Design direction
 
@@ -68,7 +69,7 @@ Package manager: npm.
 - **Cards and charts:** `StatCard` = small muted label above a large bold number (`variant="feature"` makes the one key number orange). Charts go inside `ChartCard`; `AreaTrendChart` draws an orange line with a soft gradient fill, muted grid, rounded tooltip. Lazy-load charts below the fold with `next/dynamic`.
 - **Timeline:** neutral route line; the current stop is orange with a pulse (disabled under `prefers-reduced-motion`).
 - **Public site (Phase 2):** off-white background, huge confident Open Sans headlines, an orange pill CTA, a tracking-id input card in the hero, large rounded cards, dark (`#191817`) footer. A framed product preview of the dashboard in the hero is welcome, built from real components (not an image).
-- Dates render in Asia/Dhaka (`src/lib/format.ts`) so server and client match.
+- Dates render in `BUSINESS_TIME_ZONE` (America/New_York, `src/lib/timezone.ts`) so server and client match.
 - Visible focus rings; keyboard-friendly dialogs, menus and segmented controls. Mobile-first: check 375px, 768px and 1280px for every page.
 - Use the `frontend-design` skill (if available) when building pages so the result does not look like a template.
 
@@ -95,7 +96,7 @@ API_BASE_URL=                   # https://carrivo-backend.vercel.app/api/v1 (ser
 SESSION_SECRET=                 # server only, 32+ random chars; signs the role cookie the proxy trusts
 BFF_SHARED_SECRET=              # server only, sent as x-bff-secret with x-client-ip (must match the backend)
 DEMO_PASSWORD=                  # server only, used by /api/auth/demo
-NEXT_PUBLIC_DEMO_ADMIN_EMAIL=admin@carrivo.dev
+NEXT_PUBLIC_DEMO_VIEWER_EMAIL=viewer@carrivo.dev   # "Admin (view-only)" demo; the real admin is never a demo
 NEXT_PUBLIC_DEMO_COURIER_EMAIL=courier1@carrivo.dev
 NEXT_PUBLIC_DEMO_CUSTOMER_EMAIL=customer1@carrivo.dev
 ```

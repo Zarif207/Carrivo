@@ -1,6 +1,7 @@
 "use client";
 
 // Client: step 3, summary of the draft and the create request.
+import { formatUsAddress } from "@/lib/us";
 import { ArrowLeft, Loader2, PackageCheck, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -57,10 +58,10 @@ export function ReviewStep({ contact, parcel, zones, hubs, pending, formError, o
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Section title="Sender and receiver" step={1}>
           <Row label="Sender" value={`${contact.senderName}, ${contact.senderPhone}`} />
-          <Row label="Pickup address" value={contact.pickupAddress} />
+          <Row label="Pickup address" value={formatUsAddress(contact.pickupAddress)} />
           <Row label="Receiver" value={`${contact.receiverName}, ${contact.receiverPhone}`} />
           {contact.receiverEmail ? <Row label="Receiver email" value={contact.receiverEmail} /> : null}
-          <Row label="Delivery address" value={contact.deliveryAddress} />
+          <Row label="Delivery address" value={formatUsAddress(contact.deliveryAddress)} />
         </Section>
         <Section title="Parcel and service" step={2}>
           <Row label="From" value={`${zone(parcel.originZoneId)} (${hub(parcel.originHubId)})`} />

@@ -23,6 +23,7 @@ import type {
   Zone,
   ZoneListQuery,
 } from "@/types";
+import { STAFF_ROLES } from "@/lib/auth/permissions";
 import { sessionCount, sessionFetch, sessionFetchList } from "./session-fetch";
 
 /*
@@ -31,8 +32,9 @@ import { sessionCount, sessionFetch, sessionFetchList } from "./session-fetch";
  * its own (or a session whose role changed) still can't load admin data.
  */
 
+/** Reads only: ADMIN and the read-only ADMIN_VIEWER may load admin data. */
 async function gate(): Promise<void> {
-  await requireRole("ADMIN");
+  await requireRole(STAFF_ROLES);
 }
 
 const list = async <T>(path: string, query: object): Promise<Paginated<T>> => {

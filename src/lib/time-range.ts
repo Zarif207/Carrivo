@@ -1,4 +1,4 @@
-import { BUSINESS_TIME_ZONE } from "./format";
+import { zonedParts, zonedTimeToUtc } from "./timezone";
 
 /** Short labels so the four pills fit a 375px screen without scrolling ("this week" etc. live in TIME_RANGE_LABELS). */
 export const TIME_RANGES = [
@@ -13,12 +13,6 @@ export type TimeRange = (typeof TIME_RANGES)[number]["value"];
 export const isTimeRange = (value: string | undefined): value is TimeRange =>
   TIME_RANGES.some((range) => range.value === value);
 
-const dhakaParts = (date: Date) => {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: BUSINESS_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).formatToParts(date);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  return { year: Number(get("year")), month: Number(get("month")), day: Number(get("day")), weekday: get("weekday") };
-};
-
 const ymd = (year: number, month: number, day: number) => {
   const d = new Date(Date.UTC(year, month - 1, day));
   return d.toISOString().slice(0, 10);
@@ -27,13 +21,14 @@ const ymd = (year: number, month: number, day: number) => {
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /**
- * `{ fromDate, toDate }` as YYYY-MM-DD Dhaka days, the format every API date filter accepts.
+ * `{ fromDate, toDate }` as YYYY-MM-DD days in the business time zone (America/New_York), the format
+ * every API date filter accepts.
  * Weeks start on Monday. Pass `now` for tests. In a Server Component, `await connection()` first
  * (reading the clock during a prerender is an error under Cache Components); in client components
  * call it from an event handler or effect.
  */
 export function timeRangeToDates(range: TimeRange, now: Date = new Date()): { fromDate: string; toDate: string } {
-  const { year, month, day, weekday } = dhakaParts(now);
+  const { year, month, day, weekday } = zonedParts(now);
   const today = ymd(year, month, day);
   switch (range) {
     case "today":
@@ -57,10 +52,15 @@ export const TIME_RANGE_LABELS: Record<TimeRange, string> = {
 };
 
 /**
- * Date filters for the API plus the same Dhaka-day bounds as ISO instants (start 00:00, end 23:59:59.999,
- * UTC+6), for filtering rows the API can't filter by date itself. Same clock rules as above.
+ * Date filters for the API plus the same business-day bounds as ISO instants (start 00:00, end
+ * 23:59:59.999 in the business time zone, daylight saving included), for filtering rows the API
+ * can't filter by date itself. Same clock rules as above.
  */
 export function timeRangeBounds(range: TimeRange, now: Date = new Date()) {
   const { fromDate, toDate } = timeRangeToDates(range, now);
-  return { fromDate, toDate, fromIso: `${fromDate}T00:00:00.000+06:00`, toIso: `${toDate}T23:59:59.999+06:00` };
+  const [y, m, d] = toDate.split("-").map(Number);
+  const nextDay = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+  const fromIso = zonedTimeToUtc(fromDate, "00:00").toISOString();
+  const toIso = new Date(zonedTimeToUtc(nextDay, "00:00").getTime() - 1).toISOString();
+  return { fromDate, toDate, fromIso, toIso };
 }

@@ -13,6 +13,7 @@ import { endpoints } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/errors";
 import { queryKeys } from "@/lib/api/query-keys";
 import { cn } from "@/lib/utils";
+import { formatUsAddress } from "@/lib/us";
 import { FIELD_STEP, contactStepSchema, parcelStepSchema, type ContactStep } from "@/lib/validation/shipment";
 import { useShipmentDraft, type WizardStep } from "@/stores/shipment-draft";
 import type { CreateShipmentInput, Hub, ShipmentDetail, Zone } from "@/types";
@@ -121,11 +122,11 @@ export function NewShipmentWizard({ zones, hubs, senderDefaults }: NewShipmentWi
     create.mutate({
       senderName: c.senderName,
       senderPhone: c.senderPhone,
-      pickupAddress: c.pickupAddress,
+      pickupAddress: formatUsAddress(c.pickupAddress),
       receiverName: c.receiverName,
       receiverPhone: c.receiverPhone,
       ...(c.receiverEmail ? { receiverEmail: c.receiverEmail } : {}),
-      deliveryAddress: c.deliveryAddress,
+      deliveryAddress: formatUsAddress(c.deliveryAddress),
       originZoneId: p.originZoneId,
       originHubId: p.originHubId,
       destinationZoneId: p.destinationZoneId,

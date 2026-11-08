@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ROLE_HOME } from "@/config/nav";
-import { loginPath, postLoginPath, requiredRoleFor } from "@/lib/auth/redirects";
+import { allowedRolesFor, loginPath, postLoginPath } from "@/lib/auth/redirects";
 import { readSession } from "@/lib/auth/session";
 
 /*
@@ -27,13 +27,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(target, request.url));
   }
 
-  const required = requiredRoleFor(pathname);
-  if (!required) return NextResponse.next();
+  const allowed = allowedRolesFor(pathname);
+  if (!allowed) return NextResponse.next();
 
   if (!session) {
     return noStore(NextResponse.redirect(new URL(loginPath(`${pathname}${search}`), request.url)));
   }
-  if (session.role !== required) {
+  if (!allowed.includes(session.role)) {
     return noStore(NextResponse.redirect(new URL(ROLE_HOME[session.role], request.url)));
   }
   return noStore(NextResponse.next());

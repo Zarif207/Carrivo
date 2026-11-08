@@ -3,7 +3,7 @@
  * Each enum is a readonly tuple so it can drive both TypeScript unions and Zod (`z.enum(SHIPMENT_STATUSES)`).
  */
 
-export const ROLES = ["CUSTOMER", "COURIER", "ADMIN"] as const;
+export const ROLES = ["CUSTOMER", "COURIER", "ADMIN", "ADMIN_VIEWER"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const USER_STATUSES = ["ACTIVE", "INACTIVE"] as const;

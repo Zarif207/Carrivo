@@ -3,6 +3,7 @@ import { applyBffHeaders } from "@/lib/api/client-ip";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { matchBffRule } from "@/lib/api/bff-allowlist";
 import { checkOrigin, clientIpOf, jsonError } from "@/lib/auth/http";
+import { READ_ONLY_MESSAGE, isReadOnly } from "@/lib/auth/permissions";
 import { needsRotation, rotateSession } from "@/lib/auth/refresh";
 import { clearSession, readSession, writeSession, type Session } from "@/lib/auth/session";
 
@@ -11,7 +12,9 @@ import { clearSession, readSession, writeSession, type Session } from "@/lib/aut
  * - only allow-listed method + path pairs (lib/api/bff-allowlist.ts);
  * - attaches the Bearer token from the httpOnly cookie, plus x-client-ip and x-bff-secret;
  * - rotates the token before it expires (single-flight, contract §3.5);
- * - streams request bodies (multipart uploads) and responses through unchanged, status included.
+ * - streams request bodies (multipart uploads) and responses through unchanged, status included;
+ * - refuses every write from a read-only session (ADMIN_VIEWER) with 403 READ_ONLY, before the API
+ *   is called (the API refuses them too; the role comes from the HMAC-signed cookie, so it can't be forged).
  * A 401 from the API is passed back with code SESSION_EXPIRED; the client then calls
  * /api/auth/refresh once and retries, and logs out if that fails (lib/api/client.ts).
  */
@@ -39,6 +42,9 @@ async function handle(request: NextRequest, { params }: Context): Promise<Respon
 
   let session: Session | null = readSession(request.cookies, Date.now());
   if (!session && !rule.public) return jsonError(401, "You're not logged in.", [], "UNAUTHENTICATED");
+  if (session && isReadOnly(session.role) && method !== "GET" && method !== "HEAD") {
+    return jsonError(403, READ_ONLY_MESSAGE, [], "READ_ONLY");
+  }
 
   const clientIp = clientIpOf(request);
   let rotated = false;

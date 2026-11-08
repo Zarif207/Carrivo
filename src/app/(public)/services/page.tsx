@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Services",
-  description: "Standard, Express and Same day parcel delivery across Dhaka, with doorstep pickup, tracking at every stop and refunds before pickup.",
+  description: "Standard, Express and Same day parcel delivery within and between US metro zones, with doorstep pickup, tracking at every stop and refunds before pickup.",
   alternates: { canonical: "/services" },
   openGraph: { title: "Carrivo services", url: "/services" },
 };

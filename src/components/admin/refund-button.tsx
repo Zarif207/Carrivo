@@ -6,7 +6,7 @@ import { RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { RoleGate } from "@/components/auth/role-gate";
+import { CanMutate } from "@/components/auth/role-gate";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/client";
@@ -43,7 +43,7 @@ export function RefundButton({ paymentId, amount, trackingId, size = "sm" }: Ref
   };
 
   return (
-    <RoleGate allow="ADMIN">
+    <CanMutate>
       <ConfirmDialog
         trigger={
           <Button size={size} variant="outline" className="whitespace-nowrap">
@@ -56,6 +56,6 @@ export function RefundButton({ paymentId, amount, trackingId, size = "sm" }: Ref
         cancelLabel="Not now"
         onConfirm={refund}
       />
-    </RoleGate>
+    </CanMutate>
   );
 }
