@@ -1,7 +1,7 @@
 "use client";
 
-// Client: the mobile menu sheet (open state) and active-link highlighting (usePathname).
-import { Menu } from "lucide-react";
+// Client: the mobile menu sheet (open state), active-link highlighting (usePathname) and the signed-in CTA.
+import { LayoutDashboard, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -9,7 +9,8 @@ import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { PUBLIC_NAV } from "@/config/nav";
+import { PUBLIC_NAV, ROLE_HOME, ROLE_LABEL } from "@/config/nav";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 const isActive = (pathname: string | null, href: string) => pathname !== null && (pathname === href || pathname.startsWith(`${href}/`));
@@ -59,6 +60,9 @@ function Nav(props: Omit<NavListProps, "pathname">) {
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  // Signed-in visitors (e.g. after "Back to home") get a way back to their dashboard instead of "Log in".
+  const { user } = useAuth();
+  const dashboard = user ? { href: ROLE_HOME[user.role], label: user.role === "ADMIN" ? "Admin console" : `${ROLE_LABEL[user.role]} dashboard` } : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
@@ -71,12 +75,22 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
-          <Button asChild variant="ghost" className="hidden sm:inline-flex">
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button asChild className="hidden sm:inline-flex">
-            <Link href="/register">Send a parcel</Link>
-          </Button>
+          {dashboard ? (
+            <Button asChild className="hidden sm:inline-flex">
+              <Link href={dashboard.href}>
+                <LayoutDashboard aria-hidden="true" /> {dashboard.label}
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost" className="hidden sm:inline-flex">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild className="hidden sm:inline-flex">
+                <Link href="/register">Send a parcel</Link>
+              </Button>
+            </>
+          )}
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -97,16 +111,26 @@ export function SiteHeader() {
                 <Nav variant="mobile" onNavigate={() => setOpen(false)} />
               </nav>
               <div className="grid gap-2 border-t border-border p-4">
-                <Button asChild size="lg">
-                  <Link href="/register" onClick={() => setOpen(false)}>
-                    Send a parcel
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/login" onClick={() => setOpen(false)}>
-                    Log in
-                  </Link>
-                </Button>
+                {dashboard ? (
+                  <Button asChild size="lg">
+                    <Link href={dashboard.href} onClick={() => setOpen(false)}>
+                      <LayoutDashboard aria-hidden="true" /> {dashboard.label}
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button asChild size="lg">
+                      <Link href="/register" onClick={() => setOpen(false)}>
+                        Send a parcel
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg">
+                      <Link href="/login" onClick={() => setOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

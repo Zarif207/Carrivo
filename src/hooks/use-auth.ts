@@ -83,7 +83,9 @@ export function useAuth() {
   const finishSignIn = useCallback(
     (result: SignedIn) => {
       setUser(toSessionUser(result.user));
-      window.location.assign(result.redirectTo);
+      // Replace, not assign: /login (or /register) leaves the history, so Back from the dashboard goes
+      // to the page before sign-in instead of /login, which the proxy would bounce straight back.
+      window.location.replace(result.redirectTo);
       return result;
     },
     [setUser],
@@ -105,21 +107,22 @@ export function useAuth() {
     [finishSignIn],
   );
 
+  /**
+   * Throws when /api/auth/logout can't be reached: the cookies are then still set, so the caller
+   * keeps the user signed in (and its dialog open) instead of bouncing off /login back to the dashboard.
+   */
   const logout = useCallback(async () => {
+    await postAuth("/api/auth/logout", {});
+    setUser(null);
+    meRequest = null;
+    // The shipment draft holds names, phones and addresses: drop it with the session.
     try {
-      await postAuth("/api/auth/logout", {});
-    } finally {
-      setUser(null);
-      meRequest = null;
-      // The shipment draft holds names, phones and addresses: drop it with the session.
-      try {
-        sessionStorage.removeItem(SHIPMENT_DRAFT_KEY);
-      } catch {
-        // storage unavailable: nothing to clear
-      }
-      // Full replace: drops the client router cache so Back can't show the old dashboard.
-      window.location.replace("/login?reason=logged-out");
+      sessionStorage.removeItem(SHIPMENT_DRAFT_KEY);
+    } catch {
+      // storage unavailable: nothing to clear
     }
+    // Full replace: drops the client router cache so Back can't show the old dashboard.
+    window.location.replace("/login?reason=logged-out");
   }, [setUser]);
 
   /** Better Auth's response is reduced to { changed } by /api/auth/change-password (no token reaches the browser). */

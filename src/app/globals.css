@@ -343,6 +343,16 @@
     font-feature-settings: "kern" 1;
     text-rendering: optimizeLegibility;
   }
+  /*
+   * Dashboards on desktop: exactly one scroll container (the inset content panel, see
+   * dashboard-shell.tsx). The document itself never scrolls while a shell is on screen, so nothing
+   * (a portal, an escaped absolute element) can add a second scrollbar beside the panel's.
+   */
+  @media (width >= 64rem) {
+    html:has([data-dashboard-shell]) {
+      overflow: hidden;
+    }
+  }
   /* Scoped theme panels also need their own page colour. */
   .light,
   .dark {

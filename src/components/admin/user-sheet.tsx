@@ -142,7 +142,7 @@ export function UserSheet({ user, missing }: { user: AdminUser | null; missing: 
 
   return (
     <Sheet open={open} onOpenChange={(next) => (next ? undefined : close())}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+      <SheetContent className="w-full sm:max-w-md">
         {user ? (
           <UserSheetBody key={`${user.id}:${user.status}`} user={user} />
         ) : (

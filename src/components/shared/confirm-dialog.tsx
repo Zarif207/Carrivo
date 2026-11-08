@@ -32,6 +32,8 @@ interface ConfirmDialogProps {
   confirmDisabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Where focus goes on close (controlled dialogs opened from a menu item that no longer exists). */
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 export function ConfirmDialog({
@@ -46,6 +48,7 @@ export function ConfirmDialog({
   confirmDisabled = false,
   open: controlledOpen,
   onOpenChange,
+  onCloseAutoFocus,
 }: ConfirmDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -72,7 +75,7 @@ export function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-      <DialogContent className="sm:max-w-md" showCloseButton={!pending}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!pending} onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle className="font-display text-xl">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

@@ -4,12 +4,13 @@ import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
 import { TaskFilters } from "@/components/courier/task-filters";
 import { TasksTable } from "@/components/courier/tasks-table";
+import { UnreadNotificationsCard } from "@/components/courier/unread-notifications-card";
 import { Greeting } from "@/components/layout/greeting";
 import { LoadError } from "@/components/shared/load-error";
 import { PageHeader } from "@/components/shared/page-header";
 import { Pagination } from "@/components/shared/pagination";
-import { StatCard } from "@/components/shared/stat-card";
-import { StatsSkeleton, TableSkeleton, ToolbarSkeleton } from "@/components/shipments/skeletons";
+import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card";
+import { TableSkeleton, ToolbarSkeleton } from "@/components/shipments/skeletons";
 import { ApiError } from "@/lib/api/errors";
 import { getCourierOverview, listMyTasks } from "@/lib/data/courier";
 import { formatCount, formatMoney } from "@/lib/format";
@@ -28,21 +29,30 @@ function toQuery(params: RawSearchParams): CourierTaskQuery {
   };
 }
 
-/** Independent of the list filters: two requests (active count, all-time earnings summary). */
+const STATS_GRID = "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
+
+/**
+ * Independent of the list filters: two requests (active count, all-time earnings summary). Renders the
+ * first three cells of the stats grid; the live unread card is the fourth and loads on its own.
+ */
 async function Stats() {
   let overview;
   try {
     overview = await getCourierOverview();
   } catch (error) {
     unstable_rethrow(error);
-    return <LoadError what="Your stats" message={ApiError.isApiError(error) ? error.message : undefined} />;
+    return (
+      <div className="sm:col-span-2 xl:col-span-3">
+        <LoadError what="Your stats" message={ApiError.isApiError(error) ? error.message : undefined} />
+      </div>
+    );
   }
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <>
       <StatCard variant="feature" label="Active tasks" value={formatCount(overview.active)} icon={Bike} hint="Assigned to you, not finished" />
       <StatCard label="Delivered" value={formatCount(overview.delivered)} icon={PackageCheck} hint="All time" />
       <StatCard label="Total earned" value={formatMoney(overview.totalEarned)} icon={Wallet} hint={`${formatMoney(overview.pending)} awaiting payout`} />
-    </div>
+    </>
   );
 }
 
@@ -77,9 +87,16 @@ export default function CourierHomePage({ searchParams }: PageProps<"/courier">)
     <>
       <PageHeader title={<Greeting fallback="Active tasks" />} description="Your pickups and deliveries, most recently updated first." />
       <div className="space-y-8">
-        <Suspense fallback={<StatsSkeleton />}>
-          <Stats />
-        </Suspense>
+        <div className={STATS_GRID}>
+          <Suspense
+            fallback={Array.from({ length: 3 }, (_, i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          >
+            <Stats />
+          </Suspense>
+          <UnreadNotificationsCard href="/courier/notifications" />
+        </div>
         <section aria-labelledby="tasks-heading" className="space-y-4">
           <h2 id="tasks-heading" className="text-xl font-bold tracking-tight">
             Active tasks

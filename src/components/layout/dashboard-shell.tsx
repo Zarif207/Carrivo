@@ -1,18 +1,19 @@
 "use client";
 
 // Client: collapsible sidebar (persisted UI state), active nav (usePathname, streamed under Suspense) and the mobile sheet.
-import { Ellipsis, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Ellipsis, House, LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { Logo, LogoMark } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DASHBOARD_NAV, ROLE_HOME, ROLE_LABEL, findActiveHref, type NavItem } from "@/config/nav";
+import { DASHBOARD_NAV, PUBLIC_HOME, ROLE_LABEL, findActiveHref, type NavItem } from "@/config/nav";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui-store";
+import { LogoutProvider, useRequestLogout } from "./logout-dialog";
 import { UserMenu, type ShellUser } from "./user-menu";
 
 interface DashboardShellProps {
@@ -81,6 +82,70 @@ function SidebarLink({
   );
 }
 
+const SIDEBAR_ACTION =
+  "h-11 w-full justify-start gap-3 rounded-full px-4 text-[0.9375rem] font-semibold text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-sidebar-ring dark:hover:bg-sidebar-accent";
+
+/** A sidebar footer action (link or button) that collapses to an icon with a tooltip. */
+function SidebarAction({
+  icon: Icon,
+  label,
+  collapsed,
+  href,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  collapsed: boolean;
+  href?: string;
+  onClick?: (event: MouseEvent<HTMLElement>) => void;
+}) {
+  const content = (
+    <>
+      <Icon className="size-5 shrink-0" aria-hidden="true" />
+      <span className={cn("truncate", collapsed && "sr-only")}>{label}</span>
+    </>
+  );
+  const className = cn(SIDEBAR_ACTION, collapsed && "w-11 justify-center px-0");
+  const control = href ? (
+    <Button asChild variant="ghost" className={className}>
+      <Link href={href} onClick={onClick}>
+        {content}
+      </Link>
+    </Button>
+  ) : (
+    <Button variant="ghost" className={className} onClick={onClick}>
+      {content}
+    </Button>
+  );
+  if (!collapsed) return control;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{control}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** Back to the public site and log out: shared by the desktop sidebar and the mobile "More" sheet. */
+function AccountActions({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const requestLogout = useRequestLogout();
+  return (
+    <>
+      <SidebarAction icon={House} label="Back to home" href={PUBLIC_HOME} collapsed={collapsed} onClick={onNavigate} />
+      <SidebarAction
+        icon={LogOut}
+        label="Log out"
+        collapsed={collapsed}
+        onClick={(event) => {
+          onNavigate?.();
+          // In the mobile sheet the button unmounts with the sheet: fall back to the "More" button.
+          requestLogout(onNavigate ? document.querySelector<HTMLElement>("[data-more-trigger]") : event.currentTarget);
+        }}
+      />
+    </>
+  );
+}
+
 type ActiveRender = (activeHref: string | undefined) => ReactNode;
 
 function LiveActiveHref({ items, children }: { items: NavItem[]; children: ActiveRender }) {
@@ -99,7 +164,24 @@ function WithActiveHref({ items, children }: { items: NavItem[]; children: Activ
   );
 }
 
-export function DashboardShell({ user, children, headerActions, badges = {} }: DashboardShellProps) {
+export function DashboardShell(props: DashboardShellProps) {
+  return (
+    <LogoutProvider>
+      <ShellFrame {...props} />
+    </LogoutProvider>
+  );
+}
+
+/**
+ * Scrolling model (one scroll container per breakpoint):
+ * - lg and up: the frame is exactly the viewport (h-dvh, overflow hidden) and only the inset content
+ *   panel scrolls. The panel is `relative`, so absolutely positioned descendants (sr-only text, chart
+ *   tooltips, popover anchors) are laid out inside it and can never stretch the document; globals.css
+ *   also locks the document while [data-dashboard-shell] is mounted at lg.
+ * - below lg: the document scrolls (min-h-dvh) and the panel does not, so mobile browser chrome and
+ *   pull-to-refresh behave normally.
+ */
+function ShellFrame({ user, children, headerActions, badges = {} }: DashboardShellProps) {
   const items = DASHBOARD_NAV[user.role];
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -115,7 +197,7 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
 
   return (
     // Near-black frame in both themes; on desktop the content sits in an inset rounded panel.
-    <div className="flex min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:bg-sidebar">
+    <div data-dashboard-shell="" className="flex min-h-dvh w-full lg:h-dvh lg:overflow-hidden lg:bg-sidebar">
       <aside
         className={cn(
           "hidden h-dvh shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-[width] duration-200 lg:flex",
@@ -125,15 +207,15 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
       >
         <div className={cn("flex h-20 items-center px-5", collapsed && "justify-center px-0")}>
           {collapsed ? (
-            <Link href={ROLE_HOME[user.role]} aria-label="Carrivo home" className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
+            <Link href={PUBLIC_HOME} aria-label="Carrivo home page" className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
               <LogoMark className="size-9" />
             </Link>
           ) : (
-            <Logo href={ROLE_HOME[user.role]} tone="inverse" />
+            <Logo href={PUBLIC_HOME} tone="inverse" />
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
           <p className={cn("px-4 pb-2 text-xs font-semibold text-sidebar-muted", collapsed && "sr-only")}>{SIDEBAR_HEADINGS[user.role]}</p>
           <WithActiveHref items={items}>
             {(activeHref) => (
@@ -148,7 +230,8 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
           </WithActiveHref>
         </nav>
 
-        <div className={cn("p-3", collapsed && "flex justify-center")}>
+        <div className={cn("space-y-1 border-t border-sidebar-border p-3", collapsed && "flex flex-col items-center")}>
+          <AccountActions collapsed={collapsed} />
           <Button
             variant="ghost"
             onClick={toggleSidebar}
@@ -165,11 +248,11 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
       </aside>
 
       {/* Content panel: full-bleed on mobile, inset with a 28px radius on desktop. It scrolls on its own. */}
-      <div className="flex min-w-0 flex-1 flex-col bg-background lg:my-3 lg:mr-3 lg:overflow-hidden lg:rounded-panel lg:shadow-overlay">
-        <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto lg:[scrollbar-gutter:stable]">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-background lg:my-3 lg:mr-3 lg:overflow-hidden lg:rounded-panel lg:shadow-overlay">
+        <div className="relative flex min-h-0 flex-1 flex-col lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]">
           <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md sm:px-6 lg:h-[4.5rem] lg:border-transparent lg:px-8">
             <div className="lg:hidden">
-              <Logo href={ROLE_HOME[user.role]} showWordmark={false} />
+              <Logo href={PUBLIC_HOME} showWordmark={false} />
             </div>
             <p className="truncate text-sm font-semibold text-muted-foreground">
               {ROLE_LABEL[user.role]} {user.role === "ADMIN" ? "console" : "account"}
@@ -181,7 +264,7 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
             </div>
           </header>
 
-          <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-4 lg:pb-12">
+          <main id="main" className="mx-auto w-full max-w-7xl min-w-0 flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-4 lg:pb-12">
             {children}
           </main>
         </div>
@@ -222,6 +305,7 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
                     <button
                       type="button"
                       onClick={() => setMoreOpen(true)}
+                      data-more-trigger=""
                       aria-haspopup="dialog"
                       className={cn(
                         "relative flex h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl text-[0.6875rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
@@ -249,7 +333,7 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
             </SheetHeader>
             <WithActiveHref items={items}>
               {(activeHref) => (
-                <ul className="space-y-1 px-3 pb-6">
+                <ul className="space-y-1 px-3 pb-3">
                   {overflow.map((item) => (
                     <li key={item.href}>
                       <SidebarLink
@@ -264,6 +348,9 @@ export function DashboardShell({ user, children, headerActions, badges = {} }: D
                 </ul>
               )}
             </WithActiveHref>
+            <div className="space-y-1 border-t border-sidebar-border px-3 pt-3 pb-6">
+              <AccountActions collapsed={false} onNavigate={() => setMoreOpen(false)} />
+            </div>
           </SheetContent>
         </Sheet>
       ) : null}

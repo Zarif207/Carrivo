@@ -28,7 +28,7 @@ export function FormDialog<T extends FieldValues>({ form, open, onOpenChange, tr
   return (
     <Dialog open={open} onOpenChange={(next) => (pending ? undefined : onOpenChange(next))}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-lg" showCloseButton={!pending}>
+      <DialogContent className="sm:max-w-lg" showCloseButton={!pending}>
         <DialogHeader>
           <DialogTitle className="font-display text-xl">{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

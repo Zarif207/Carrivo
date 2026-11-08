@@ -1,10 +1,9 @@
 "use client";
 
-// Client: dropdown state and the logout action.
-import { LogOut, UserRound } from "lucide-react";
+// Client: dropdown state; logout opens the shell's confirmation dialog.
+import { House, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ROLE_LABEL, ROLE_PROFILE } from "@/config/nav";
-import { useAuth } from "@/hooks/use-auth";
+import { PUBLIC_HOME, ROLE_LABEL, ROLE_PROFILE } from "@/config/nav";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
+import { useRequestLogout } from "./logout-dialog";
 
 export interface ShellUser {
   name: string;
@@ -39,24 +38,14 @@ export function UserAvatar({ user, className }: { user: Pick<ShellUser, "name" |
 }
 
 export function UserMenu({ user }: { user: ShellUser }) {
-  const { logout } = useAuth();
-  const [pending, setPending] = useState(false);
+  const requestLogout = useRequestLogout();
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const profileHref = ROLE_PROFILE[user.role];
-
-  const logOut = async () => {
-    setPending(true);
-    try {
-      await logout(); // full page replace to /login on success
-    } catch {
-      toast.error("Could not log out. Check your connection and try again.");
-      setPending(false);
-    }
-  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-11 gap-2.5 rounded-full px-1.5 sm:pr-3" aria-label={`Account menu for ${user.name}`}>
+        <Button ref={triggerRef} variant="ghost" className="h-11 gap-2.5 rounded-full px-1.5 sm:pr-3" aria-label={`Account menu for ${user.name}`}>
           <UserAvatar user={user} />
           <span className="hidden max-w-36 truncate text-sm font-semibold sm:block">{user.name}</span>
         </Button>
@@ -76,14 +65,17 @@ export function UserMenu({ user }: { user: ShellUser }) {
               </Link>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              void logOut();
-            }}
-            disabled={pending}
-          >
-            <LogOut /> {pending ? "Logging out…" : "Log out"}
+          <DropdownMenuItem asChild>
+            <Link href={PUBLIC_HOME}>
+              <House /> Back to home
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {/* The menu closes and the confirmation dialog takes focus. */}
+          <DropdownMenuItem onSelect={() => requestLogout(triggerRef.current)}>
+            <LogOut /> Log out
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

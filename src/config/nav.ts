@@ -68,6 +68,7 @@ export const DASHBOARD_NAV: Record<Role, NavItem[]> = {
   COURIER: [
     { title: "Active tasks", href: "/courier", icon: Bike, primary: true },
     { title: "Earnings", href: "/courier/earnings", icon: Wallet, primary: true },
+    { title: "Notifications", href: "/courier/notifications", icon: Bell, primary: true },
     { title: "Profile", href: "/courier/profile", icon: UserRound, primary: true },
   ],
   ADMIN: [
@@ -87,9 +88,12 @@ export function findActiveHref(items: NavItem[], pathname: string): string | und
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
-/** Full notifications list per role (only customers have one so far; the bell works for every role). */
+/** Full notifications list per role (admins have none; the bell still works for them). */
 export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
   CUSTOMER: "/dashboard/notifications",
-  COURIER: null,
+  COURIER: "/courier/notifications",
   ADMIN: null,
 };
+
+/** The public site's home page (reachable from every dashboard). */
+export const PUBLIC_HOME = "/";

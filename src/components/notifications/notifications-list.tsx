@@ -18,12 +18,21 @@ import { cn } from "@/lib/utils";
 import type { AppNotification, MarkAllReadResult } from "@/types";
 import { NOTIFICATION_ICONS } from "./notification-meta";
 
+/** Plain data only: this is rendered by Server Components (no functions across the boundary). */
 interface NotificationsListProps {
   items: AppNotification[];
   unreadOnly: boolean;
+  /** This list's own page, e.g. "/courier/notifications" (the "Show all" link). */
+  listHref: string;
+  /** Where a shipment link goes in this area: `${shipmentBase}/${id}`. */
+  shipmentBase: string;
+  /** Next step when there are no notifications at all. */
+  emptyAction: { label: string; href: string };
+  /** Empty-state copy for this role. */
+  emptyDescription: string;
 }
 
-export function NotificationsList({ items, unreadOnly }: NotificationsListProps) {
+export function NotificationsList({ items, unreadOnly, listHref, shipmentBase, emptyAction, emptyDescription }: NotificationsListProps) {
   const router = useRouter();
   const client = useQueryClient();
   const [, startTransition] = useTransition();
@@ -76,15 +85,15 @@ export function NotificationsList({ items, unreadOnly }: NotificationsListProps)
       <EmptyState
         icon={BellOff}
         title={unreadOnly ? "No unread notifications" : "No notifications yet"}
-        description={unreadOnly ? "You've read everything." : "Updates appear here when you book, pay and when a courier moves your parcel."}
+        description={unreadOnly ? "You've read everything." : emptyDescription}
         action={
           unreadOnly ? (
             <Button asChild variant="outline">
-              <Link href="/dashboard/notifications">Show all</Link>
+              <Link href={listHref}>Show all</Link>
             </Button>
           ) : (
             <Button asChild>
-              <Link href="/dashboard/shipments/new">Book a shipment</Link>
+              <Link href={emptyAction.href}>{emptyAction.label}</Link>
             </Button>
           )
         }
@@ -117,7 +126,7 @@ export function NotificationsList({ items, unreadOnly }: NotificationsListProps)
                 <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <RelativeTime value={n.createdAt} />
                   {n.shipment ? (
-                    <Link href={`/dashboard/shipments/${n.shipment.id}`} onClick={() => void markRead(n)} className="font-id font-semibold text-foreground underline-offset-4 hover:underline">
+                    <Link href={`${shipmentBase}/${n.shipment.id}`} onClick={() => void markRead(n)} className="font-id font-semibold text-foreground underline-offset-4 hover:underline">
                       {n.shipment.trackingId}
                     </Link>
                   ) : null}

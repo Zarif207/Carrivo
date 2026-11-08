@@ -1,5 +1,6 @@
 import { StatCardSkeleton } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /** Same footprint as ShipmentsTable (rows) so streaming in doesn't shift the page. */
 export function TableSkeleton({ rows = 6 }: { rows?: number }) {
@@ -20,10 +21,10 @@ export function TableSkeleton({ rows = 6 }: { rows?: number }) {
   );
 }
 
-export function StatsSkeleton() {
+export function StatsSkeleton({ count = 3 }: { count?: 3 | 4 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3" aria-busy="true">
-      {Array.from({ length: 3 }, (_, i) => (
+    <div className={cn("grid gap-4", count === 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3")} aria-busy="true">
+      {Array.from({ length: count }, (_, i) => (
         <StatCardSkeleton key={i} />
       ))}
     </div>

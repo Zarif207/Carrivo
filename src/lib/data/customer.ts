@@ -2,7 +2,7 @@ import "server-only";
 
 import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated } from "@/lib/api/types";
-import type { AppNotification, MyPaymentsQuery, NotificationQuery, Payment, PaymentVerification, ShipmentDetail, ShipmentListItem, ShipmentListQuery } from "@/types";
+import type { MyPaymentsQuery, Payment, PaymentVerification, ShipmentDetail, ShipmentListItem, ShipmentListQuery } from "@/types";
 import { sessionCount, sessionFetch, sessionFetchList } from "./session-fetch";
 
 /* Customer reads (Server Components). Each call is request-time and uses the session token. */
@@ -18,9 +18,6 @@ export const listMyPayments = (query: MyPaymentsQuery): Promise<Paginated<Paymen
 /** Asks the API to check the Checkout session with Stripe (and reconcile it). Safe to repeat. */
 export const verifyMyPayment = async (sessionId: string): Promise<PaymentVerification> =>
   (await sessionFetch<PaymentVerification>(endpoints.payments.verify, { query: { session_id: sessionId } })).data;
-
-export const listMyNotifications = (query: NotificationQuery): Promise<Paginated<AppNotification>> =>
-  sessionFetchList<AppNotification>(endpoints.notifications.mine, { query });
 
 export interface CustomerOverview {
   total: number;
