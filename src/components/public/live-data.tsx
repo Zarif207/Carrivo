@@ -134,7 +134,7 @@ export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
       {zones.map((zone) => {
         const zoneHubs = hubs.filter((hub) => hub.zone.id === zone.id && hub.isActive);
         return (
-          <article key={zone.id} className="flex flex-col gap-4 rounded-2xl bg-card p-6 shadow-card sm:p-7">
+          <article key={zone.id} className="flex flex-col gap-4 rounded-2xl bg-card p-6 text-card-foreground shadow-card sm:p-7">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <h3 className="text-xl font-bold tracking-tight">{zone.name}</h3>

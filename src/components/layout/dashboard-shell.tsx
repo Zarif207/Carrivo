@@ -99,6 +99,8 @@ function SidebarAction({
   href?: string;
   onClick?: (event: MouseEvent<HTMLElement>) => void;
 }) {
+  // prefetch={false}: links from a dashboard to the public site shouldn't preload the marketing
+  // page's code (its motion libraries) into every dashboard visit.
   const content = (
     <>
       <Icon className="size-5 shrink-0" aria-hidden="true" />
@@ -108,7 +110,7 @@ function SidebarAction({
   const className = cn(SIDEBAR_ACTION, collapsed && "w-11 justify-center px-0");
   const control = href ? (
     <Button asChild variant="ghost" className={className}>
-      <Link href={href} onClick={onClick}>
+      <Link href={href} onClick={onClick} prefetch={false}>
         {content}
       </Link>
     </Button>
@@ -207,11 +209,11 @@ function ShellFrame({ user, children, headerActions, badges = {} }: DashboardShe
       >
         <div className={cn("flex h-20 items-center px-5", collapsed && "justify-center px-0")}>
           {collapsed ? (
-            <Link href={PUBLIC_HOME} aria-label="Carrivo home page" className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
+            <Link href={PUBLIC_HOME} prefetch={false} aria-label="Carrivo home page" className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
               <LogoMark className="size-9" />
             </Link>
           ) : (
-            <Logo href={PUBLIC_HOME} tone="inverse" />
+            <Logo href={PUBLIC_HOME} tone="inverse" prefetch={false} />
           )}
         </div>
 
@@ -252,7 +254,7 @@ function ShellFrame({ user, children, headerActions, badges = {} }: DashboardShe
         <div className="relative flex min-h-0 flex-1 flex-col lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]">
           <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md sm:px-6 lg:h-[4.5rem] lg:border-transparent lg:px-8">
             <div className="lg:hidden">
-              <Logo href={PUBLIC_HOME} showWordmark={false} />
+              <Logo href={PUBLIC_HOME} showWordmark={false} prefetch={false} />
             </div>
             <p className="truncate text-sm font-semibold text-muted-foreground">
               {ROLE_LABEL[user.role]} {user.role === "ADMIN" ? "console" : "account"}

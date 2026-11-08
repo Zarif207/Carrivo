@@ -1,14 +1,23 @@
 "use client";
 
 // Client: validates the id and navigates to /track/[id].
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Loader2, PackageSearch } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { normalizeTrackingId, trackingSchema, type TrackingValues } from "@/lib/validation/public";
+import { normalizeTrackingId } from "@/lib/tracking-id";
+import type { TrackingValues } from "@/lib/validation/public";
+
+/**
+ * React Hook Form + the Zod schema, but Zod and the resolver load on the first validation instead of
+ * with the page: this form sits in the home page hero, where every early kilobyte delays the paint.
+ */
+const trackingResolver: Resolver<TrackingValues> = async (values, context, options) => {
+  const [{ zodResolver }, { trackingSchema }] = await Promise.all([import("@hookform/resolvers/zod"), import("@/lib/validation/public")]);
+  return zodResolver(trackingSchema)(values, context, options);
+};
 
 interface TrackingFormProps {
   defaultValue?: string;
@@ -30,7 +39,7 @@ export function TrackingForm({ defaultValue = "", variant = "card", hint, autoFo
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<TrackingValues>({ resolver: zodResolver(trackingSchema), defaultValues: { trackingId: defaultValue } });
+  } = useForm<TrackingValues>({ resolver: trackingResolver, defaultValues: { trackingId: defaultValue } });
 
   const onSubmit = handleSubmit(({ trackingId }) => {
     startTransition(() => router.push(`/track/${encodeURIComponent(normalizeTrackingId(trackingId))}`));

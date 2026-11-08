@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 // Default Open Graph / social card for every page (pages can override with their own).
-export const alt = "Carrivo: parcels across Dhaka, tracked to the door";
+export const alt = "Carrivo: door-to-door delivery, tracked at every stop";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -18,7 +18,7 @@ export default function OpenGraphImage() {
           <div style={{ color: "#f7f7f6", fontSize: 44, fontWeight: 800 }}>Carrivo</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{ color: "#f7f7f6", fontSize: 76, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>Parcels across Dhaka, tracked to the door.</div>
+          <div style={{ color: "#f7f7f6", fontSize: 76, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>Door-to-door delivery, tracked at every stop.</div>
           <div style={{ display: "flex", gap: 16 }}>
             <div style={{ background: "#f05a16", color: "#191817", borderRadius: 999, padding: "14px 30px", fontSize: 30, fontWeight: 700 }}>Send a parcel</div>
             <div style={{ color: "#a6a29c", fontSize: 30, display: "flex", alignItems: "center" }}>Standard, Express and Same day</div>

@@ -87,12 +87,13 @@ export function SiteFooter() {
       </div>
 
       {/* Oversized wordmark: decorative (the logo and the page title already name the brand). */}
-      <p
-        aria-hidden="true"
-        className="mx-auto mt-16 w-full max-w-7xl px-4 font-display text-[clamp(4.5rem,21vw,17rem)] leading-[0.78] font-extrabold tracking-[-0.06em] text-white/[0.07] select-none sm:px-6 lg:px-8"
-      >
-        Carrivo
-      </p>
+      <div aria-hidden="true" className="mx-auto mt-16 w-full max-w-7xl px-4 select-none sm:px-6 lg:px-8">
+        <svg viewBox="0 0 1000 205" className="block w-full fill-white/[0.07]" focusable="false">
+          <text x="0" y="188" textLength="1000" lengthAdjust="spacingAndGlyphs" className="font-display font-extrabold" fontSize="248">
+            Carrivo
+          </text>
+        </svg>
+      </div>
 
       <div className="border-t border-sidebar-border">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-sidebar-muted sm:flex-row sm:justify-between sm:px-6 lg:px-8">

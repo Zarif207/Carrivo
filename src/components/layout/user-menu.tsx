@@ -66,7 +66,7 @@ export function UserMenu({ user }: { user: ShellUser }) {
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem asChild>
-            <Link href={PUBLIC_HOME}>
+            <Link href={PUBLIC_HOME} prefetch={false}>
               <House /> Back to home
             </Link>
           </DropdownMenuItem>

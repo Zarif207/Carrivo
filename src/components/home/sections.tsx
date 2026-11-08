@@ -3,7 +3,6 @@ import {
   BadgeCheck,
   Ban,
   Camera,
-  CircleDollarSign,
   CreditCard,
   EyeOff,
   FileClock,
@@ -64,7 +63,7 @@ const SERVICES = [
   {
     icon: <Truck />,
     title: "Standard",
-    body: "The everyday service for parcels that aren't urgent, within a metro zone or between zones.",
+    body: "The everyday service for parcels that aren’t urgent, within a metro zone or between zones.",
     note: "Within a zone and between zones",
   },
   {
@@ -182,7 +181,7 @@ export function TrackingExplainer() {
             {
               icon: <Camera />,
               title: "A photo at hand-over",
-              body: "Couriers can take the proof-of-delivery photo with the phone camera; it's compressed on the device and attached to the shipment for the sender to see.",
+              body: "Couriers can take the proof-of-delivery photo with the phone camera; it’s compressed on the device and attached to the shipment for the sender to see.",
             },
             {
               icon: <BadgeCheck />,
@@ -209,21 +208,21 @@ export function TrackingExplainer() {
 /* ───────────── Guarantees (honest) ───────────── */
 
 const PROMISES = [
-  { title: "The price is fixed when you pay", body: "The API prices every booking. Editing weight or service before payment re-prices it; after payment it's locked." },
-  { title: "Cancel before pickup, get it back", body: "Cancel any time before the courier picks the parcel up. If you've paid, the payment is refunded to your card." },
+  { title: "The price is fixed when you pay", body: "The API prices every booking. Editing weight or service before payment re-prices it; after payment it’s locked." },
+  { title: "Cancel before pickup, get it back", body: "Cancel any time before the courier picks the parcel up. If you’ve paid, the payment is refunded to your card." },
   { title: "Three tries at the door", body: "If nobody can receive it, the courier tries again, up to three attempts, before the parcel is returned to you." },
   { title: "Every stop on record", body: "Each status change is timestamped on your tracking page and in an audit trail." },
 ];
 
 const NOT_PROMISED = [
-  { title: "A delivery date", body: "We don't publish transit-time guarantees. Express is the faster service; Same day is for hand-over the day it's collected, within one zone." },
-  { title: "Insurance", body: "You can record a declared value on a shipment, but Carrivo doesn't sell parcel insurance." },
+  { title: "A delivery date", body: "We don’t publish transit-time guarantees. Express is the faster service; Same day is for hand-over the day it’s collected, within one zone." },
+  { title: "Insurance", body: "You can record a declared value on a shipment, but Carrivo doesn’t sell parcel insurance." },
   { title: "A photo every time", body: "Hand-over photos are added by the courier when they can, so not every delivery has one." },
 ];
 
 export function Guarantees() {
   return (
-    <Section id="promises" title="What we promise, and what we don't" intro="Plain rules the app enforces, and the limits we'd rather tell you up front.">
+    <Section id="promises" title="What we promise, and what we don’t" intro="Plain rules the app enforces, and the limits we’d rather tell you up front.">
       <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
         <div data-reveal="" className="rounded-2xl bg-card p-6 shadow-card sm:p-8">
           <h3 className="mb-5 flex items-center gap-2 text-lg font-bold">
@@ -259,9 +258,9 @@ export function Guarantees() {
 /* ───────────── Security and trust ───────────── */
 
 const SECURITY: { icon: ReactNode; title: string; body: string }[] = [
-  { icon: <CreditCard />, title: "Cards stay with Stripe", body: "Checkout is hosted by Stripe. Card numbers never reach Carrivo's servers, and a payment is only marked paid after Stripe confirms it." },
-  { icon: <KeyRound />, title: "Sessions out of reach", body: "Your session lives in an httpOnly cookie that page scripts can't read, and signing out revokes it on the server." },
-  { icon: <Lock />, title: "Only your parcels", body: "Customers see their own shipments, couriers only the ones assigned to them. Anyone else's record answers “not found”." },
+  { icon: <CreditCard />, title: "Cards stay with Stripe", body: "Checkout is hosted by Stripe. Card numbers never reach Carrivo’s servers, and a payment is only marked paid after Stripe confirms it." },
+  { icon: <KeyRound />, title: "Sessions out of reach", body: "Your session lives in an httpOnly cookie that page scripts can’t read, and signing out revokes it on the server." },
+  { icon: <Lock />, title: "Only your parcels", body: "Customers see their own shipments, couriers only the ones assigned to them. Anyone else’s record answers “not found”." },
   { icon: <FileClock />, title: "Every admin action logged", body: "Assignments, status changes, refunds and account changes are written to an audit log, with secrets redacted." },
 ];
 
@@ -342,11 +341,11 @@ export function Roles() {
 const FAQ: { q: string; a: ReactNode }[] = [
   {
     q: "Where do you deliver?",
-    a: "Within and between Carrivo's metro zones. The coverage section above lists every zone and hub, read live from our network.",
+    a: "Within and between Carrivo’s metro zones. The coverage section above lists every zone and hub, read live from our network.",
   },
   {
     q: "How is the price worked out?",
-    a: "Each route and service has a base fee that covers the first pounds, plus a fixed amount for each started pound above that. You see the total before you pay, and it doesn't change after.",
+    a: "Each route and service has a base fee that covers the first pounds, plus a fixed amount for each started pound above that. You see the total before you pay, and it doesn’t change after.",
   },
   {
     q: "When do I pay?",
@@ -354,7 +353,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
   },
   {
     q: "Can I cancel?",
-    a: "Yes, any time before the courier picks the parcel up. If you've paid, the payment is refunded to your card. After pickup the parcel is on its way and can't be cancelled.",
+    a: "Yes, any time before the courier picks the parcel up. If you’ve paid, the payment is refunded to your card. After pickup the parcel is on its way and can’t be cancelled.",
   },
   {
     q: "What if nobody is home?",
@@ -366,7 +365,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
   },
   {
     q: "Can I change the pickup window?",
-    a: "Not once it's booked, so pick a window when someone can hand the parcel over. Windows are up to 12 hours long, any day in the next 30.",
+    a: "Not once it’s booked, so pick a window when someone can hand the parcel over. Windows are up to 12 hours long, any day in the next 30.",
   },
   {
     q: "How do I reach support?",
@@ -424,9 +423,7 @@ export function FinalCta() {
             </Magnetic>
             <Magnetic>
               <Button asChild size="lg" variant="outline" className="border-ink/30 bg-transparent text-brand-foreground hover:bg-ink/10">
-                <Link href="/contact">
-                  <CircleDollarSign aria-hidden="true" /> Talk to us
-                </Link>
+                <Link href="/contact">Talk to us</Link>
               </Button>
             </Magnetic>
           </div>

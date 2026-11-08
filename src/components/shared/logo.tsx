@@ -31,9 +31,11 @@ interface LogoProps {
   tone?: "default" | "inverse";
   showWordmark?: boolean;
   className?: string;
+  /** Next.js link prefetch; dashboards pass false so the marketing home page isn't preloaded there. */
+  prefetch?: boolean;
 }
 
-export function Logo({ href = "/", tone = "default", showWordmark = true, className }: LogoProps) {
+export function Logo({ href = "/", tone = "default", showWordmark = true, className, prefetch }: LogoProps) {
   const content = (
     <>
       <LogoMark />
@@ -54,7 +56,7 @@ export function Logo({ href = "/", tone = "default", showWordmark = true, classN
 
   if (href === null) return <span className={classes}>{content}</span>;
   return (
-    <Link href={href} className={cn(classes, "outline-none focus-visible:ring-3 focus-visible:ring-ring/50")} aria-label="Carrivo home">
+    <Link href={href} prefetch={prefetch} className={cn(classes, "outline-none focus-visible:ring-3 focus-visible:ring-ring/50")} aria-label="Carrivo home">
       {content}
     </Link>
   );

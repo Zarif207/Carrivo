@@ -69,40 +69,42 @@ const HUB_PATH = ["PICKED_UP", "AT_ORIGIN_HUB", "IN_TRANSIT", "AT_DESTINATION_HU
 export function HowItWorks() {
   return (
     <section id="how-it-works" aria-labelledby="how-heading" className="py-16 sm:py-20 lg:py-0">
-      <div data-steps-pin="" className="lg:flex lg:min-h-dvh lg:items-center lg:py-20">
+      <div data-steps-pin="" className="lg:flex lg:min-h-dvh lg:items-center lg:py-14">
         <Container>
-          <div className="mb-10 max-w-2xl space-y-3 lg:mb-12">
-            <h2 id="how-heading" className="font-display text-display-2">
-              How it works
-            </h2>
-            <p className="text-lg text-muted-foreground">Five steps from booking to the receiver&rsquo;s door.</p>
-          </div>
-
           <div className="grid gap-10 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16">
-            <ol className="space-y-3" data-steps-list="">
-              {STEPS.map((step, i) => (
-                <li
-                  key={step.title}
-                  data-step={i}
-                  data-reveal=""
-                  className="group flex gap-4 rounded-2xl p-4 transition-colors duration-300 data-[active=true]:bg-card data-[active=true]:shadow-card sm:p-5"
-                >
-                  <span
-                    className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary transition-colors duration-300 group-data-[active=true]:bg-brand group-data-[active=true]:text-brand-foreground [&_svg]:size-5"
-                    aria-hidden="true"
+            <div>
+              <div className="mb-8 max-w-2xl space-y-3">
+                <h2 id="how-heading" className="font-display text-display-2">
+                  How it works
+                </h2>
+                <p className="text-lg text-muted-foreground">Five steps from booking to the receiver&rsquo;s door.</p>
+              </div>
+              <ol className="space-y-2" data-steps-list="">
+                {STEPS.map((step, i) => (
+                  <li
+                    key={step.title}
+                    data-step={i}
+                    data-reveal=""
+                    className="group flex gap-4 rounded-2xl p-4 transition-colors duration-300 data-[active=true]:bg-card data-[active=true]:shadow-card sm:p-5 lg:py-3.5"
                   >
-                    {step.icon}
-                  </span>
-                  <div className="space-y-1.5">
-                    <h3 className="text-lg font-bold tracking-tight">
-                      <span className="mr-2 text-muted-foreground tabular">{i + 1}.</span>
-                      {step.title}
-                    </h3>
-                    <p className="text-muted-foreground">{step.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+                    <span
+                      className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary transition-colors duration-300 group-data-[active=true]:bg-brand group-data-[active=true]:text-brand-foreground [&_svg]:size-5"
+                      aria-hidden="true"
+                    >
+                      {step.icon}
+                    </span>
+                    <div className="space-y-1.5">
+                      <h3 className="text-lg font-bold tracking-tight">
+                        <span className="mr-2 text-muted-foreground tabular">{i + 1}.</span>
+                        {step.title}
+                      </h3>
+                      {/* While pinned, steps not yet reached show one line (the full text stays in the DOM). */}
+                      <p className="text-muted-foreground group-data-[active=false]:line-clamp-1">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
 
             {/* Decorative screens, one per step (large screens only). */}
             <div aria-hidden="true" className="relative hidden aspect-[5/4] overflow-hidden rounded-panel bg-ink text-ink-foreground shadow-overlay lg:block">

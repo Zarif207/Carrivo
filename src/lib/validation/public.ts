@@ -1,13 +1,11 @@
 import { z } from "zod";
 import { SERVICE_TYPES } from "@/types";
+import { TRACKING_ID_PATTERN } from "@/lib/tracking-id";
 import { MAX_WEIGHT_LB } from "@/lib/weight";
 
+export { TRACKING_ID_PATTERN, normalizeTrackingId } from "@/lib/tracking-id";
+
 /* Zod rules for the public forms. They mirror the API's validation (docs/API_CONTRACT.md). */
-
-/** CRV-YYMMDD-XXXXXX, case-insensitive (the API upper-cases on lookup). */
-export const TRACKING_ID_PATTERN = /^CRV-\d{6}-[A-Z0-9]{6}$/i;
-
-export const normalizeTrackingId = (value: string): string => value.trim().toUpperCase();
 
 export const trackingSchema = z.object({
   trackingId: z
