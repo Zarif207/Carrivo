@@ -96,6 +96,7 @@ Build the customer area using real API data:
 ```
 **Done when:** a new customer can create a shipment, see it in the list, open it, and cancel it; all filters survive a refresh.
 
+
 ## Phase 5: Stripe payments
 
 ```
