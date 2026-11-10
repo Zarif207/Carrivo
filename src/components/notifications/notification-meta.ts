@@ -1,7 +1,24 @@
-import { BadgeCheck, Bike, CircleAlert, CircleCheckBig, PackageCheck, PackagePlus, RotateCcw, UserCheck, type LucideIcon } from "lucide-react";
+import {
+  BadgeCheck,
+  BadgeX,
+  Bell,
+  Bike,
+  CircleAlert,
+  CircleCheckBig,
+  MapPinned,
+  PackageCheck,
+  PackagePlus,
+  PackageX,
+  RotateCcw,
+  TriangleAlert,
+  UserCheck,
+  UserPlus,
+  Warehouse,
+  type LucideIcon,
+} from "lucide-react";
 import type { NotificationType } from "@/types";
 
-/** Icon per notification type (the API's eight lifecycle events). */
+/** Icon per notification type: customer/courier lifecycle events and the staff feed. */
 export const NOTIFICATION_ICONS: Record<NotificationType, LucideIcon> = {
   SHIPMENT_CREATED: PackagePlus,
   COURIER_ASSIGNED: UserCheck,
@@ -11,4 +28,13 @@ export const NOTIFICATION_ICONS: Record<NotificationType, LucideIcon> = {
   FAILED_DELIVERY: CircleAlert,
   PAYMENT_RECEIVED: BadgeCheck,
   REFUND_COMPLETED: RotateCcw,
+  SHIPMENT_CANCELLED: PackageX,
+  PAYMENT_FAILED: BadgeX,
+  REFUND_FAILED: TriangleAlert,
+  ZONE_CHANGED: MapPinned,
+  HUB_CHANGED: Warehouse,
+  COURIER_ADDED: UserPlus,
 };
+
+/** Icon for a type, with a plain bell for a type a newer API adds before the UI knows it. */
+export const notificationIcon = (type: string): LucideIcon => NOTIFICATION_ICONS[type as NotificationType] ?? Bell;

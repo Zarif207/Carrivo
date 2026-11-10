@@ -43,7 +43,7 @@ Defined in `src/types/enums.ts` as readonly tuples (usable with `z.enum`).
 | `VehicleType` | `BICYCLE`, `MOTORCYCLE`, `CAR`, `VAN`, `TRUCK` |
 | `PickupStatus` | `SCHEDULED`, `COMPLETED`, `CANCELLED` |
 | `EarningStatus` | `PENDING`, `PAID` |
-| `NotificationType` | `SHIPMENT_CREATED`, `COURIER_ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_DELIVERY`, `PAYMENT_RECEIVED`, `REFUND_COMPLETED` |
+| `NotificationType` | `SHIPMENT_CREATED`, `COURIER_ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_DELIVERY`, `PAYMENT_RECEIVED`, `REFUND_COMPLETED`; staff feed only: `SHIPMENT_CANCELLED`, `PAYMENT_FAILED`, `REFUND_FAILED`, `ZONE_CHANGED`, `HUB_CHANGED`, `COURIER_ADDED` |
 | `AuditEntityType` | `ZONE`, `HUB`, `PRICING_RULE`, `SHIPMENT`, `COURIER_PROFILE`, `USER`, `PAYMENT` **(src; Postman lists only the first 6)** |
 | `AuditAction` | 36 values, see `AUDIT_ACTIONS` in `src/types/enums.ts` **(src)** |
 | Google `?error=` | `account_exists`, `account_deactivated`, `google_cancelled`, `google_failed` |
@@ -188,7 +188,7 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 
 ## 7. Admin endpoints (`ADMIN`; reads also `ADMIN_VIEWER`)
 
-**ADMIN_VIEWER** may call every admin **GET** below (dashboard stats, users, shipments, payments, audit logs, zones, hubs, pricing rules, couriers) and gets the same data as ADMIN. Every POST/PUT/PATCH/DELETE, anywhere in the API, answers **403 `This account is read-only`**, including `PATCH /users/me`, `POST /auth/change-password` and marking notifications read; only `POST /auth/logout` and `POST /auth/refresh-token` are allowed. `GET /payments/verify` is not allowed (it can write). The frontend hides every write control for this role, shows a "View-only access" banner, and the BFF refuses its writes before they reach the API.
+**ADMIN_VIEWER** may call every admin **GET** below (dashboard stats, users, shipments, payments, audit logs, zones, hubs, pricing rules, couriers) and gets the same data as ADMIN. Every POST/PUT/PATCH/DELETE, anywhere in the API, answers **403 `This account is read-only`**, including `PATCH /users/me`, `POST /auth/change-password` and `DELETE /notifications/:id`; only `POST /auth/logout`, `POST /auth/refresh-token`, `PATCH /notifications/:id/read` and `PATCH /notifications/read-all` are allowed (its own notification read state). The BFF mirrors this with `readOnlyMayWrite()` in `src/lib/auth/permissions.ts`. `GET /payments/verify` is not allowed (it can write). The frontend hides every write control for this role, shows a "View-only access" banner, and the BFF refuses its writes before they reach the API.
 
 
 | Method | Path | Body / query | Response `data` / notes |
@@ -229,11 +229,17 @@ Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLb
 
 | Method | Path | Query | Response `data` |
 |---|---|---|---|
-| GET | `/notifications/my` | `unread` true\|false (omit = all), `page`, `limit`, `sortOrder` | `AppNotification[] { id, type, title, message, readAt, isRead, createdAt, shipment{id, trackingId} \| null }` + meta. `meta.total` with `unread=true` gives the badge count |
+| GET | `/notifications/my` | `unread` true\|false (omit = all), `page`, `limit`, `sortOrder` | `AppNotification[] { id, type, title, message, link, readAt, isRead, createdAt, shipment{id, trackingId} \| null }` + meta |
+| GET | `/notifications/unread-count` | | `{ unread: number, total: number }` (the bell, nav badge and courier card; polled every 30 s while the tab is visible) |
 | PATCH | `/notifications/:id/read` | | `AppNotification` (keeps the original `readAt`) |
 | PATCH | `/notifications/read-all` | | `{ updated: number }` |
+| DELETE | `/notifications/:id` | | `{ id }` |
 
-`ADMIN_VIEWER` can read its notifications but both PATCH calls answer 403 (read-only), so the UI hides "mark read" for that role.
+All five are scoped to the caller: another user's id answers 404. `ADMIN_VIEWER` may list, count and mark read (both PATCH calls); `DELETE` answers 403, so the UI hides Delete for that role (`canDeleteNotifications`).
+
+`link` is an in-app path (e.g. `/admin/shipments/<id>`, `/admin/payments?status=FAILED`, `/admin/settings?tab=hubs`, `/admin/users`; customer rows use `/shipments/<id>`, which redirects by role), or `null` on older rows. The UI follows it only through `safeInternalPath()` (`src/lib/notifications/link.ts`): a root-relative, same-origin path, never `//host`, a backslash, a scheme or control characters. Clicking a row marks it read and navigates there with the router; with no (safe) link it only marks it read.
+
+ADMIN and ADMIN_VIEWER receive the staff feed at `/admin/notifications`: shipment booked, payment received, delivered, delivery failed, cancelled (link `/admin/shipments/<id>`), payment failed, refund completed, refund failed (`/admin/payments?…`), zone and hub changes (`/admin/settings?tab=zones|hubs`) and courier added (`/admin/users`).
 
 Render `message` as **plain text**: it contains user-entered text (the example includes `<b>`).
 

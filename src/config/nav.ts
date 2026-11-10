@@ -64,6 +64,7 @@ const ADMIN_NAV: NavItem[] = [
   { title: "Shipments", href: "/admin/shipments", icon: Package, primary: true },
   { title: "Users", href: "/admin/users", icon: Users, primary: true },
   { title: "Payments", href: "/admin/payments", icon: CreditCard, primary: true },
+  { title: "Notifications", href: "/admin/notifications", icon: Bell },
   { title: "Reports", href: "/admin/reports", icon: FileClock },
   { title: "Settings", href: "/admin/settings", icon: Settings2 },
   { title: "Profile", href: "/admin/profile", icon: UserRound },
@@ -96,12 +97,12 @@ export function findActiveHref(items: NavItem[], pathname: string): string | und
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
-/** Full notifications list per role (admins have none; the bell still works for them). */
+/** Full notifications list per role: the bell's "View all" target and the nav item carrying the unread badge. */
 export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
   CUSTOMER: "/dashboard/notifications",
   COURIER: "/courier/notifications",
-  ADMIN: null,
-  ADMIN_VIEWER: null,
+  ADMIN: "/admin/notifications",
+  ADMIN_VIEWER: "/admin/notifications",
 };
 
 /** The public site's home page (reachable from every dashboard). */

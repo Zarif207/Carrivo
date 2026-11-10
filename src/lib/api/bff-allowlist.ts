@@ -75,8 +75,10 @@ export const BFF_RULES: readonly Rule[] = [
 
   // Notifications
   r("GET", "/notifications/my"),
+  r("GET", "/notifications/unread-count"),
   r("PATCH", "/notifications/read-all"),
   r("PATCH", `/notifications/${ID}/read`),
+  r("DELETE", `/notifications/${ID}`),
 ];
 
 /** The matching rule, or null when the call is not allowed. */

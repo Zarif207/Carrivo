@@ -55,6 +55,13 @@ export const NOTIFICATION_TYPES = [
   "FAILED_DELIVERY",
   "PAYMENT_RECEIVED",
   "REFUND_COMPLETED",
+  // Staff only (ADMIN and ADMIN_VIEWER feed)
+  "SHIPMENT_CANCELLED",
+  "PAYMENT_FAILED",
+  "REFUND_FAILED",
+  "ZONE_CHANGED",
+  "HUB_CHANGED",
+  "COURIER_ADDED",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

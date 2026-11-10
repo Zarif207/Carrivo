@@ -84,7 +84,9 @@ export const endpoints = {
 
   notifications: {
     mine: "/notifications/my",
+    unreadCount: "/notifications/unread-count",
     readAll: "/notifications/read-all",
     read: (id: string) => `/notifications/${seg(id)}/read`,
+    remove: (id: string) => `/notifications/${seg(id)}`,
   },
 } as const;
