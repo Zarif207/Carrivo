@@ -21,19 +21,26 @@ import type { UserProfile } from "@/types";
 
 const FIELDS = new Set(["name", "phone", "address", "image"]);
 
-const toValues = (p: Pick<UserProfile, "name" | "phone" | "address" | "image">): ProfileValues => ({
+// A hidden address starts blank, so a stored line that doesn't parse can't block the save (it's never sent).
+const toValues = (p: Pick<UserProfile, "name" | "phone" | "address" | "image">, withAddress = true): ProfileValues => ({
   name: p.name,
   phone: p.phone ?? "",
-  address: parseUsAddress(p.address),
+  address: parseUsAddress(withAddress ? p.address : null),
   image: p.image ?? "",
 });
 
-export function ProfileForm({ profile }: { profile: UserProfile }) {
+interface ProfileFormProps {
+  profile: UserProfile;
+  /** The address only fills in the pickup address, so staff profiles leave it out (and never send it). */
+  withAddress?: boolean;
+}
+
+export function ProfileForm({ profile, withAddress = true }: ProfileFormProps) {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: toValues(profile),
+    defaultValues: toValues(profile, withAddress),
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -43,12 +50,12 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
         body: {
           name: values.name,
           phone: values.phone || null,
-          address: isEmptyAddress(values.address) ? null : formatUsAddress(values.address),
+          ...(withAddress ? { address: isEmptyAddress(values.address) ? null : formatUsAddress(values.address) } : {}),
           image: values.image || null,
         },
       });
       setUser(toSessionUser(data));
-      form.reset(toValues(data));
+      form.reset(toValues(data, withAddress));
       toast.success("Profile saved");
       router.refresh(); // the shell's name and avatar come from the server
     } catch (error) {
@@ -71,7 +78,9 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           <TextField control={form.control} name="name" label="Full name" autoComplete="name" />
           <TextField control={form.control} name="phone" label="Phone" optional type="tel" inputMode="tel" autoComplete="tel" placeholder={US_PHONE_PLACEHOLDER} />
         </div>
-        <UsAddressFields control={form.control} name="address" legend="Address" optional description="Used as the pickup address when you book." />
+        {withAddress ? (
+          <UsAddressFields control={form.control} name="address" legend="Address" optional description="Used as the pickup address when you book." />
+        ) : null}
         <TextField control={form.control} name="image" label="Photo link" optional type="url" inputMode="url" placeholder="https://" description="A link to a square photo. Leave empty to show your initials." />
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={isSubmitting || !isDirty}>

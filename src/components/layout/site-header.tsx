@@ -1,20 +1,19 @@
 "use client";
 
-// Client: mobile menu sheet, active page/section highlighting, hide-on-scroll with a reading-progress bar,
-// and the signed-in CTA.
-import { LayoutDashboard, Menu } from "lucide-react";
+// Client: mobile menu sheet, active page/section highlighting and hide-on-scroll with a reading-progress bar.
+// The account area (avatar menu or Log in) arrives as server-rendered slots under <Suspense>.
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useCallback, useRef, useState, type ReactNode } from "react";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { PUBLIC_NAV, ROLE_HOME, ROLE_LABEL } from "@/config/nav";
-import { useAuth } from "@/hooks/use-auth";
-import { isStaff } from "@/lib/auth/permissions";
+import { PUBLIC_NAV } from "@/config/nav";
 import { useActiveSection, useScrollChrome } from "@/hooks/use-scroll-chrome";
 import { cn } from "@/lib/utils";
+import { HeaderSheetContext } from "./header-account-client";
 
 const isActive = (pathname: string | null, href: string) => pathname !== null && (pathname === href || pathname.startsWith(`${href}/`));
 
@@ -71,14 +70,19 @@ function Nav(props: Omit<NavListProps, "pathname">) {
   );
 }
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  /** Avatar menu or Log in / Send a parcel, beside the theme toggle. */
+  account: ReactNode;
+  /** The same for the mobile menu sheet. */
+  mobileAccount: ReactNode;
+}
+
+export function SiteHeader({ account, mobileAccount }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
   const headerRef = useRef<HTMLElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const hidden = useScrollChrome({ headerRef, progressRef, pinned: open });
-  // Signed-in visitors (e.g. after "Back to home") get a way back to their dashboard instead of "Log in".
-  const { user } = useAuth();
-  const dashboard = user ? { href: ROLE_HOME[user.role], label: isStaff(user.role) ? "Admin console" : `${ROLE_LABEL[user.role]} dashboard` } : null;
 
   return (
     <header
@@ -99,22 +103,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
-          {dashboard ? (
-            <Button asChild className="hidden sm:inline-flex">
-              <Link href={dashboard.href}>
-                <LayoutDashboard aria-hidden="true" /> {dashboard.label}
-              </Link>
-            </Button>
-          ) : (
-            <>
-              <Button asChild variant="ghost" className="hidden sm:inline-flex">
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button asChild className="hidden sm:inline-flex">
-                <Link href="/register">Send a parcel</Link>
-              </Button>
-            </>
-          )}
+          {account}
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -132,29 +121,10 @@ export function SiteHeader() {
                 <SheetDescription className="sr-only">Site navigation</SheetDescription>
               </SheetHeader>
               <nav aria-label="Mobile" className="flex-1 overflow-y-auto p-3">
-                <Nav variant="mobile" onNavigate={() => setOpen(false)} />
+                <Nav variant="mobile" onNavigate={close} />
               </nav>
               <div className="grid gap-2 border-t border-border p-4">
-                {dashboard ? (
-                  <Button asChild size="lg">
-                    <Link href={dashboard.href} onClick={() => setOpen(false)}>
-                      <LayoutDashboard aria-hidden="true" /> {dashboard.label}
-                    </Link>
-                  </Button>
-                ) : (
-                  <>
-                    <Button asChild size="lg">
-                      <Link href="/register" onClick={() => setOpen(false)}>
-                        Send a parcel
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="lg">
-                      <Link href="/login" onClick={() => setOpen(false)}>
-                        Log in
-                      </Link>
-                    </Button>
-                  </>
-                )}
+                <HeaderSheetContext.Provider value={close}>{mobileAccount}</HeaderSheetContext.Provider>
               </div>
             </SheetContent>
           </Sheet>

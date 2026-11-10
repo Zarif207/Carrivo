@@ -66,8 +66,11 @@ export function PriceTeaserSkeleton() {
   );
 }
 
+/** Two columns beside the coverage map; four in a row elsewhere. */
+const FACT_GRID = { 2: "grid gap-4 sm:grid-cols-2", 4: "grid gap-4 sm:grid-cols-2 lg:grid-cols-4" } as const;
+
 /** Facts on the home page: zone and hub counts come from the public API; the rest are product rules. */
-export async function NetworkFacts() {
+export async function NetworkFacts({ columns = 4 }: { columns?: keyof typeof FACT_GRID }) {
   await connection();
   let zones: Zone[] | null = null;
   let hubs: Hub[] | null = null;
@@ -89,7 +92,7 @@ export async function NetworkFacts() {
   ];
 
   return (
-    <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <dl className={FACT_GRID[columns]}>
       {facts.map((fact) => (
         <div key={fact.label} className="rounded-2xl bg-white/5 p-6 ring-1 ring-sidebar-border">
           <dt className="sr-only">{fact.label}</dt>
@@ -104,9 +107,9 @@ export async function NetworkFacts() {
   );
 }
 
-export function NetworkFactsSkeleton() {
+export function NetworkFactsSkeleton({ columns = 4 }: { columns?: keyof typeof FACT_GRID }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={FACT_GRID[columns]}>
       {Array.from({ length: 4 }, (_, i) => (
         <div key={i} className="h-[10.5rem] rounded-2xl bg-white/5 p-6 ring-1 ring-sidebar-border">
           <Skeleton className="h-12 w-16 bg-white/10" />

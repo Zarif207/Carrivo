@@ -1,7 +1,7 @@
 "use client";
 
-// Client: dropdown state; logout opens the shell's confirmation dialog.
-import { House, LogOut, UserRound } from "lucide-react";
+// Client: dropdown state; logout opens the confirmation dialog of the shell or the public header.
+import { House, LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PUBLIC_HOME, ROLE_LABEL, ROLE_PROFILE } from "@/config/nav";
+import { PUBLIC_HOME, ROLE_HOME, ROLE_LABEL, ROLE_PROFILE } from "@/config/nav";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types";
@@ -37,7 +37,13 @@ export function UserAvatar({ user, className }: { user: Pick<ShellUser, "name" |
   );
 }
 
-export function UserMenu({ user }: { user: ShellUser }) {
+interface UserMenuProps {
+  user: ShellUser;
+  /** "dashboard" (default) links back to the public site; "public" (the site header) links to the role's dashboard. */
+  context?: "dashboard" | "public";
+}
+
+export function UserMenu({ user, context = "dashboard" }: UserMenuProps) {
   const requestLogout = useRequestLogout();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const profileHref = ROLE_PROFILE[user.role];
@@ -58,18 +64,25 @@ export function UserMenu({ user }: { user: ShellUser }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {profileHref ? (
+          {context === "public" ? (
             <DropdownMenuItem asChild>
-              <Link href={profileHref}>
-                <UserRound /> Profile
+              <Link href={ROLE_HOME[user.role]}>
+                <LayoutDashboard /> Dashboard
               </Link>
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem asChild>
-            <Link href={PUBLIC_HOME} prefetch={false}>
-              <House /> Back to home
+            <Link href={profileHref}>
+              <UserRound /> Profile
             </Link>
           </DropdownMenuItem>
+          {context === "dashboard" ? (
+            <DropdownMenuItem asChild>
+              <Link href={PUBLIC_HOME} prefetch={false}>
+                <House /> Back to home
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

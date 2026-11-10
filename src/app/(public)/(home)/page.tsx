@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { HomeMotion } from "@/components/home/home-motion";
+import { CoverageMap, CoverageMapSkeleton } from "@/components/home/illustrations/coverage-map";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq, FinalCta, Guarantees, Roles, Security, Services, TrackingExplainer, TrustStrip } from "@/components/home/sections";
 import {
@@ -42,9 +43,14 @@ export default function HomePage() {
       {/* Coverage: zones and hubs read live from the public API (cached for hours). */}
       <Section id="coverage" tone="dark" title="Where we deliver" intro="Our zones and sorting hubs, read live from the Carrivo network.">
         <div className="space-y-6">
-          <Suspense fallback={<NetworkFactsSkeleton />}>
-            <NetworkFacts />
-          </Suspense>
+          <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+            <Suspense fallback={<CoverageMapSkeleton />}>
+              <CoverageMap />
+            </Suspense>
+            <Suspense fallback={<NetworkFactsSkeleton columns={2} />}>
+              <NetworkFacts columns={2} />
+            </Suspense>
+          </div>
           <Suspense fallback={<CoverageSkeleton />}>
             <CoverageList showCta={false} />
           </Suspense>

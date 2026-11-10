@@ -40,9 +40,9 @@ export function DashboardPreview({ className }: { className?: string }) {
                 <p className="text-xs font-semibold text-muted-foreground">Customer account</p>
                 <p className="text-xl font-extrabold tracking-tight">Your shipments</p>
               </div>
-              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand px-3.5 text-sm font-semibold text-brand-foreground">
+              <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-2.5 text-sm font-semibold whitespace-nowrap text-brand-foreground sm:px-3.5">
                 <Plus className="size-4" aria-hidden="true" />
-                New shipment
+                <span className="hidden sm:inline">New shipment</span>
               </span>
             </div>
 

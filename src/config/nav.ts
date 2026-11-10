@@ -51,12 +51,12 @@ export const ROLE_LABEL: Record<Role, string> = {
   ADMIN_VIEWER: "Admin (view-only)",
 };
 
-/** Profile page per role (admins have none). */
-export const ROLE_PROFILE: Record<Role, string | null> = {
+/** Profile page per role (the viewer's is read-only). */
+export const ROLE_PROFILE: Record<Role, string> = {
   CUSTOMER: "/dashboard/profile",
   COURIER: "/courier/profile",
-  ADMIN: null,
-  ADMIN_VIEWER: null,
+  ADMIN: "/admin/profile",
+  ADMIN_VIEWER: "/admin/profile",
 };
 
 const ADMIN_NAV: NavItem[] = [
@@ -66,6 +66,7 @@ const ADMIN_NAV: NavItem[] = [
   { title: "Payments", href: "/admin/payments", icon: CreditCard, primary: true },
   { title: "Reports", href: "/admin/reports", icon: FileClock },
   { title: "Settings", href: "/admin/settings", icon: Settings2 },
+  { title: "Profile", href: "/admin/profile", icon: UserRound },
 ];
 
 export const DASHBOARD_NAV: Record<Role, NavItem[]> = {

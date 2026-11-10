@@ -10,18 +10,19 @@ import {
   Lock,
   RotateCcw,
   ShieldCheck,
-  Timer,
   Truck,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { DashboardPreview } from "@/components/public/dashboard-preview";
 import { Container, Section } from "@/components/public/section";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/config/site";
-import { SHIPMENT_MAIN_PATH, SHIPMENT_STATUS_META, TONE_CLASSES } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { CtaVan } from "./illustrations/cta-van";
+import { ServiceScene } from "./illustrations/service-scenes";
+import { TrackingPhone } from "./illustrations/tracking-phone";
 import { Magnetic } from "./magnetic";
 import { RoleTabs, type RoleTab } from "./role-tabs";
 
@@ -61,24 +62,24 @@ export function TrustStrip() {
 
 const SERVICES = [
   {
-    icon: <Truck />,
+    service: "STANDARD",
     title: "Standard",
     body: "The everyday service for parcels that aren’t urgent, within a metro zone or between zones.",
     note: "Within a zone and between zones",
   },
   {
-    icon: <Zap />,
+    service: "EXPRESS",
     title: "Express",
     body: "Our faster service, priced higher, for parcels that need to arrive sooner.",
     note: "Within a zone and between zones",
   },
   {
-    icon: <Timer />,
+    service: "SAME_DAY",
     title: "Same day",
     body: "Collected and handed over on the same day, inside one metro zone. Offered only on routes with a same-day price; the quote tells you.",
     note: "Within one zone only",
   },
-];
+] as const;
 
 export function Services() {
   return (
@@ -104,15 +105,7 @@ export function Services() {
               i === 1 ? "bg-ink text-ink-foreground" : "bg-card text-card-foreground",
             )}
           >
-            <span
-              className={cn(
-                "grid size-12 place-items-center rounded-full [&_svg]:size-6",
-                i === 1 ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground",
-              )}
-              aria-hidden="true"
-            >
-              {service.icon}
-            </span>
+            <ServiceScene service={service.service} className="-ml-1" />
             <h3 className="font-display text-2xl tracking-tight">{service.title}</h3>
             <p className={i === 1 ? "text-sidebar-muted" : "text-muted-foreground"}>{service.body}</p>
             <p className={cn("mt-auto border-t pt-4 text-sm font-semibold", i === 1 ? "border-sidebar-border" : "border-border")}>{service.note}</p>
@@ -126,50 +119,14 @@ export function Services() {
 /* ───────────── Live tracking and proof of delivery ───────────── */
 
 export function TrackingExplainer() {
-  // The real status path (same labels as the tracking page), shown as an illustration.
-  const path = SHIPMENT_MAIN_PATH.slice(3);
-  const current = 2; // "In transit" in the illustration
-
   return (
     <Section
       id="tracking"
       title="Live tracking, with proof at the door"
       intro="Every status change is a timestamped stop. Anyone with the tracking ID can follow it; only you see the details."
     >
-      <div data-nav-section="/track" className="grid gap-6 lg:grid-cols-2">
-        <div data-reveal="" className="rounded-2xl bg-card p-6 shadow-card sm:p-8" aria-label="Example tracking timeline" role="group">
-          <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span className="font-id font-semibold">CRV-261101-SEED05</span>
-            <span className="text-muted-foreground">Example timeline</span>
-          </p>
-          <ol className="relative space-y-5 before:absolute before:top-2 before:bottom-2 before:left-[0.9375rem] before:w-px before:bg-border">
-            {path.map((status, i) => {
-              const meta = SHIPMENT_STATUS_META[status];
-              const Icon = meta.icon;
-              const done = i < current;
-              const now = i === current;
-              return (
-                <li key={status} className="relative flex gap-4">
-                  <span
-                    className={cn(
-                      "relative z-10 grid size-8 shrink-0 place-items-center rounded-full ring-4 ring-card",
-                      now ? "bg-brand text-brand-foreground" : done ? TONE_CLASSES[meta.tone] : "bg-secondary text-muted-foreground",
-                    )}
-                  >
-                    <Icon className="size-4" aria-hidden="true" />
-                  </span>
-                  <div className="pt-1">
-                    <p className={cn("font-semibold", !done && !now && "text-muted-foreground")}>
-                      {meta.label}
-                      {now ? <span className="ml-2 text-sm font-medium text-brand-text">Current stop</span> : null}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{meta.description}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+      <div data-nav-section="/track" className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
+        <TrackingPhone />
 
         <div className="grid gap-4">
           {[
@@ -299,6 +256,7 @@ const ROLES: RoleTab[] = [
       "Cancel before pickup with an automatic refund",
       "Payment history and notifications in one place",
     ],
+    preview: <DashboardPreview />,
   },
   {
     id: "courier",
@@ -312,6 +270,7 @@ const ROLES: RoleTab[] = [
       "Earnings by day and month, with payout status",
       "Go available or unavailable in one switch",
     ],
+    preview: { lazy: "courier" },
   },
   {
     id: "admin",
@@ -325,6 +284,7 @@ const ROLES: RoleTab[] = [
       "Payments with refund retry when one is stuck",
       "Audit log with filters and CSV export",
     ],
+    preview: { lazy: "admin" },
   },
 ];
 
@@ -404,29 +364,32 @@ export function FinalCta() {
       <Container>
         <div
           data-reveal=""
-          className="relative isolate overflow-hidden rounded-panel bg-brand p-8 text-brand-foreground shadow-raised sm:p-12 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:p-16"
+          className="relative isolate grid items-center gap-10 overflow-hidden rounded-panel bg-brand p-8 text-brand-foreground shadow-raised sm:p-12 lg:grid-cols-[1.25fr_1fr] lg:gap-12 lg:p-16"
         >
           <div aria-hidden="true" className="pointer-events-none absolute -right-24 -bottom-32 -z-10 size-96 rounded-full bg-white/20 blur-3xl" />
-          <div className="max-w-2xl space-y-3">
-            <h2 id="cta-heading" className="font-display text-display-2">
-              Your first parcel is a few minutes away.
-            </h2>
-            <p className="text-lg font-medium">Create a free account, get a price, and pay only for what you send.</p>
+          <div className="space-y-8">
+            <div className="max-w-2xl space-y-3">
+              <h2 id="cta-heading" className="font-display text-display-2">
+                Your first parcel is a few minutes away.
+              </h2>
+              <p className="text-lg font-medium">Create a free account, get a price, and pay only for what you send.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Magnetic>
+                <Button asChild size="lg" className="bg-ink text-ink-foreground hover:bg-ink/90">
+                  <Link href="/register">
+                    Create an account <ArrowRight aria-hidden="true" />
+                  </Link>
+                </Button>
+              </Magnetic>
+              <Magnetic>
+                <Button asChild size="lg" variant="outline" className="border-ink/30 bg-transparent text-brand-foreground hover:bg-ink/10 hover:text-brand-foreground dark:border-ink/30 dark:bg-transparent dark:hover:bg-ink/10">
+                  <Link href="/contact">Talk to us</Link>
+                </Button>
+              </Magnetic>
+            </div>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3 lg:mt-0 lg:shrink-0">
-            <Magnetic>
-              <Button asChild size="lg" className="bg-ink text-ink-foreground hover:bg-ink/90">
-                <Link href="/register">
-                  Create an account <ArrowRight aria-hidden="true" />
-                </Link>
-              </Button>
-            </Magnetic>
-            <Magnetic>
-              <Button asChild size="lg" variant="outline" className="border-ink/30 bg-transparent text-brand-foreground hover:bg-ink/10">
-                <Link href="/contact">Talk to us</Link>
-              </Button>
-            </Magnetic>
-          </div>
+          <CtaVan className="mx-auto max-w-sm lg:max-w-none" />
         </div>
       </Container>
     </section>

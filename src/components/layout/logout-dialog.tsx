@@ -1,17 +1,17 @@
 "use client";
 
-// Client: one logout confirmation per dashboard, opened from the sidebar, the user menu or the mobile sheet.
+// Client: one logout confirmation per dashboard (and in the public header's account menus), opened from the sidebar, a user menu or a mobile sheet.
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { useAuth } from "@/hooks/use-auth";
+import { useLogout } from "@/hooks/use-auth";
 
 /** Opens the dialog; `returnTo` gets focus back when it closes (the control the user acted on). */
 type RequestLogout = (returnTo?: HTMLElement | null) => void;
 
 const LogoutContext = createContext<RequestLogout | null>(null);
 
-/** Opens the logout confirmation. Must be used inside <LogoutProvider> (the dashboard shell). */
+/** Opens the logout confirmation. Must be used inside <LogoutProvider> (the dashboard shell or the public header). */
 export function useRequestLogout(): RequestLogout {
   const request = useContext(LogoutContext);
   if (!request) throw new Error("useRequestLogout must be used inside LogoutProvider");
@@ -19,7 +19,7 @@ export function useRequestLogout(): RequestLogout {
 }
 
 export function LogoutProvider({ children }: { children: ReactNode }) {
-  const { logout } = useAuth();
+  const logout = useLogout();
   const [open, setOpen] = useState(false);
   // Where focus returns on close. Callers pass a control that outlives the dialog (a menu item
   // unmounts with its menu, so the user menu passes its trigger); otherwise the focused element.

@@ -1,5 +1,5 @@
+import { PublicSiteHeader } from "@/components/layout/public-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 
 export default function PublicLayout({ children }: LayoutProps<"/">) {
@@ -16,7 +16,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       >
         Skip to content
       </a>
-      <SiteHeader />
+      <PublicSiteHeader />
       <main id="main" className="flex-1">
         {children}
       </main>

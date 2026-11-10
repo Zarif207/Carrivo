@@ -60,6 +60,30 @@ export interface RegisterInputValues {
 }
 
 /**
+ * Log out without loading the session first (the public header's logout dialog uses this, so it
+ * doesn't add an /api/auth/me request to every public page).
+ *
+ * Throws when /api/auth/logout can't be reached: the cookies are then still set, so the caller
+ * keeps the user signed in (and its dialog open) instead of bouncing off /login back to the dashboard.
+ */
+export function useLogout() {
+  const setUser = useAuthStore((state) => state.setUser);
+  return useCallback(async () => {
+    await postAuth("/api/auth/logout", {});
+    setUser(null);
+    meRequest = null;
+    // The shipment draft holds names, phones and addresses: drop it with the session.
+    try {
+      sessionStorage.removeItem(SHIPMENT_DRAFT_KEY);
+    } catch {
+      // storage unavailable: nothing to clear
+    }
+    // Full replace: drops the client router cache so Back can't show the old dashboard.
+    window.location.replace("/login?reason=logged-out");
+  }, [setUser]);
+}
+
+/**
  * Session state and actions for client components. Sign-in calls go to /api/auth/*, which set the
  * httpOnly cookies; after success we do a full navigation so every server component re-renders
  * with the new session.
@@ -107,23 +131,7 @@ export function useAuth() {
     [finishSignIn],
   );
 
-  /**
-   * Throws when /api/auth/logout can't be reached: the cookies are then still set, so the caller
-   * keeps the user signed in (and its dialog open) instead of bouncing off /login back to the dashboard.
-   */
-  const logout = useCallback(async () => {
-    await postAuth("/api/auth/logout", {});
-    setUser(null);
-    meRequest = null;
-    // The shipment draft holds names, phones and addresses: drop it with the session.
-    try {
-      sessionStorage.removeItem(SHIPMENT_DRAFT_KEY);
-    } catch {
-      // storage unavailable: nothing to clear
-    }
-    // Full replace: drops the client router cache so Back can't show the old dashboard.
-    window.location.replace("/login?reason=logged-out");
-  }, [setUser]);
+  const logout = useLogout();
 
   /** Better Auth's response is reduced to { changed } by /api/auth/change-password (no token reaches the browser). */
   const changePassword = useCallback(

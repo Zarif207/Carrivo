@@ -1,8 +1,8 @@
 import { Compass } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicSiteHeader } from "@/components/layout/public-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
 import { Container } from "@/components/public/section";
 import { TrackingForm } from "@/components/public/tracking-form";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Page not found", robots: { index: fa
 export default function NotFound() {
   return (
     <>
-      <SiteHeader />
+      <PublicSiteHeader />
       <main id="main" className="flex-1 py-20 sm:py-24">
         <Container className="max-w-2xl space-y-8">
           <span className="grid size-14 place-items-center rounded-full border-2 border-dashed border-border text-muted-foreground">
