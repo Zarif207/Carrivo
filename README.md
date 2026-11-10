@@ -261,7 +261,7 @@ sequenceDiagram
     BFF-->>U: rewritten cookies
   end
   BFF->>API: request with the Bearer token
-  Note over U,API: A 401 triggers one shared POST /api/auth/refresh and one retry; after that the cookies are cleared and the visitor lands on /login with a notice.
+  Note over U,API: A 401 triggers one shared POST /api/auth/refresh and one retry, after that the cookies are cleared and the visitor lands on /login with a notice.
 ```
 
 - **BFF:** client components never see the token; they call the same origin, and the BFF attaches it, forwards the visitor's IP with a shared header so the API rate-limits per visitor, and refuses every Admin Viewer write with 403.
