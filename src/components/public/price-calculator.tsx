@@ -9,34 +9,23 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { estimatePrice, type EstimateResult } from "@/app/(public)/pricing/actions";
 import { NumberField, SelectField } from "@/components/shared/form-fields";
-import { SegmentedControl } from "@/components/shared/segmented-control";
+import { ServiceField } from "@/components/shared/service-field";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney, formatWeight } from "@/lib/format";
+import { describePriceProblem, serviceLabel } from "@/lib/pricing/services";
+import { sortZones, zoneOptions } from "@/lib/zones";
 import { estimateSchema, type EstimateFormValues, type EstimateValues } from "@/lib/validation/public";
-import type { ServiceType, Zone } from "@/types";
-
-export const SERVICE_OPTIONS = [
-  { value: "STANDARD", label: "Standard" },
-  { value: "EXPRESS", label: "Express" },
-  { value: "SAME_DAY", label: "Same day" },
-] as const satisfies readonly { value: ServiceType; label: string }[];
-
-const SERVICE_HINTS: Record<ServiceType, string> = {
-  STANDARD: "The everyday option for parcels that aren't urgent.",
-  EXPRESS: "Faster and higher priced, for parcels that need to arrive sooner.",
-  SAME_DAY: "Picked up and delivered the same day, within one zone only.",
-};
-
-const serviceLabel = (value: ServiceType) => SERVICE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+import type { Zone } from "@/types";
 
 interface Quote {
   input: EstimateValues;
   result: EstimateResult;
 }
 
-export function PriceCalculator({ zones }: { zones: Zone[] }) {
+export function PriceCalculator({ zones: unsorted }: { zones: Zone[] }) {
+  const zones = sortZones(unsorted);
   const form = useForm<EstimateFormValues, unknown, EstimateValues>({
     resolver: zodResolver(estimateSchema),
     defaultValues: {
@@ -46,7 +35,7 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
       serviceType: "STANDARD",
     },
   });
-  const [origin, destination, service] = useWatch({ control: form.control, name: ["originZoneId", "destinationZoneId", "serviceType"] });
+  const [origin, destination] = useWatch({ control: form.control, name: ["originZoneId", "destinationZoneId"] });
 
   const zoneName = (id: string) => zones.find((z) => z.id === id)?.name ?? "Unknown zone";
   const zoneAreas = (id: string) => zones.find((z) => z.id === id)?.description ?? undefined;
@@ -65,8 +54,16 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
     onError: () => toast.error("Pricing is unavailable right now. Try again in a moment."),
   });
 
-  const zoneOptions = zones.map((zone) => ({ value: zone.id, label: zone.name }));
+  const options = zoneOptions(zones);
   const data = quote.data;
+  const problem =
+    data && !data.result.ok && data.result.kind === "unavailable"
+      ? describePriceProblem(data.result.message, {
+          ...data.input,
+          originName: zoneName(data.input.originZoneId),
+          destinationName: zoneName(data.input.destinationZoneId),
+        })
+      : null;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr] lg:gap-8">
@@ -78,26 +75,13 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
           aria-describedby="calculator-note"
         >
           <div className="grid gap-5 sm:grid-cols-2">
-            <SelectField control={form.control} name="originZoneId" label="From" options={zoneOptions} placeholder="Choose a zone" description={zoneAreas(origin)} />
-            <SelectField control={form.control} name="destinationZoneId" label="To" options={zoneOptions} placeholder="Choose a zone" description={zoneAreas(destination)} />
+            <SelectField control={form.control} name="originZoneId" label="From" options={options} placeholder="Choose a zone" description={zoneAreas(origin)} />
+            <SelectField control={form.control} name="destinationZoneId" label="To" options={options} placeholder="Choose a zone" description={zoneAreas(destination)} />
           </div>
 
           <NumberField control={form.control} name="weightLb" label="Weight" suffix="lb" step="0.01" min={0} placeholder="e.g. 5.5" className="sm:max-w-56" />
 
-          <FormField
-            control={form.control}
-            name="serviceType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Service</FormLabel>
-                <FormControl>
-                  <SegmentedControl options={SERVICE_OPTIONS} value={field.value} onValueChange={field.onChange} label="Service" ref={field.ref} fullWidth className="sm:w-auto" />
-                </FormControl>
-                <FormDescription>{SERVICE_HINTS[service]}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <ServiceField />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button type="submit" size="lg" disabled={quote.isPending}>
@@ -125,14 +109,13 @@ export function PriceCalculator({ zones }: { zones: Zone[] }) {
           </div>
         ) : data?.result.ok ? (
           <QuoteResult quote={data} origin={zoneName(data.input.originZoneId)} destination={zoneName(data.input.destinationZoneId)} />
-        ) : data && !data.result.ok && data.result.kind === "unavailable" ? (
+        ) : problem ? (
           <div className="flex flex-1 flex-col justify-center gap-3">
             <span className="grid size-12 place-items-center rounded-full bg-warning-soft text-warning">
               <Info className="size-6" aria-hidden="true" />
             </span>
-            <p className="text-xl font-bold">Not available on this route</p>
-            <p className="text-muted-foreground">{data.result.message}.</p>
-            <p className="text-sm text-muted-foreground">Same-day delivery runs inside one zone, and each service has a weight limit. Try another service or route.</p>
+            <p className="text-xl font-bold">{problem.title}</p>
+            <p className="text-muted-foreground">{problem.message}</p>
           </div>
         ) : (
           <div className="flex flex-1 flex-col justify-center gap-3 text-muted-foreground">

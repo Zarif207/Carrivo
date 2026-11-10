@@ -6,31 +6,21 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { NumberField, SelectField, SwitchField, TextareaField } from "@/components/shared/form-fields";
-import { SegmentedControl } from "@/components/shared/segmented-control";
+import { ServiceField } from "@/components/shared/service-field";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ApiError } from "@/lib/api/errors";
+import { describePriceProblem } from "@/lib/pricing/services";
 import { toEstimateInput, useEstimate } from "@/lib/queries/pricing";
+import { hubOptions, hubsInZone, sortZones, zoneOptions } from "@/lib/zones";
 import { parcelStepSchema, type ParcelStep, type ParcelStepInput } from "@/lib/validation/shipment";
 import { useShipmentDraft } from "@/stores/shipment-draft";
-import type { Hub, ServiceType, Zone } from "@/types";
+import type { Hub, Zone } from "@/types";
 import { EstimateCard } from "./estimate-card";
 import { useServerErrors } from "./use-server-errors";
 
 const FIELDS = ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightLb", "serviceType", "description", "declaredValue", "isFragile"] as const;
-
-const SERVICE_OPTIONS = [
-  { value: "STANDARD", label: "Standard" },
-  { value: "EXPRESS", label: "Express" },
-  { value: "SAME_DAY", label: "Same day" },
-] as const satisfies readonly { value: ServiceType; label: string }[];
-
-const SERVICE_HINTS: Record<ServiceType, string> = {
-  STANDARD: "The everyday option for parcels that aren't urgent.",
-  EXPRESS: "Faster and higher priced, for parcels that need to arrive sooner.",
-  SAME_DAY: "Picked up and delivered the same day, within one zone only.",
-};
 
 interface ParcelStepFormProps {
   zones: Zone[];
@@ -38,7 +28,8 @@ interface ParcelStepFormProps {
   serverErrors?: Record<string, string>;
 }
 
-export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProps) {
+export function ParcelStepForm({ zones: unsorted, hubs, serverErrors }: ParcelStepFormProps) {
+  const zones = useMemo(() => sortZones(unsorted), [unsorted]);
   const draft = useShipmentDraft((s) => s.parcel);
   const saveParcel = useShipmentDraft((s) => s.saveParcel);
   const setStep = useShipmentDraft((s) => s.setStep);
@@ -71,31 +62,33 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
     name: ["originZoneId", "originHubId", "destinationZoneId", "destinationHubId", "weightLb", "serviceType"],
   });
 
-  const originHubs = useMemo(() => hubs.filter((hub) => hub.zone.id === originZoneId && hub.isActive), [hubs, originZoneId]);
-  const destinationHubs = useMemo(() => hubs.filter((hub) => hub.zone.id === destinationZoneId && hub.isActive), [hubs, destinationZoneId]);
+  const originHubs = useMemo(() => hubsInZone(hubs, originZoneId), [hubs, originZoneId]);
+  const destinationHubs = useMemo(() => hubsInZone(hubs, destinationZoneId), [hubs, destinationZoneId]);
 
-  // Keep each hub inside its zone: pick the only hub automatically, clear a hub from another zone.
-  // Only writes when the value actually changes, so it can't loop.
+  // Keep each hub inside its zone: a hub from another zone is replaced by the zone's main hub (first
+  // in the list), which the customer can change. Only writes when the value changes, so it can't loop.
   useEffect(() => {
     if (originHubs.some((h) => h.id === originHubId)) return;
-    const wanted = originHubs.length === 1 ? originHubs[0].id : "";
+    const wanted = originHubs[0]?.id ?? "";
     if (wanted !== originHubId) form.setValue("originHubId", wanted);
   }, [originHubs, originHubId, form]);
   useEffect(() => {
     if (destinationHubs.some((h) => h.id === destinationHubId)) return;
-    const wanted = destinationHubs.length === 1 ? destinationHubs[0].id : "";
+    const wanted = destinationHubs[0]?.id ?? "";
     if (wanted !== destinationHubId) form.setValue("destinationHubId", wanted);
   }, [destinationHubs, destinationHubId, form]);
 
   const debouncedWeight = useDebounce(weightLb, 400);
   const estimateInput = toEstimateInput({ originZoneId, destinationZoneId, weightLb: debouncedWeight, serviceType });
   const estimate = useEstimate(estimateInput);
+  const zoneName = (id: string | undefined) => zones.find((z) => z.id === id)?.name;
+  const priceContext = { serviceType, originZoneId, destinationZoneId, originName: zoneName(originZoneId), destinationName: zoneName(destinationZoneId) };
 
   const next = form.handleSubmit((values) => {
     if (estimate.isError && ApiError.isApiError(estimate.error) && estimate.error.status === 422) {
-      const onWeight = estimate.error.errors.some((e) => e.path.endsWith("weightLb"));
-      form.setError(onWeight ? "weightLb" : "serviceType", { message: estimate.error.message });
-      form.setFocus(onWeight ? "weightLb" : "serviceType");
+      const problem = describePriceProblem(estimate.error.message, priceContext);
+      form.setError(problem.field, { message: problem.message });
+      form.setFocus(problem.field);
       return;
     }
     saveParcel(values);
@@ -107,8 +100,7 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
     setStep(1);
   };
 
-  const zoneOptions = zones.map((zone) => ({ value: zone.id, label: zone.name }));
-  const hubOptions = (list: Hub[]) => list.map((hub) => ({ value: hub.id, label: `${hub.name}, ${hub.city}` }));
+  const zoneChoices = zoneOptions(zones);
   const zoneArea = (id: string | undefined) => zones.find((z) => z.id === id)?.description ?? undefined;
 
   return (
@@ -120,9 +112,9 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
             Route
           </h3>
           <div className="grid gap-5 sm:grid-cols-2">
-            <SelectField control={form.control} name="originZoneId" label="Pickup zone" options={zoneOptions} description={zoneArea(originZoneId)} />
+            <SelectField control={form.control} name="originZoneId" label="Pickup zone" options={zoneChoices} description={zoneArea(originZoneId)} />
             <SelectField control={form.control} name="originHubId" label="Pickup hub" options={hubOptions(originHubs)} placeholder={originHubs.length ? "Choose a hub" : "No hub in this zone"} />
-            <SelectField control={form.control} name="destinationZoneId" label="Delivery zone" options={zoneOptions} description={zoneArea(destinationZoneId)} />
+            <SelectField control={form.control} name="destinationZoneId" label="Delivery zone" options={zoneChoices} description={zoneArea(destinationZoneId)} />
             <SelectField
               control={form.control}
               name="destinationHubId"
@@ -140,22 +132,9 @@ export function ParcelStepForm({ zones, hubs, serverErrors }: ParcelStepFormProp
           </h3>
           <div className="grid gap-5 sm:grid-cols-[minmax(0,14rem)_1fr]">
             <NumberField control={form.control} name="weightLb" label="Weight" suffix="lb" step="0.01" min={0} placeholder="e.g. 5.5" />
-            <FormField
-              control={form.control}
-              name="serviceType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Service</FormLabel>
-                  <FormControl>
-                    <SegmentedControl options={SERVICE_OPTIONS} value={field.value} onValueChange={field.onChange} label="Service" ref={field.ref} fullWidth className="sm:w-auto" />
-                  </FormControl>
-                  <FormDescription>{SERVICE_HINTS[serviceType ?? "STANDARD"]}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <ServiceField />
           </div>
-          <EstimateCard query={estimate} ready={estimateInput !== null} />
+          <EstimateCard query={estimate} ready={estimateInput !== null} context={priceContext} />
           <TextareaField control={form.control} name="description" label="What's inside" optional rows={2} maxLength={500} />
           <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
             <NumberField control={form.control} name="declaredValue" label="Declared value" optional suffix="USD" step="0.01" min={0} description="What the contents are worth." />

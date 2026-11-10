@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { TextField } from "@/components/shared/form-fields";
+import { PasswordField, TextField } from "@/components/shared/form-fields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next?: string | null }) {
     <Form {...form}>
       <form onSubmit={onSubmit} noValidate className="space-y-5" aria-describedby={formError ? "login-error" : undefined}>
         <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" inputMode="email" />
-        <TextField control={form.control} name="password" label="Password" type="password" autoComplete="current-password" />
+        <PasswordField control={form.control} name="password" label="Password" autoComplete="current-password" />
         {formError ? (
           <p id="login-error" role="alert" className="rounded-xl bg-danger-soft p-3 text-sm font-medium text-danger">
             {formError}

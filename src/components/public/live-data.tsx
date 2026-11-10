@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PRICE_EXAMPLE_WEIGHT_LB, getPriceExamples, getPublicHubs, getPublicZones } from "@/lib/data/public";
 import { formatMoney } from "@/lib/format";
 import { SERVICE_NAMES } from "@/lib/status";
+import { sortZones } from "@/lib/zones";
 import type { Hub, Zone } from "@/types";
 
 /*
@@ -69,6 +70,20 @@ export function PriceTeaserSkeleton() {
 /** Two columns beside the coverage map; four in a row elsewhere. */
 const FACT_GRID = { 2: "grid gap-4 sm:grid-cols-2", 4: "grid gap-4 sm:grid-cols-2 lg:grid-cols-4" } as const;
 
+/** "Atlanta, Chicago and Houston": zone names without the "Metro" suffix, A–Z. */
+const zoneList = (zones: Zone[]): string => {
+  const names = sortZones(zones).map((zone) => zone.name.replace(/\s+Metro$/i, ""));
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+};
+
+/** "2 in every zone" when the hubs are spread evenly, otherwise "Across N zones". */
+const hubSpread = (zones: Zone[], hubs: Hub[]): string => {
+  const perZone = zones.map((zone) => hubs.filter((hub) => hub.zone.id === zone.id).length);
+  const same = perZone.length > 0 && perZone.every((n) => n === perZone[0]);
+  if (same && perZone[0] > 0) return `${perZone[0]} in every zone`;
+  return `Across ${zones.length} ${zones.length === 1 ? "zone" : "zones"}`;
+};
+
 /** Facts on the home page: zone and hub counts come from the public API; the rest are product rules. */
 export async function NetworkFacts({ columns = 4 }: { columns?: keyof typeof FACT_GRID }) {
   await connection();
@@ -83,8 +98,8 @@ export async function NetworkFacts({ columns = 4 }: { columns?: keyof typeof FAC
   const facts = [
     ...(zones && hubs
       ? [
-          { value: String(zones.length), label: zones.length === 1 ? "delivery zone" : "delivery zones", detail: zones.map((z) => z.name).join(" and ") },
-          { value: String(hubs.length), label: hubs.length === 1 ? "sorting hub" : "sorting hubs", detail: hubs.map((h) => h.name).join(", ") },
+          { value: String(zones.length), label: zones.length === 1 ? "delivery zone" : "delivery zones", detail: zoneList(zones) },
+          { value: String(hubs.length), label: hubs.length === 1 ? "sorting hub" : "sorting hubs", detail: hubSpread(zones, hubs) },
         ]
       : []),
     { value: "3", label: "service levels", detail: "Standard, Express and Same day" },
@@ -133,8 +148,8 @@ export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {zones.map((zone) => {
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {sortZones(zones).map((zone) => {
         const zoneHubs = hubs.filter((hub) => hub.zone.id === zone.id && hub.isActive);
         return (
           <article key={zone.id} className="flex flex-col gap-4 rounded-2xl bg-card p-6 text-card-foreground shadow-card sm:p-7">
@@ -173,7 +188,7 @@ export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
         );
       })}
       {showCta ? (
-        <div className="flex flex-col justify-between gap-4 rounded-2xl bg-ink p-6 text-ink-foreground sm:p-7 md:col-span-2 md:flex-row md:items-center">
+        <div className="flex flex-col justify-between gap-4 rounded-2xl bg-ink p-6 text-ink-foreground sm:col-span-2 sm:p-7 md:flex-row md:items-center xl:col-span-4">
           <p className="text-lg font-semibold">Check the price between any two zones before you book.</p>
           <Button asChild size="lg">
             <Link href="/pricing">
@@ -188,8 +203,8 @@ export async function CoverageList({ showCta = true }: { showCta?: boolean }) {
 
 export function CoverageSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {Array.from({ length: 2 }, (_, i) => (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {Array.from({ length: 4 }, (_, i) => (
         <div key={i} className="h-64 space-y-4 rounded-2xl bg-card p-7 shadow-card">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-4 w-64" />

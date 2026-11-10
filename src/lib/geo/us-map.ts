@@ -1,9 +1,9 @@
 /*
  * Geometry for the home page's stylised US map. Plain module (server-safe, no React).
  *
- * The API's hubs have no coordinates (contract §7), only a US address ending in "City, ST ZIP".
- * A hub is placed from that address: a known city's real coordinates, else the state's centre.
- * Positions are approximate on purpose: the map is a picture, the hub list beside it is exact.
+ * The API's zones and hubs have no coordinates (contract §7), so each zone's pin comes from a small
+ * lookup table of approximate metro centres keyed by zone name. A zone that isn't in the table gets
+ * no pin (it is still listed in the coverage cards), so the map never shows a wrong location.
  */
 
 export const MAP_W = 600;
@@ -59,64 +59,43 @@ export const US_OUTLINE_PATH = `${OUTLINE.map(([lon, lat], i) => {
   return `${i === 0 ? "M" : "L"}${x} ${y}`;
 }).join(" ")}Z`;
 
-/** Real coordinates of large US cities and the seeded hub cities ("city|ST" → [lon, lat]). */
-const CITIES: Record<string, [number, number]> = {
-  "new york|NY": [-74.0, 40.71], "long island city|NY": [-73.94, 40.74], "brooklyn|NY": [-73.95, 40.65], "jersey city|NJ": [-74.08, 40.72],
-  "newark|NJ": [-74.17, 40.74], "los angeles|CA": [-118.24, 34.05], "long beach|CA": [-118.19, 33.77], "san francisco|CA": [-122.42, 37.77],
-  "oakland|CA": [-122.27, 37.8], "san diego|CA": [-117.16, 32.72], "san jose|CA": [-121.89, 37.34], "sacramento|CA": [-121.49, 38.58],
-  "seattle|WA": [-122.33, 47.61], "portland|OR": [-122.68, 45.52], "las vegas|NV": [-115.14, 36.17], "phoenix|AZ": [-112.07, 33.45],
-  "denver|CO": [-104.99, 39.74], "salt lake city|UT": [-111.89, 40.76], "dallas|TX": [-96.8, 32.78], "fort worth|TX": [-97.33, 32.76],
-  "houston|TX": [-95.37, 29.76], "austin|TX": [-97.74, 30.27], "san antonio|TX": [-98.49, 29.42], "chicago|IL": [-87.63, 41.88],
-  "minneapolis|MN": [-93.27, 44.98], "detroit|MI": [-83.05, 42.33], "atlanta|GA": [-84.39, 33.75], "miami|FL": [-80.19, 25.76],
-  "orlando|FL": [-81.38, 28.54], "tampa|FL": [-82.46, 27.95], "boston|MA": [-71.06, 42.36], "philadelphia|PA": [-75.17, 39.95],
-  "pittsburgh|PA": [-79.99, 40.44], "washington|DC": [-77.04, 38.91], "baltimore|MD": [-76.61, 39.29], "charlotte|NC": [-80.84, 35.23],
-  "nashville|TN": [-86.78, 36.16], "new orleans|LA": [-90.07, 29.95], "kansas city|MO": [-94.58, 39.1], "st. louis|MO": [-90.2, 38.63],
-  "columbus|OH": [-82.99, 39.96], "cleveland|OH": [-81.69, 41.5], "indianapolis|IN": [-86.16, 39.77],
-};
+/** Where a pin's label sits relative to the pin. Chosen per zone so labels never overlap. */
+export type LabelSide = "left" | "right" | "above";
 
-/** Approximate centres of the lower-48 states and DC (used when the hub's city isn't listed above). */
-const STATES: Record<string, [number, number]> = {
-  AL: [-86.8, 32.8], AZ: [-111.7, 34.3], AR: [-92.4, 34.9], CA: [-119.5, 37.2], CO: [-105.5, 39.0], CT: [-72.7, 41.6], DE: [-75.5, 39.0],
-  DC: [-77.0, 38.9], FL: [-81.7, 28.6], GA: [-83.4, 32.7], ID: [-114.6, 44.4], IL: [-89.2, 40.0], IN: [-86.3, 39.9], IA: [-93.5, 42.1],
-  KS: [-98.4, 38.5], KY: [-85.3, 37.5], LA: [-92.0, 31.0], ME: [-69.2, 45.4], MD: [-76.8, 39.0], MA: [-71.8, 42.3], MI: [-84.7, 43.6],
-  MN: [-94.3, 46.3], MS: [-89.7, 32.7], MO: [-92.5, 38.4], MT: [-109.6, 47.0], NE: [-99.8, 41.5], NV: [-116.6, 39.3], NH: [-71.6, 43.7],
-  NJ: [-74.7, 40.1], NM: [-106.1, 34.4], NY: [-75.5, 42.9], NC: [-79.4, 35.6], ND: [-100.5, 47.5], OH: [-82.8, 40.3], OK: [-97.5, 35.6],
-  OR: [-120.6, 43.9], PA: [-77.6, 40.9], RI: [-71.5, 41.7], SC: [-80.9, 33.9], SD: [-100.2, 44.4], TN: [-86.3, 35.9], TX: [-99.3, 31.5],
-  UT: [-111.7, 39.3], VT: [-72.7, 44.1], VA: [-78.8, 37.5], WA: [-120.5, 47.4], WV: [-80.6, 38.6], WI: [-89.8, 44.6], WY: [-107.5, 43.0],
-};
-
-/** The state from "…, City, ST 12345" (the API's US address format). */
-function stateOf(address: string): string | null {
-  return /,\s*[^,]+,\s*([A-Z]{2})\s+\d{5}(?:-\d{4})?\s*$/.exec(address.trim())?.[1] ?? null;
+interface ZoneLocation {
+  lon: number;
+  lat: number;
+  /** Short name for the map label. */
+  short: string;
+  label: LabelSide;
 }
 
-/** Position of a hub on the map, or null when its address isn't a lower-48 US address. */
-export function locateHub(hub: { address: string; city: string }): { x: number; y: number } | null {
-  const state = stateOf(hub.address);
-  if (!state) return null;
-  const known = CITIES[`${hub.city.trim().toLowerCase()}|${state}`] ?? STATES[state];
-  return known ? project(known[0], known[1]) : null;
-}
+/**
+ * Approximate metro centres, keyed by the zone's name as the API returns it. Label sides keep the
+ * labels apart at every width: the west coast labels to the right (they are 60+ map units apart),
+ * New York and Chicago above (they sit at almost the same height), Miami to the left (bottom edge).
+ */
+export const ZONE_LOCATIONS: Readonly<Record<string, ZoneLocation>> = {
+  "New York Metro": { lon: -74.0, lat: 40.71, short: "New York", label: "above" },
+  "Los Angeles Metro": { lon: -118.24, lat: 34.05, short: "Los Angeles", label: "right" },
+  "Chicago Metro": { lon: -87.63, lat: 41.88, short: "Chicago", label: "above" },
+  "Houston Metro": { lon: -95.37, lat: 29.76, short: "Houston", label: "right" },
+  "Miami Metro": { lon: -80.19, lat: 25.76, short: "Miami", label: "left" },
+  "San Francisco Bay Area": { lon: -122.33, lat: 37.79, short: "SF Bay Area", label: "right" },
+  "Seattle Metro": { lon: -122.33, lat: 47.61, short: "Seattle", label: "right" },
+  "Atlanta Metro": { lon: -84.39, lat: 33.75, short: "Atlanta", label: "right" },
+};
 
-export interface MapCluster<T> {
+export interface ZonePin {
   x: number;
   y: number;
-  items: T[];
+  short: string;
+  label: LabelSide;
 }
 
-/** Merges points closer than `radius` (viewBox units), so neighbouring hubs share one pin. */
-export function clusterPoints<T>(points: { x: number; y: number; item: T }[], radius = 24): MapCluster<T>[] {
-  const clusters: MapCluster<T>[] = [];
-  for (const point of points) {
-    const near = clusters.find((c) => Math.hypot(c.x - point.x, c.y - point.y) < radius);
-    if (near) {
-      const n = near.items.length;
-      near.x = round((near.x * n + point.x) / (n + 1));
-      near.y = round((near.y * n + point.y) / (n + 1));
-      near.items.push(point.item);
-    } else {
-      clusters.push({ x: point.x, y: point.y, items: [point.item] });
-    }
-  }
-  return clusters;
+/** The pin for a zone, or null when the zone isn't in the table (it then appears in the list only). */
+export function locateZone(zoneName: string): ZonePin | null {
+  const location = ZONE_LOCATIONS[zoneName.trim()];
+  if (!location) return null;
+  return { ...project(location.lon, location.lat), short: location.short, label: location.label };
 }

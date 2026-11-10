@@ -4,6 +4,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordInput } from "@/components/shared/password-input";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,6 +53,35 @@ export function TextField<T extends FieldValues>({
           <FieldLabel label={label} optional={optional} />
           <FormControl>
             <Input {...input} {...field} value={field.value ?? ""} disabled={disabled} />
+          </FormControl>
+          {description ? <FormDescription>{description}</FormDescription> : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** A password field with a show/hide button (PasswordInput). Use it for every password, including confirmations. */
+export function PasswordField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  description,
+  optional,
+  disabled,
+  className,
+  autoComplete,
+}: BaseFieldProps<T> & { autoComplete: "current-password" | "new-password" }) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className={className}>
+          <FieldLabel label={label} optional={optional} />
+          <FormControl>
+            <PasswordInput {...field} value={field.value ?? ""} autoComplete={autoComplete} disabled={disabled} />
           </FormControl>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { TextField } from "@/components/shared/form-fields";
+import { PasswordField, TextField } from "@/components/shared/form-fields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
@@ -64,8 +64,8 @@ export function RegisterForm({ next }: { next?: string | null }) {
           description="Couriers call this number about pickups."
         />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField control={form.control} name="password" label="Password" type="password" autoComplete="new-password" description="At least 8 characters." />
-          <TextField control={form.control} name="confirmPassword" label="Confirm password" type="password" autoComplete="new-password" />
+          <PasswordField control={form.control} name="password" label="Password" autoComplete="new-password" description="At least 8 characters." />
+          <PasswordField control={form.control} name="confirmPassword" label="Confirm password" autoComplete="new-password" />
         </div>
         {formError ? (
           <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm font-medium text-danger">

@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { CheckboxField, TextField } from "@/components/shared/form-fields";
+import { CheckboxField, PasswordField } from "@/components/shared/form-fields";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,10 +44,10 @@ export function PasswordForm({ email }: { email: string }) {
       <form onSubmit={onSubmit} noValidate className="space-y-5">
         {/* Lets password managers file the new password under the right account. */}
         <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
-        <TextField control={form.control} name="currentPassword" label="Current password" type="password" autoComplete="current-password" />
+        <PasswordField control={form.control} name="currentPassword" label="Current password" autoComplete="current-password" />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField control={form.control} name="newPassword" label="New password" type="password" autoComplete="new-password" description="At least 8 characters." />
-          <TextField control={form.control} name="confirmPassword" label="Confirm new password" type="password" autoComplete="new-password" />
+          <PasswordField control={form.control} name="newPassword" label="New password" autoComplete="new-password" description="At least 8 characters." />
+          <PasswordField control={form.control} name="confirmPassword" label="Confirm new password" autoComplete="new-password" />
         </div>
         <CheckboxField control={form.control} name="revokeOtherSessions" label="Sign out my other devices" description="You stay signed in here." />
         {formError ? (

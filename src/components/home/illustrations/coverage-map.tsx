@@ -1,54 +1,47 @@
 import { connection } from "next/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicHubs, getPublicZones } from "@/lib/data/public";
-import { MAP_H, MAP_W, US_OUTLINE_PATH, clusterPoints, locateHub } from "@/lib/geo/us-map";
+import { MAP_H, MAP_W, US_OUTLINE_PATH, locateZone, type LabelSide } from "@/lib/geo/us-map";
 import { cn } from "@/lib/utils";
-import type { Hub } from "@/types";
+import { sortZones } from "@/lib/zones";
 
 const FRAME = "rounded-2xl bg-white/5 p-4 ring-1 ring-sidebar-border sm:p-6";
 const pct = (value: number, total: number) => `${(value / total) * 100}%`;
 const hubCount = (n: number) => (n === 1 ? "1 hub" : `${n} hubs`);
 
-/** "Downtown LA Hub and Long Beach Hub", "A, B and C". */
-function joinNames(names: string[]): string {
-  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
-}
-
-/** A gentle arc between two pins (a lane between zones), bowing upward. */
-function lane(a: { x: number; y: number }, b: { x: number; y: number }): string {
-  const mx = (a.x + b.x) / 2;
-  const my = Math.min(a.y, b.y) - Math.hypot(b.x - a.x, b.y - a.y) * 0.22;
-  return `M${a.x} ${a.y} Q${mx} ${my} ${b.x} ${b.y}`;
-}
+/** Label offset from the pin (the pin is ~16px across at full size). */
+const LABEL_POSITION: Record<LabelSide, string> = {
+  right: "translate-x-3 -translate-y-1/2",
+  left: "-translate-x-[calc(100%+0.75rem)] -translate-y-1/2",
+  above: "-translate-x-1/2 -translate-y-[calc(100%+0.6rem)]",
+};
 
 /**
- * A stylised US map with the real, active hubs from the public API (request-time under Suspense,
- * cached data underneath). Neighbouring hubs share one pin, labelled with their zone.
+ * A stylised US map with a pin for each active zone that has active hubs, from the public API
+ * (request-time under Suspense, cached data underneath). Pins come from a lookup table of metro
+ * centres (lib/geo/us-map.ts); a zone the table doesn't know is left off the map and stays in the
+ * zone cards below, so a pin is never in the wrong place.
  */
 export async function CoverageMap({ className }: { className?: string }) {
   await connection();
-  let hubs: Hub[];
+  let zones;
+  let hubs;
   try {
-    const [zones, allHubs] = await Promise.all([getPublicZones(), getPublicHubs()]);
-    const activeZones = new Set(zones.map((z) => z.id));
-    hubs = allHubs.filter((hub) => hub.isActive && activeZones.has(hub.zone.id));
+    [zones, hubs] = await Promise.all([getPublicZones(), getPublicHubs()]);
   } catch {
     return null; // the zone cards below show the "couldn't load" message
   }
 
-  const points = hubs.flatMap((hub) => {
-    const at = locateHub(hub);
-    return at ? [{ ...at, item: hub }] : [];
-  });
-  const clusters = clusterPoints(points).map((cluster) => {
-    const zoneNames = [...new Set(cluster.items.map((hub) => hub.zone.name))];
-    return { ...cluster, title: joinNames(zoneNames), detail: hubCount(cluster.items.length) };
-  });
-  if (clusters.length === 0) return null;
+  const active = sortZones(zones.filter((zone) => zone.isActive)).map((zone) => ({
+    zone,
+    hubs: hubs.filter((hub) => hub.isActive && hub.zone.id === zone.id).length,
+    pin: locateZone(zone.name),
+  }));
+  const pinned = active.filter((entry) => entry.pin !== null && entry.hubs > 0);
+  const unpinned = active.length - pinned.length;
+  if (pinned.length === 0) return null;
 
-  const label = `Map of the United States with Carrivo's ${hubCount(points.length)}: ${clusters
-    .map((c) => `${joinNames(c.items.map((hub) => hub.name))} in ${c.title}`)
-    .join("; ")}.`;
+  const label = `Map of the United States with Carrivo's ${active.length} zones: ${active.map((e) => `${e.zone.name} (${hubCount(e.hubs)})`).join(", ")}.`;
 
   return (
     <figure className={cn(FRAME, className)}>
@@ -61,45 +54,35 @@ export async function CoverageMap({ className }: { className?: string }) {
           </defs>
           <path d={US_OUTLINE_PATH} fill="url(#carrivo-us-dots)" />
           <path d={US_OUTLINE_PATH} fill="none" stroke="currentColor" strokeOpacity="0.22" strokeWidth="1.5" strokeLinejoin="round" />
-          {clusters.slice(1).map((cluster, i) => (
-            <path
-              key={`lane-${i}`}
-              data-map-lane=""
-              d={lane(clusters[0], cluster)}
-              fill="none"
-              className="stroke-brand"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeDasharray="2 9"
-            />
-          ))}
-          {clusters.map((cluster) => (
-            <g key={`${cluster.x}-${cluster.y}`}>
-              <circle data-map-pulse="" cx={cluster.x} cy={cluster.y} r="9" className="fill-brand" fillOpacity="0.3" />
-              <circle cx={cluster.x} cy={cluster.y} r="8" className="fill-ink stroke-brand" strokeWidth="3" />
-              <circle cx={cluster.x} cy={cluster.y} r="3.2" className="fill-brand" />
-            </g>
-          ))}
+          {pinned.map(({ zone, pin }) =>
+            pin ? (
+              <g key={zone.id}>
+                <circle data-map-pulse="" cx={pin.x} cy={pin.y} r="9" className="fill-brand" fillOpacity="0.3" />
+                <circle cx={pin.x} cy={pin.y} r="7.5" className="fill-ink stroke-brand" strokeWidth="3" />
+                <circle cx={pin.x} cy={pin.y} r="3" className="fill-brand" />
+              </g>
+            ) : null,
+          )}
         </svg>
         {/* Visible labels (the SVG's label already says all of this to screen readers). */}
         <ul aria-hidden="true">
-          {clusters.map((cluster) => {
-            // Below the pin (the lanes bow upward), opening toward the middle of the map.
-            const right = cluster.x < MAP_W * 0.6;
-            return (
+          {pinned.map(({ zone, pin }) =>
+            pin ? (
               <li
-                key={`${cluster.x}-${cluster.y}`}
-                className={cn("absolute pt-3.5 text-xs leading-tight sm:text-sm", right ? "pl-1" : "-translate-x-full pr-1 text-right")}
-                style={{ left: pct(cluster.x, MAP_W), top: pct(cluster.y, MAP_H) }}
+                key={zone.id}
+                className={cn("absolute text-[0.6875rem] leading-none font-bold whitespace-nowrap sm:text-sm", LABEL_POSITION[pin.label])}
+                style={{ left: pct(pin.x, MAP_W), top: pct(pin.y, MAP_H) }}
               >
-                <span className="block font-bold whitespace-nowrap">{cluster.title}</span>
-                <span className="block whitespace-nowrap text-sidebar-muted">{cluster.detail}</span>
+                {pin.short}
               </li>
-            );
-          })}
+            ) : null,
+          )}
         </ul>
       </div>
-      <figcaption className="mt-3 text-sm text-sidebar-muted">Hub positions are approximate. Every address is listed below.</figcaption>
+      <figcaption className="mt-3 text-sm text-sidebar-muted">
+        Pins mark each metro area, not exact hub addresses. Every zone and hub is listed below.
+        {unpinned > 0 ? ` ${unpinned === 1 ? "One zone isn't" : `${unpinned} zones aren't`} on the map yet.` : null}
+      </figcaption>
     </figure>
   );
 }

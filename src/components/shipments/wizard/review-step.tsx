@@ -74,7 +74,17 @@ export function ReviewStep({ contact, parcel, zones, hubs, pending, formError, o
         </Section>
       </div>
 
-      <EstimateCard query={estimate} ready />
+      <EstimateCard
+        query={estimate}
+        ready
+        context={{
+          serviceType: parcel.serviceType,
+          originZoneId: parcel.originZoneId,
+          destinationZoneId: parcel.destinationZoneId,
+          originName: zone(parcel.originZoneId),
+          destinationName: zone(parcel.destinationZoneId),
+        }}
+      />
 
       <p className="text-sm text-muted-foreground">
         The final price is worked out again when you book, with the same rules. You pay after booking, before pickup.

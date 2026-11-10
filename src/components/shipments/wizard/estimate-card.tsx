@@ -5,11 +5,13 @@ import { Calculator, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/errors";
 import { formatMoney, formatWeight } from "@/lib/format";
+import { describePriceProblem, type PriceContext } from "@/lib/pricing/services";
 import type { useEstimate } from "@/lib/queries/pricing";
 
 type EstimateQuery = ReturnType<typeof useEstimate>;
 
-export function EstimateCard({ query, ready }: { query: EstimateQuery; ready: boolean }) {
+export function EstimateCard({ query, ready, context }: { query: EstimateQuery; ready: boolean; context: PriceContext }) {
+  const problem = query.isError && ApiError.isApiError(query.error) && query.error.status === 422 ? describePriceProblem(query.error.message, context) : null;
   return (
     <section aria-live="polite" aria-busy={query.isFetching} aria-label="Price" className="rounded-xl bg-surface p-5 ring-1 ring-border">
       {!ready ? (
@@ -27,9 +29,9 @@ export function EstimateCard({ query, ready }: { query: EstimateQuery; ready: bo
         <div className="flex items-start gap-3">
           <Info className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
           <div>
-            <p className="font-bold">Not available</p>
+            <p className="font-bold">{problem ? problem.title : "Not available"}</p>
             <p className="text-sm text-muted-foreground">
-              {ApiError.isApiError(query.error) ? query.error.message : "The price couldn't be worked out. Try again."}
+              {problem ? problem.message : ApiError.isApiError(query.error) ? query.error.message : "The price couldn't be worked out. Try again."}
             </p>
           </div>
         </div>
