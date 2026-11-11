@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { SAME_DAY_REASON, describePriceProblem, sameDayAllowed } from "../src/lib/pricing/services.ts";
 import { hubsInZone, sortZones, zoneOptions } from "../src/lib/zones.ts";
-import { MAP_H, MAP_W, ZONE_LOCATIONS, locateZone } from "../src/lib/geo/us-map.ts";
+import { MAP_H, MAP_W, ZONE_LOCATIONS, locateZone, zoneKey } from "../src/lib/geo/us-map.ts";
 
 const CHI = "11111111-1111-7111-8111-111111111111";
 const ATL = "22222222-2222-7222-8222-222222222222";
@@ -78,20 +78,26 @@ describe("zones and hubs in pickers", () => {
 });
 
 describe("coverage map pins", () => {
-  it("places all eight seeded metros inside the map", () => {
-    const names = ["New York Metro", "Los Angeles Metro", "Chicago Metro", "Houston Metro", "Miami Metro", "San Francisco Bay Area", "Seattle Metro", "Atlanta Metro"];
+  it("places every live zone inside the map, whatever the punctuation", () => {
+    const names = [
+      "Ann Arbor Metro", "Atlanta Metro", "Chicago Metro", "Dallas–Fort Worth", "Detroit Metro", "Flint Metro", "Grand Rapids Metro",
+      "Houston Metro", "Lansing Metro", "Los Angeles Metro", "Miami Metro", "New York Metro", "Philadelphia Metro", "Phoenix Metro", "Washington DC Metro",
+    ];
     for (const name of names) {
       const pin = locateZone(name);
       assert.ok(pin, name);
       assert.ok(pin.x > 0 && pin.x < MAP_W && pin.y > 0 && pin.y < MAP_H, `${name} inside the map`);
     }
-    assert.equal(Object.keys(ZONE_LOCATIONS).length, 8);
+    assert.equal(Object.keys(ZONE_LOCATIONS).length, 15);
+    assert.deepEqual(locateZone("Dallas-Fort Worth"), locateZone("Dallas–Fort Worth"));
+    assert.deepEqual(locateZone("Washington, D.C. Metro"), locateZone("Washington DC Metro"));
+    assert.equal(zoneKey("Grand Rapids Metro Area"), "grand rapids");
   });
 
   it("puts west in the west and north in the north", () => {
-    const [sea, mia, la, nyc] = ["Seattle Metro", "Miami Metro", "Los Angeles Metro", "New York Metro"].map((n) => locateZone(n));
+    const [la, nyc, mia, det] = ["Los Angeles Metro", "New York Metro", "Miami Metro", "Detroit Metro"].map((n) => locateZone(n));
     assert.ok(la.x < nyc.x, "Los Angeles west of New York");
-    assert.ok(sea.y < mia.y, "Seattle north of Miami");
+    assert.ok(det.y < mia.y, "Detroit north of Miami");
   });
 
   it("leaves an unknown zone off the map instead of guessing", () => {

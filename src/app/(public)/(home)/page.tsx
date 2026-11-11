@@ -4,17 +4,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { HomeMotion } from "@/components/home/home-motion";
-import { CoverageMap, CoverageMapSkeleton } from "@/components/home/illustrations/coverage-map";
+import { CoverageNetwork } from "@/components/home/coverage/coverage-section";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq, FinalCta, Guarantees, Roles, Security, Services, TrackingExplainer, TrustStrip } from "@/components/home/sections";
-import {
-  CoverageList,
-  CoverageSkeleton,
-  NetworkFacts,
-  NetworkFactsSkeleton,
-  PriceTeaser,
-  PriceTeaserSkeleton,
-} from "@/components/public/live-data";
+import { PriceTeaser, PriceTeaserSkeleton } from "@/components/public/live-data";
 import { Section } from "@/components/public/section";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/config/site";
@@ -40,21 +33,15 @@ export default function HomePage() {
       <HowItWorks />
       <TrackingExplainer />
 
-      {/* Coverage: zones and hubs read live from the public API (cached for hours). */}
-      <Section id="coverage" tone="dark" title="Where we deliver" intro="Our zones and sorting hubs, read live from the Carrivo network.">
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
-            <Suspense fallback={<CoverageMapSkeleton />}>
-              <CoverageMap />
-            </Suspense>
-            <Suspense fallback={<NetworkFactsSkeleton columns={2} />}>
-              <NetworkFacts columns={2} />
-            </Suspense>
-          </div>
-          <Suspense fallback={<CoverageSkeleton />}>
-            <CoverageList showCta={false} />
-          </Suspense>
-        </div>
+      {/* Coverage: zones, hubs and the route network, read live from the public API (cached for hours). */}
+      <Section
+        id="coverage"
+        tone="dark"
+        title="Where we deliver"
+        intro="Every zone we serve, the hubs that sort its parcels, and the routes that link them. Read live from the Carrivo network."
+      >
+        {/* No <Suspense> here on purpose: the section is part of the static shell (see CoverageNetwork). */}
+        <CoverageNetwork />
       </Section>
 
       {/* Pricing teaser: real quotes from POST /pricing/estimate. */}

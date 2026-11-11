@@ -5,7 +5,7 @@
  */
 
 interface SmoothScroller {
-  scrollTo: (target: number | string | HTMLElement, options?: { immediate?: boolean }) => void;
+  scrollTo: (target: number | string | HTMLElement, options?: { immediate?: boolean; onComplete?: () => void }) => void;
 }
 
 let scroller: SmoothScroller | null = null;
@@ -27,4 +27,25 @@ export function scrollToTop(): void {
     return;
   }
   window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+}
+
+/**
+ * Centre an element in the viewport: Lenis when it runs (native scrolling would fight it), else native.
+ * Layout above can still move while scrolling (GSAP adds its pin spacers once it loads), so when the
+ * scroll ends it checks again and corrects once.
+ */
+export function scrollIntoCenter(element: HTMLElement, retry = true): void {
+  const targetTop = () => {
+    const rect = element.getBoundingClientRect();
+    return Math.max(0, window.scrollY + rect.top - Math.max(80, (window.innerHeight - rect.height) / 2));
+  };
+  const onComplete = () => {
+    const rect = element.getBoundingClientRect();
+    if (retry && (rect.bottom < 0 || rect.top > window.innerHeight)) scrollIntoCenter(element, false);
+  };
+  if (scroller) {
+    scroller.scrollTo(targetTop(), { immediate: prefersReducedMotion(), onComplete });
+    return;
+  }
+  window.scrollTo({ top: targetTop(), behavior: prefersReducedMotion() ? "auto" : "smooth" });
 }

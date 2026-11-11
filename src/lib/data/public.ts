@@ -72,6 +72,40 @@ export async function getPriceExamples(): Promise<PriceExample[]> {
   return results.filter((r): r is PriceExample => r !== null);
 }
 
+const SERVICES: readonly ServiceType[] = ["STANDARD", "EXPRESS", "SAME_DAY"];
+
+/**
+ * Which services are quoted for a parcel that stays inside each zone (zone id → services), from real
+ * estimates: a 422 means no rule exists for that service there (Same day is not offered everywhere).
+ * Throws when a check fails for another reason (never cached), and the caller then shows no badges
+ * rather than wrong ones. Cached for hours: one quote per zone and service, six at a time.
+ */
+export async function getZoneServices(zoneIds: readonly string[]): Promise<Record<string, ServiceType[]>> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("pricing");
+  const jobs = zoneIds.flatMap((zoneId) => SERVICES.map((serviceType) => ({ zoneId, serviceType })));
+  const offered: Record<string, ServiceType[]> = Object.fromEntries(zoneIds.map((id) => [id, []]));
+  for (let i = 0; i < jobs.length; i += 6) {
+    await Promise.all(
+      jobs.slice(i, i + 6).map(async ({ zoneId, serviceType }) => {
+        try {
+          await serverFetch<PriceEstimate>(endpoints.pricing.estimate, {
+            method: "POST",
+            auth: false,
+            body: { weightLb: PRICE_EXAMPLE_WEIGHT_LB, serviceType, originZoneId: zoneId, destinationZoneId: zoneId },
+          });
+          offered[zoneId].push(serviceType);
+        } catch (error) {
+          if (!(ApiError.isApiError(error) && error.status === 422)) throw error;
+        }
+      }),
+    );
+  }
+  for (const id of zoneIds) offered[id].sort((a, b) => SERVICES.indexOf(a) - SERVICES.indexOf(b));
+  return offered;
+}
+
 export type TrackingLookup = { status: "found"; data: TrackingInfo } | { status: "not-found" } | { status: "invalid" };
 
 /** Live status (not cached: it changes as the parcel moves). Unknown and malformed ids are results, not errors. */

@@ -76,44 +76,6 @@ function heroRoute(): void {
   });
 }
 
-/** Plays the tweens only while `trigger` is on screen. */
-function whileVisible(trigger: Element, tweens: gsap.core.Tween[]): void {
-  ScrollTrigger.create({
-    trigger,
-    start: "top bottom",
-    end: "bottom top",
-    onToggle: (self) => {
-      for (const tween of tweens) {
-        if (self.isActive) tween.play();
-        else tween.pause();
-      }
-    },
-  });
-}
-
-/**
- * Coverage map: hub pins pulse and the lanes between zones flow. The map streams in after load,
- * so this runs again when it appears (see GsapScenes).
- */
-function coverageMap(): boolean {
-  const map = document.querySelector<SVGSVGElement>("[data-map-pulse]")?.ownerSVGElement;
-  if (!map || map.dataset.animated) return Boolean(map);
-  map.dataset.animated = "true";
-  const pulses = gsap.utils.toArray<SVGCircleElement>(map.querySelectorAll("[data-map-pulse]"));
-  const tweens = pulses.map((pulse, i) =>
-    gsap.fromTo(
-      pulse,
-      { scale: 1, opacity: 0.6, transformOrigin: "50% 50%" },
-      { scale: 2.8, opacity: 0, duration: 2.4, ease: "power1.out", repeat: -1, delay: i * 0.5, paused: true },
-    ),
-  );
-  for (const lane of map.querySelectorAll("[data-map-lane]")) {
-    tweens.push(gsap.to(lane, { strokeDashoffset: -110, duration: 2.6, ease: "none", repeat: -1, paused: true }));
-  }
-  whileVisible(map, tweens);
-  return true;
-}
-
 /** Final call to action: the van drives in from the left once, when it scrolls into view. */
 function ctaVan(): void {
   const van = document.querySelector<SVGGElement>("[data-cta-van]");
@@ -198,18 +160,8 @@ export default function GsapScenes() {
         if (!motion) return undefined;
         heroRoute();
         ctaVan();
-        // The map streams in with live data: start it now, or as soon as it shows up.
-        let mapTimer = 0;
-        let tries = 0;
-        const waitForMap = () => {
-          // Give up after ~10 s (the API may be down, and then there's no map).
-          if (!coverageMap() && (tries += 1) < 20) mapTimer = window.setTimeout(waitForMap, 500);
-        };
-        waitForMap();
         const cleanups = [reveals(), desktop ? pinnedSteps() : undefined];
         return () => {
-          window.clearTimeout(mapTimer);
-          document.querySelector<SVGSVGElement>("[data-map-pulse]")?.ownerSVGElement?.removeAttribute("data-animated");
           for (const cleanup of cleanups) cleanup?.();
         };
       },

@@ -59,43 +59,55 @@ export const US_OUTLINE_PATH = `${OUTLINE.map(([lon, lat], i) => {
   return `${i === 0 ? "M" : "L"}${x} ${y}`;
 }).join(" ")}Z`;
 
-/** Where a pin's label sits relative to the pin. Chosen per zone so labels never overlap. */
-export type LabelSide = "left" | "right" | "above";
-
 interface ZoneLocation {
-  lon: number;
   lat: number;
-  /** Short name for the map label. */
-  short: string;
-  label: LabelSide;
+  lon: number;
 }
 
 /**
- * Approximate metro centres, keyed by the zone's name as the API returns it. Label sides keep the
- * labels apart at every width: the west coast labels to the right (they are 60+ map units apart),
- * New York and Chicago above (they sit at almost the same height), Miami to the left (bottom edge).
+ * Approximate metro centres, keyed by the zone's normalised name (see `zoneKey`). Add a row when a
+ * zone opens; until then the zone is listed in the cards only, never pinned in a guessed place.
  */
 export const ZONE_LOCATIONS: Readonly<Record<string, ZoneLocation>> = {
-  "New York Metro": { lon: -74.0, lat: 40.71, short: "New York", label: "above" },
-  "Los Angeles Metro": { lon: -118.24, lat: 34.05, short: "Los Angeles", label: "right" },
-  "Chicago Metro": { lon: -87.63, lat: 41.88, short: "Chicago", label: "above" },
-  "Houston Metro": { lon: -95.37, lat: 29.76, short: "Houston", label: "right" },
-  "Miami Metro": { lon: -80.19, lat: 25.76, short: "Miami", label: "left" },
-  "San Francisco Bay Area": { lon: -122.33, lat: 37.79, short: "SF Bay Area", label: "right" },
-  "Seattle Metro": { lon: -122.33, lat: 47.61, short: "Seattle", label: "right" },
-  "Atlanta Metro": { lon: -84.39, lat: 33.75, short: "Atlanta", label: "right" },
+  "ann arbor": { lat: 42.28, lon: -83.74 },
+  atlanta: { lat: 33.75, lon: -84.39 },
+  chicago: { lat: 41.88, lon: -87.63 },
+  "dallas fort worth": { lat: 32.78, lon: -96.8 },
+  detroit: { lat: 42.33, lon: -83.05 },
+  flint: { lat: 43.01, lon: -83.69 },
+  "grand rapids": { lat: 42.96, lon: -85.67 },
+  houston: { lat: 29.76, lon: -95.37 },
+  lansing: { lat: 42.73, lon: -84.56 },
+  "los angeles": { lat: 34.05, lon: -118.24 },
+  miami: { lat: 25.76, lon: -80.19 },
+  "new york": { lat: 40.71, lon: -74.01 },
+  philadelphia: { lat: 39.95, lon: -75.17 },
+  phoenix: { lat: 33.45, lon: -112.07 },
+  "washington dc": { lat: 38.91, lon: -77.04 },
 };
+
+/**
+ * "Dallas–Fort Worth" → "dallas fort worth", "Washington, D.C. Metro" → "washington dc": lower case,
+ * any dash or punctuation folded, and a trailing "Metro"/"Metro Area"/"Area" dropped.
+ */
+export function zoneKey(zoneName: string): string {
+  return zoneName
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[\u2010-\u2015-]/g, " ")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\s+(metro area|metro|area)$/, "");
+}
 
 export interface ZonePin {
   x: number;
   y: number;
-  short: string;
-  label: LabelSide;
 }
 
-/** The pin for a zone, or null when the zone isn't in the table (it then appears in the list only). */
+/** The map position for a zone, or null when the table doesn't know it (it then appears in the cards only). */
 export function locateZone(zoneName: string): ZonePin | null {
-  const location = ZONE_LOCATIONS[zoneName.trim()];
-  if (!location) return null;
-  return { ...project(location.lon, location.lat), short: location.short, label: location.label };
+  const location = ZONE_LOCATIONS[zoneKey(zoneName)];
+  return location ? project(location.lon, location.lat) : null;
 }

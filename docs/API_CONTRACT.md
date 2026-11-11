@@ -133,6 +133,8 @@ Body `ChangePasswordInput { currentPassword, newPassword (8-128), revokeOtherSes
 
 Pricing formula: `total = baseFee + ceil(max(0, weight - baseWeightLb)) × perLbFee`. The rule is the active (service, origin, destination) rule if there is one, otherwise the service's default rule (both zones null).
 
+Services per zone (home page "Where we deliver"): there is no public endpoint that lists which services a zone offers, so `getZoneServices` (`src/lib/data/public.ts`) asks for a 2 lb within-zone estimate per zone and service ("use cache", hours, six at a time); 200 = offered, 422 = not. Checked live on 11/11/2026: Standard and Express are quoted in every zone, Same day only where a zone-specific rule exists (e.g. New York yes, Flint no), so the "Same-day inside this zone" badge is data-driven, never assumed. Zone map positions come from a name-keyed lookup table (`ZONE_LOCATIONS` in `src/lib/geo/us-map.ts`); zones and hubs still have no coordinates in the API.
+
 ## 5. Customer endpoints (`CUSTOMER`)
 
 | Method | Path | Body / query | Response `data` / notes |
