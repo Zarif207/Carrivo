@@ -1,5 +1,6 @@
 import { SHIPMENT_STATUS_META } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { CourierRider } from "./illustrations/courier-rider";
 
 /*
  * The hero's route: a map-less corridor from the sender's door through two hubs to the receiver.
@@ -36,36 +37,17 @@ const SCOOTER = { x: 274.3, y: 161, angle: 21.8 };
 
 const pct = (value: number, total: number) => `${(value / total) * 100}%`;
 
-/**
- * A courier on a scooter with a parcel on the rack, drawn around its road contact point (0, 0),
- * facing along the route. Original geometric drawing; tokens only (it sits on the ink panel).
- */
+/** The courier, resting where GSAP will pick it up (components/home/gsap-scenes.tsx). */
 function Scooter() {
   return (
     // GSAP replaces the outer transform as it moves the courier; the inner one only sets the size.
     <g data-scooter="" transform={`translate(${SCOOTER.x} ${SCOOTER.y}) rotate(${SCOOTER.angle})`}>
       <g transform="scale(1.3)">
-        {/* Parcel on the rear rack */}
-        <rect x="-27" y="-31" width="17" height="15" rx="2.5" className="fill-brand" />
-        <path d="M-18.5 -31 V-16" className="stroke-ink" strokeOpacity="0.5" strokeWidth="2" />
-        {/* Frame: deck, rear guard and steering column */}
-        <path d="M-23 -13 H7 L15 -31" fill="none" className="stroke-ink-foreground" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M11 -33 H20" className="stroke-ink-foreground" strokeWidth="3.5" strokeLinecap="round" />
-        {/* Rider: leg, body, arm, helmet */}
-        <path d="M-8 -15 L-3 -26" className="stroke-ink-foreground" strokeWidth="5" strokeLinecap="round" />
-        <path d="M-3 -26 L1 -40" className="stroke-ink-foreground" strokeWidth="6.5" strokeLinecap="round" />
-        <path d="M0 -36 L13 -32" className="stroke-ink-foreground" strokeWidth="3.5" strokeLinecap="round" />
-        <circle cx="3" cy="-47" r="6.5" className="fill-brand" />
-        <path d="M5 -50 H10" className="stroke-ink" strokeOpacity="0.55" strokeWidth="2" strokeLinecap="round" />
-        {/* Wheels */}
-        {[-17, 15].map((cx) => (
-          <circle key={cx} cx={cx} cy="-6.5" r="6.5" className="fill-ink stroke-ink-foreground" strokeWidth="3" />
-        ))}
+        <CourierRider />
       </g>
     </g>
   );
 }
-
 
 export function RouteVisual({ className }: { className?: string }) {
   return (

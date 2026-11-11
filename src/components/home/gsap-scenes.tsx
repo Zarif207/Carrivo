@@ -3,35 +3,10 @@
 // Client: every GSAP effect on the home page, in one lazily loaded chunk (see home-motion.tsx).
 // Nothing here creates content: it only moves, reveals or emphasises server-rendered markup.
 import { gsap } from "gsap";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect } from "react";
-
-gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
-
-type Cleanup = () => void;
-
-/** Closest point on the path (0-1) to (x, y): parcels start the loop where the server drew them. */
-function progressAt(path: SVGPathElement, x: number, y: number): number {
-  const length = path.getTotalLength();
-  let best = 0;
-  let bestDistance = Infinity;
-  for (let i = 0; i <= 200; i += 1) {
-    const point = path.getPointAtLength((length * i) / 200);
-    const distance = (point.x - x) ** 2 + (point.y - y) ** 2;
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = i / 200;
-    }
-  }
-  return best;
-}
-
-/** Where a server-drawn element sits (its translate), so its loop starts there instead of jumping. */
-function originOf(element: SVGGraphicsElement): { x: number; y: number } {
-  const matrix = element.transform.baseVal.consolidate()?.matrix;
-  return { x: matrix?.e ?? 0, y: matrix?.f ?? 0 };
-}
+// Registers ScrollTrigger and MotionPathPlugin; also the courier campaign band's motion.
+import { homeCampaign, originOf, progressAt, type Cleanup } from "@/components/courier-campaign/campaign-motion";
 
 /** Hero corridor: the courier and the parcels loop along the route and the dashes flow; paused while off screen. */
 function heroRoute(): void {
@@ -160,7 +135,7 @@ export default function GsapScenes() {
         if (!motion) return undefined;
         heroRoute();
         ctaVan();
-        const cleanups = [reveals(), desktop ? pinnedSteps() : undefined];
+        const cleanups = [reveals(), desktop ? pinnedSteps() : undefined, homeCampaign()];
         return () => {
           for (const cleanup of cleanups) cleanup?.();
         };

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { HomeMotion } from "@/components/home/home-motion";
 import { CoverageNetwork } from "@/components/home/coverage/coverage-section";
-import { DriveWithUs } from "@/components/home/drive-with-us";
+import { DriveWithCarrivoSection } from "@/components/courier-campaign/home-section";
 import { HowItWorks } from "@/components/home/how-it-works";
 import { Faq, FinalCta, Guarantees, Roles, Security, Services, TrackingExplainer, TrustStrip } from "@/components/home/sections";
 import { PriceTeaser, PriceTeaserSkeleton } from "@/components/public/live-data";
@@ -68,7 +68,7 @@ export default function HomePage() {
       <Guarantees />
       <Security />
       <Roles />
-      <DriveWithUs />
+      <DriveWithCarrivoSection />
       <Faq />
       <FinalCta />
 

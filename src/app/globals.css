@@ -529,6 +529,28 @@ html.lenis body {
   animation: route-flow 1.4s linear infinite;
 }
 
+/*
+ * Courier campaign (components/courier-campaign): the route lines flow and the orange glow drifts only
+ * while GSAP marks the band [data-live] (on screen, motion allowed). No JS, off screen or reduced
+ * motion: everything stays still. Dash patterns there sum to 24, matching route-flow's offset.
+ */
+@keyframes campaign-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-14%, 10%, 0) scale(1.15);
+  }
+}
+.campaign[data-live] [data-flow] {
+  animation: route-flow 1.2s linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+.campaign[data-live] [data-glow] {
+  animation: campaign-drift 16s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

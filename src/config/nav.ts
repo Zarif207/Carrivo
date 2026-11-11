@@ -110,6 +110,8 @@ export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
 
 /** Customers apply to become couriers here; staff review the queue at ADMIN_COURIER_APPLICATIONS. */
 export const COURIER_APPLICATION_PATH = "/courier-application";
+/** The courier recruitment page (public); its buttons lead to COURIER_APPLICATION_PATH. */
+export const DRIVE_WITH_CARRIVO_PATH = "/drive-with-carrivo";
 export const ADMIN_COURIER_APPLICATIONS = "/admin/courier-applications";
 
 /** The public site's home page (reachable from every dashboard). */

@@ -18,6 +18,7 @@ const COLUMNS: { title: string; links: { title: string; href: string }[] }[] = [
     title: "Company",
     links: [
       { title: "About Carrivo", href: "/about" },
+      { title: "Drive with Carrivo", href: "/drive-with-carrivo" },
       { title: "Become a courier", href: "/courier-application" },
       { title: "Contact us", href: "/contact" },
     ],
