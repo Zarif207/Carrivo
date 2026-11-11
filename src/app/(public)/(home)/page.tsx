@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
+import { AppTeaser } from "@/components/home/app-teaser";
 import { HomeMotion } from "@/components/home/home-motion";
 import { CoverageNetwork } from "@/components/home/coverage/coverage-section";
 import { DriveWithCarrivoSection } from "@/components/courier-campaign/home-section";
@@ -71,6 +72,7 @@ export default function HomePage() {
       <DriveWithCarrivoSection />
       <Faq />
       <FinalCta />
+      <AppTeaser />
 
       <HomeMotion />
     </>

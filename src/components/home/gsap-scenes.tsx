@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect } from "react";
 // Registers ScrollTrigger and MotionPathPlugin; also the courier campaign band's motion.
 import { homeCampaign, originOf, progressAt, type Cleanup } from "@/components/courier-campaign/campaign-motion";
+import { appTeaser } from "./app-teaser-motion";
 
 /** Hero corridor: the courier and the parcels loop along the route and the dashes flow; paused while off screen. */
 function heroRoute(): void {
@@ -135,7 +136,7 @@ export default function GsapScenes() {
         if (!motion) return undefined;
         heroRoute();
         ctaVan();
-        const cleanups = [reveals(), desktop ? pinnedSteps() : undefined, homeCampaign()];
+        const cleanups = [reveals(), desktop ? pinnedSteps() : undefined, homeCampaign(), appTeaser()];
         return () => {
           for (const cleanup of cleanups) cleanup?.();
         };
