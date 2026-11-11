@@ -1,6 +1,8 @@
 "use client";
 
 import { toast } from "sonner";
+import { currentSessionEndReason } from "@/lib/auth/role-change-hint";
+import { SESSION_END_MESSAGES, sessionEndLoginUrl, type SessionEndReason } from "@/lib/auth/session-end";
 import { ApiError } from "./errors";
 import { toQueryString } from "./search-params";
 import type { ApiSuccess, Paginated } from "./types";
@@ -40,13 +42,17 @@ function recoverSession(): Promise<boolean> {
   return refreshInFlight;
 }
 
-/** Clears the cookies, tells the user once, and sends them to log in again. */
-export function endSession(message = "Your session ended. Log in again."): void {
+/**
+ * Clears the cookies, tells the user once, and sends them to log in again. The reason defaults to
+ * what the browser can tell: "role-changed" while a courier application was pending (its approval
+ * revokes every session), otherwise "expired". Never loops: /login is not protected, the cookies are
+ * gone, and `next` never points back at /login (sessionEndLoginUrl).
+ */
+export function endSession(reason: SessionEndReason = currentSessionEndReason()): void {
   if (sessionEnding || typeof window === "undefined") return;
   sessionEnding = true;
-  toast.error(message);
-  const next = `${window.location.pathname}${window.location.search}`;
-  const target = new URL(`/login?next=${encodeURIComponent(next)}&reason=expired`, window.location.origin).toString();
+  toast.error(SESSION_END_MESSAGES[reason]);
+  const target = new URL(sessionEndLoginUrl(window.location.pathname, window.location.search, reason), window.location.origin).toString();
   void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
     .catch(() => undefined)
     // A full navigation on purpose: it drops every piece of client state from the ended session.
@@ -86,11 +92,13 @@ async function parse<T>(response: Response): Promise<ApiSuccess<T>> {
 export async function apiFetch<T>(path: string, options: ClientFetchOptions = {}): Promise<ApiSuccess<T>> {
   let response = await send(path, options);
   if (response.status === 401) {
+    // Read before the refresh attempt: a failed refresh clears the cookies, the role-change hint included.
+    const reason = currentSessionEndReason();
     const recovered = await recoverSession();
     if (recovered) response = await send(path, options);
     if (!recovered || response.status === 401) {
-      endSession();
-      throw new ApiError(401, "Your session ended. Log in again.");
+      endSession(reason);
+      throw new ApiError(401, SESSION_END_MESSAGES[reason]);
     }
   }
   return parse<T>(response);

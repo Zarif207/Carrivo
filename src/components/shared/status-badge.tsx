@@ -1,4 +1,5 @@
 import {
+  COURIER_APPLICATION_STATUS_META,
   EARNING_STATUS_META,
   ROLE_META,
   USER_STATUS_META,
@@ -9,7 +10,7 @@ import {
   type StatusMeta,
 } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import type { EarningStatus, PaymentStatus, Role, ShipmentPaymentStatus, ShipmentStatus, UserStatus } from "@/types";
+import type { CourierApplicationStatus, EarningStatus, PaymentStatus, Role, ShipmentPaymentStatus, ShipmentStatus, UserStatus } from "@/types";
 
 type StatusBadgeProps = (
   | { kind: "shipment"; status: ShipmentStatus }
@@ -18,6 +19,7 @@ type StatusBadgeProps = (
   | { kind: "earning"; status: EarningStatus }
   | { kind: "user"; status: UserStatus }
   | { kind: "role"; status: Role }
+  | { kind: "courier-application"; status: CourierApplicationStatus }
 ) & {
   size?: "sm" | "md";
   className?: string;
@@ -37,6 +39,8 @@ function metaFor(props: StatusBadgeProps): StatusMeta {
       return USER_STATUS_META[props.status];
     case "role":
       return ROLE_META[props.status];
+    case "courier-application":
+      return COURIER_APPLICATION_STATUS_META[props.status];
   }
 }
 

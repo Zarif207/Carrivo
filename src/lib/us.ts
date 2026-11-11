@@ -8,6 +8,21 @@ export const US_PHONE_PATTERN = /^(?:\+?1[\s.-]?)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[
 export const US_PHONE_MESSAGE = "Enter a US phone number, e.g. (212) 555-0142 or +1 212-555-0142";
 export const US_PHONE_PLACEHOLDER = "(212) 555-0142";
 
+/**
+ * Input mask for a US phone: formats as you type ("2125" → "(212) 5", "2125550142" → "(212) 555-0142").
+ * Drops a leading country code 1 and anything past 10 digits. Empty input stays empty.
+ */
+export function formatUsPhoneInput(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  // US area codes never start with 0 or 1, so a leading 1 is the country code (typed or pasted).
+  if (digits.startsWith("1")) digits = digits.slice(1);
+  digits = digits.slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export const ZIP_PATTERN = /^\d{5}(?:-\d{4})?$/;
 export const ZIP_MESSAGE = "Enter a 5-digit ZIP code, or ZIP+4 (e.g. 10118 or 10118-0110)";
 

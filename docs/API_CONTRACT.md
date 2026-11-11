@@ -40,12 +40,14 @@ Defined in `src/types/enums.ts` as readonly tuples (usable with `z.enum`).
 | `ShipmentPaymentStatus` (`shipment.paymentStatus`) | `UNPAID`, `PAID`, `REFUNDED` |
 | `PaymentStatus` (`payment.status`) | `PENDING`, `PAID`, `FAILED`, `EXPIRED`, `REFUND_PENDING`, `REFUNDED` |
 | `ServiceType` | `STANDARD`, `EXPRESS`, `SAME_DAY` |
-| `VehicleType` | `BICYCLE`, `MOTORCYCLE`, `CAR`, `VAN`, `TRUCK` |
+| `VehicleType` | `BICYCLE`, `MOTORCYCLE`, `CAR`, `VAN`, `TRUCK` (shown as Bicycle, Motorcycle, Car, Van, Truck) |
+| `CourierApplicationStatus` | `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED` (withdrawn by the applicant) |
+| `WorkAvailability` | `WEEKDAYS`, `WEEKENDS`, `FULL_TIME` |
 | `PickupStatus` | `SCHEDULED`, `COMPLETED`, `CANCELLED` |
 | `EarningStatus` | `PENDING`, `PAID` |
-| `NotificationType` | `SHIPMENT_CREATED`, `COURIER_ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_DELIVERY`, `PAYMENT_RECEIVED`, `REFUND_COMPLETED`; staff feed only: `SHIPMENT_CANCELLED`, `PAYMENT_FAILED`, `REFUND_FAILED`, `ZONE_CHANGED`, `HUB_CHANGED`, `COURIER_ADDED` |
-| `AuditEntityType` | `ZONE`, `HUB`, `PRICING_RULE`, `SHIPMENT`, `COURIER_PROFILE`, `USER`, `PAYMENT` **(src; Postman lists only the first 6)** |
-| `AuditAction` | 36 values, see `AUDIT_ACTIONS` in `src/types/enums.ts` **(src)** |
+| `NotificationType` | `SHIPMENT_CREATED`, `COURIER_ASSIGNED`, `PICKED_UP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `FAILED_DELIVERY`, `PAYMENT_RECEIVED`, `REFUND_COMPLETED`; staff feed only: `SHIPMENT_CANCELLED`, `PAYMENT_FAILED`, `REFUND_FAILED`, `ZONE_CHANGED`, `HUB_CHANGED`, `COURIER_ADDED`, `COURIER_APPLICATION_SUBMITTED`; applicant: `COURIER_APPLICATION_APPROVED`, `COURIER_APPLICATION_REJECTED` |
+| `AuditEntityType` | `ZONE`, `HUB`, `PRICING_RULE`, `SHIPMENT`, `COURIER_PROFILE`, `USER`, `PAYMENT`, `COURIER_APPLICATION` **(src; Postman lists only the first 6)** |
+| `AuditAction` | 40 values (4 `COURIER_APPLICATION_*`), see `AUDIT_ACTIONS` in `src/types/enums.ts` **(src)** |
 | Google `?error=` | `account_exists`, `account_deactivated`, `google_cancelled`, `google_failed` |
 
 ### Shipment state machine
@@ -227,6 +229,27 @@ Services per zone (home page "Where we deliver"): there is no public endpoint th
 - Refunds finished synchronously in every test, so `REFUND_PENDING` was never observed live; "Retry refund" shows only for that status.
 - Audit `before` / `after` snapshots usually hold only the changed fields (no names or tracking ids), so the UI labels records by type + the last 6 characters of the id.
 
+## 7b. Courier applications (backend `docs/api.md` → "Courier applications")
+
+A CUSTOMER applies to become a COURIER; an ADMIN approves or rejects; ADMIN_VIEWER reads only. No licence, SSN or ID numbers are collected (the API refuses unknown body fields with 400).
+
+| Method | Path | Role | Body / query | Response `data` / notes |
+|---|---|---|---|---|
+| POST | `/courier-applications` | CUSTOMER | `{ phone (US), vehicleType, availability, preferredZoneId? \| null, vehiclePlate? \| null (2-20), experience? ≤500, about? ≤1000 }` | **201** `CourierApplication`. ADMIN 403, ADMIN_VIEWER 403 read-only, COURIER 409 "You are already a courier". 409 when one is PENDING, or during the 7-day wait after a rejection (`errors[{ path: "canReapplyAt" }]`). 429 after 10 submits/cancels an hour |
+| GET | `/courier-applications/my` | CUSTOMER, COURIER | | `{ latest, history[] (≤20, newest first), canApply, canReapplyAt, blockedReason, cooldownDays }` |
+| PATCH | `/courier-applications/my/:id/cancel` | CUSTOMER (owner) | | `CourierApplication` (CANCELLED). 404 not yours, 409 not pending |
+| GET | `/admin/courier-applications` | Staff | `status`, `zoneId` (preferred zone), `vehicleType`, `searchTerm` (name, email, phone), `sortBy` createdAt\|updatedAt\|status, page, limit | `AdminCourierApplication[]` (+ `user { id, name, email, phone, role, status }`, `reviewedBy { id, name } \| null`) + meta |
+| GET | `/admin/courier-applications/:id` | Staff | | `AdminCourierApplication`, 404 unknown |
+| PATCH | `/admin/courier-applications/:id/approve` | ADMIN | `{ zoneId?, hubId? \| null }` (zone defaults to the preferred one; 400 when there's neither) | `AdminCourierApplication`. The user becomes COURIER and **every session is revoked**. 409 not PENDING (`errors[{ path: "status" }]`), 409 the customer still has unfinished shipments (`errors[{ path: "unfinishedShipments", message: "<n>" }]`) |
+| PATCH | `/admin/courier-applications/:id/reject` | ADMIN | `{ note }` 3-500 (the UI asks for 5) | `AdminCourierApplication` (REJECTED). Role and sessions untouched |
+
+`CourierApplication { id, status, phone, vehicleType, vehiclePlate, availability, experience, about, reviewNote, reviewedAt, createdAt, updatedAt, preferredZone { id, name, code } \| null }`.
+
+**How the UI uses this:**
+- `/courier-application` (any signed-in role; the proxy sends visitors to `/login?next=/courier-application`): customers get the form or their application's state (`src/lib/courier-application.ts`, unit-tested); couriers see their approved application; staff get a link to the queue. Linked from the footer, the home page ("Deliver with Carrivo"), the customer dashboard card and the customer nav.
+- `/admin/courier-applications`: tabs Pending (default) / Approved / Rejected / All from `?status=`, counts from `meta.total` (`limit=1`, four calls), search and zone filter in the URL, a `?view=<id>` sheet (`GET /admin/courier-applications/:id` when the row isn't on the page). Approve and Reject are `<CanMutate>`; the viewer sees "View only". The nav badge and the overview's "Pending courier applications" use the PENDING count.
+- **Session revoked by an approval.** The API answers 401 for a revoked token just like an expired one. While the user has a PENDING application the UI sets a hint cookie (`carrivo_role_change`, not httpOnly, value `1`); the client's `endSession()` and `/api/auth/session-expired` read it and say "Your role changed, please sign in again" (`/login?reason=role-changed`). `clearSession()` deletes the hint. See `src/lib/auth/session-end.ts`.
+
 ## 8. Any signed-in role
 
 | Method | Path | Query | Response `data` |
@@ -241,7 +264,7 @@ All five are scoped to the caller: another user's id answers 404. `ADMIN_VIEWER`
 
 `link` is an in-app path (e.g. `/admin/shipments/<id>`, `/admin/payments?status=FAILED`, `/admin/settings?tab=hubs`, `/admin/users`; customer rows use `/shipments/<id>`, which redirects by role), or `null` on older rows. The UI follows it only through `safeInternalPath()` (`src/lib/notifications/link.ts`): a root-relative, same-origin path, never `//host`, a backslash, a scheme or control characters. Clicking a row marks it read and navigates there with the router; with no (safe) link it only marks it read.
 
-ADMIN and ADMIN_VIEWER receive the staff feed at `/admin/notifications`: shipment booked, payment received, delivered, delivery failed, cancelled (link `/admin/shipments/<id>`), payment failed, refund completed, refund failed (`/admin/payments?…`), zone and hub changes (`/admin/settings?tab=zones|hubs`) and courier added (`/admin/users`).
+ADMIN and ADMIN_VIEWER receive the staff feed at `/admin/notifications`: shipment booked, payment received, delivered, delivery failed, cancelled (link `/admin/shipments/<id>`), payment failed, refund completed, refund failed (`/admin/payments?…`), zone and hub changes (`/admin/settings?tab=zones|hubs`), courier added (`/admin/users`) and new courier applications (`/admin/courier-applications?status=PENDING`). Applicants get `COURIER_APPLICATION_APPROVED` (link `/dashboard`, which sends a COURIER to `/courier`) or `COURIER_APPLICATION_REJECTED` (link `/courier-application`, with the admin's note).
 
 Render `message` as **plain text**: it contains user-entered text (the example includes `<b>`).
 

@@ -24,7 +24,18 @@ import {
   UserX,
   Warehouse,
 } from "lucide-react";
-import type { EarningStatus, PaymentStatus, Role, ServiceType, ShipmentPaymentStatus, ShipmentStatus, UserStatus, VehicleType } from "@/types";
+import type {
+  CourierApplicationStatus,
+  EarningStatus,
+  PaymentStatus,
+  Role,
+  ServiceType,
+  ShipmentPaymentStatus,
+  ShipmentStatus,
+  UserStatus,
+  VehicleType,
+  WorkAvailability,
+} from "@/types";
 
 /** Colour families defined as --tone-* tokens in globals.css (light + dark). Brand orange is never a status colour. */
 export type Tone =
@@ -112,6 +123,14 @@ export const USER_STATUS_META: Record<UserStatus, StatusMeta> = {
   INACTIVE: { label: "Deactivated", tone: "stone", icon: UserX, description: "Signed out everywhere and can't sign in." },
 };
 
+/** Courier applications. */
+export const COURIER_APPLICATION_STATUS_META: Record<CourierApplicationStatus, StatusMeta> = {
+  PENDING: { label: "Pending review", tone: "amber", icon: Hourglass, description: "Waiting for an admin to decide." },
+  APPROVED: { label: "Approved", tone: "green", icon: BadgeCheck, description: "The applicant is now a courier." },
+  REJECTED: { label: "Not approved", tone: "red", icon: CircleX, description: "Rejected with a note to the applicant." },
+  CANCELLED: { label: "Withdrawn", tone: "stone", icon: Ban, description: "Cancelled by the applicant." },
+};
+
 /** Roles (identity, not state: cool tones only). */
 export const ROLE_META: Record<Role, StatusMeta> = {
   CUSTOMER: { label: "Customer", tone: "slate", icon: UserRound, description: "Books and pays for shipments." },
@@ -134,5 +153,7 @@ export const SHIPMENT_MAIN_PATH: readonly ShipmentStatus[] = [
 ];
 
 export const VEHICLE_NAMES: Record<VehicleType, string> = { BICYCLE: "Bicycle", MOTORCYCLE: "Motorcycle", CAR: "Car", VAN: "Van", TRUCK: "Truck" };
+
+export const WORK_AVAILABILITY_NAMES: Record<WorkAvailability, string> = { WEEKDAYS: "Weekdays", WEEKENDS: "Weekends", FULL_TIME: "Full time" };
 
 export const SERVICE_NAMES: Record<ServiceType, string> = { STANDARD: "Standard", EXPRESS: "Express", SAME_DAY: "Same day" };

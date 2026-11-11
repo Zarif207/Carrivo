@@ -27,6 +27,7 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityType, string> = {
   COURIER_PROFILE: "Courier profile",
   USER: "User",
   PAYMENT: "Payment",
+  COURIER_APPLICATION: "Courier application",
 };
 
 /** Where an audit entry's subject lives in the admin area (null when there's no page for it). */
@@ -36,6 +37,8 @@ export function auditEntityHref(log: Pick<AuditLog, "entityType" | "entityId">):
       return `/admin/shipments/${log.entityId}`;
     case "USER":
       return `/admin/users?view=${log.entityId}`;
+    case "COURIER_APPLICATION":
+      return `/admin/courier-applications?view=${log.entityId}`;
     case "ZONE":
       return "/admin/settings?tab=zones";
     case "HUB":

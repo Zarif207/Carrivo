@@ -64,6 +64,11 @@ export const BFF_RULES: readonly Rule[] = [
   r("GET", "/payments/my"),
   r("GET", `/payments/${ID}`),
 
+  // Courier applications (apply/cancel: CUSTOMER; my: CUSTOMER, COURIER; enforced by the API)
+  r("POST", "/courier-applications"),
+  r("GET", "/courier-applications/my"),
+  r("PATCH", `/courier-applications/my/${ID}/cancel`),
+
   // Admin
   r("GET", "/admin/users"),
   r("POST", "/admin/users"),
@@ -72,6 +77,9 @@ export const BFF_RULES: readonly Rule[] = [
   r("GET", "/admin/audit-logs"),
   r("GET", "/admin/payments"),
   r("POST", `/admin/payments/${ID}/refund`),
+  r("GET", "/admin/courier-applications"),
+  r("GET", `/admin/courier-applications/${ID}`),
+  r("PATCH", `/admin/courier-applications/${ID}/(approve|reject)`),
 
   // Notifications
   r("GET", "/notifications/my"),

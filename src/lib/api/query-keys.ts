@@ -2,6 +2,7 @@ import type {
   AdminPaymentsQuery,
   AdminUserListQuery,
   AuditLogQuery,
+  CourierApplicationListQuery,
   CourierListQuery,
   CourierTaskQuery,
   EarningQuery,
@@ -75,6 +76,13 @@ export const queryKeys = {
     users: (query: AdminUserListQuery = {}) => ["admin", "users", query] as const,
     dashboardStats: () => ["admin", "dashboard-stats"] as const,
     auditLogs: (query: AuditLogQuery = {}) => ["admin", "audit-logs", query] as const,
+  },
+
+  courierApplications: {
+    all: ["courier-applications"] as const,
+    mine: () => ["courier-applications", "mine"] as const,
+    /** Staff: counts per status (the sidebar badge), and lists. */
+    count: (query: CourierApplicationListQuery = {}) => ["courier-applications", "count", query] as const,
   },
 
   notifications: {

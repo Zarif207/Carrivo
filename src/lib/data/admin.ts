@@ -4,12 +4,14 @@ import { endpoints } from "@/lib/api/endpoints";
 import type { Paginated } from "@/lib/api/types";
 import { requireRole } from "@/lib/auth/current-user";
 import type {
+  AdminCourierApplication,
   AdminPayment,
   AdminPaymentsQuery,
   AdminUser,
   AdminUserListQuery,
   AuditLog,
   AuditLogQuery,
+  CourierApplicationListQuery,
   CourierListItem,
   CourierListQuery,
   DashboardStats,
@@ -64,6 +66,10 @@ export const countAdminPayments = (query: AdminPaymentsQuery) => count(endpoints
 export const listCouriers = (query: CourierListQuery) => list<CourierListItem>(endpoints.couriers.list, query);
 export const listAdminUsers = (query: AdminUserListQuery) => list<AdminUser>(endpoints.admin.users, query);
 export const listAuditLogs = (query: AuditLogQuery) => list<AuditLog>(endpoints.admin.auditLogs, query);
+
+export const listCourierApplications = (query: CourierApplicationListQuery) => list<AdminCourierApplication>(endpoints.admin.courierApplications, query);
+export const getCourierApplication = (id: string) => one<AdminCourierApplication>(endpoints.admin.courierApplication(id));
+export const countCourierApplications = (query: CourierApplicationListQuery) => count(endpoints.admin.courierApplications, query);
 
 /** Settings lists include inactive records (isActive=all) so they can be reactivated. */
 export const listAdminZones = (query: ZoneListQuery) => list<Zone>(endpoints.zones.list, query);

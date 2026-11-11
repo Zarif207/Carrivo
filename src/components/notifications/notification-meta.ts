@@ -5,6 +5,9 @@ import {
   Bike,
   CircleAlert,
   CircleCheckBig,
+  ClipboardCheck,
+  ClipboardList,
+  ClipboardX,
   MapPinned,
   PackageCheck,
   PackagePlus,
@@ -34,6 +37,9 @@ export const NOTIFICATION_ICONS: Record<NotificationType, LucideIcon> = {
   ZONE_CHANGED: MapPinned,
   HUB_CHANGED: Warehouse,
   COURIER_ADDED: UserPlus,
+  COURIER_APPLICATION_SUBMITTED: ClipboardList,
+  COURIER_APPLICATION_APPROVED: ClipboardCheck,
+  COURIER_APPLICATION_REJECTED: ClipboardX,
 };
 
 /** Icon for a type, with a plain bell for a type a newer API adds before the UI knows it. */

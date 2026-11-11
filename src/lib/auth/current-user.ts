@@ -35,6 +35,17 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 });
 
 /**
+ * Guard for pages any signed-in role may open (e.g. /courier-application, which explains itself to
+ * each role). Same session checks as requireRole, without the role filter.
+ */
+export async function requireSignedIn(): Promise<UserProfile> {
+  const current = await getCurrentUser();
+  if (!current) redirect(`/api/auth/session-expired?reason=expired`);
+  if (current.session.role !== current.user.role) redirect(`/api/auth/session-expired?reason=role-changed`);
+  return current.user;
+}
+
+/**
  * Layout guard. Server Components can't change cookies, so a dead or out-of-date session is sent
  * through /api/auth/session-expired, which clears the cookies and lands on /login.
  */

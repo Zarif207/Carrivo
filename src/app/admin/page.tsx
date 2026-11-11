@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Bike, CircleDollarSign, Package, PackageX, RotateCw, ShieldAlert, UserRoundSearch } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bike, CircleDollarSign, ClipboardList, Package, PackageX, RotateCw, ShieldAlert, UserRoundSearch } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatCard, StatCardSkeleton } from "@/components/shared/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/errors";
-import { countAdminPayments, getDashboardStats, listAuditLogs } from "@/lib/data/admin";
+import { countAdminPayments, countCourierApplications, getDashboardStats, listAuditLogs } from "@/lib/data/admin";
 import { formatCount, formatDateTime, formatMoney, shortDayLabel } from "@/lib/format";
 import { PAYMENT_STATUS_META, SHIPMENT_STATUS_META, TONE_CLASSES } from "@/lib/status";
 import { cn } from "@/lib/utils";
@@ -55,11 +55,16 @@ function AttentionRow({ href, icon: Icon, label, hint, count }: { href: string; 
   );
 }
 
-/** Three requests: dashboard-stats (cached 60 s by the API), a review count and the latest audit entries. */
+/** Four requests: dashboard-stats (cached 60 s by the API), two attention counts and the latest audit entries. */
 async function Overview() {
-  let stats, reviewCount, activity;
+  let stats, reviewCount, pendingApplications, activity;
   try {
-    [stats, reviewCount, activity] = await Promise.all([getDashboardStats(), countAdminPayments({ requiresReview: "true" }), listAuditLogs({ limit: 8 })]);
+    [stats, reviewCount, pendingApplications, activity] = await Promise.all([
+      getDashboardStats(),
+      countAdminPayments({ requiresReview: "true" }),
+      countCourierApplications({ status: "PENDING" }),
+      listAuditLogs({ limit: 8 }),
+    ]);
   } catch (error) {
     unstable_rethrow(error);
     return <LoadError what="The overview" message={ApiError.isApiError(error) ? error.message : undefined} />;
@@ -92,6 +97,13 @@ async function Overview() {
             <AttentionRow href="/admin/shipments?status=FAILED_DELIVERY" icon={AlertTriangle} label="Failed deliveries" hint="Retry with the courier or return to sender" count={shipments.byStatus.FAILED_DELIVERY ?? 0} />
             <AttentionRow href="/admin/payments?status=REFUND_PENDING" icon={RotateCw} label="Refunds pending" hint="Cancelled after payment, refund not confirmed" count={paymentsByStatus.REFUND_PENDING ?? 0} />
             <AttentionRow href="/admin/payments?requiresReview=true" icon={ShieldAlert} label="Payments to review" hint="Failed refunds, duplicates or amount mismatches" count={reviewCount} />
+            <AttentionRow
+              href="/admin/courier-applications?status=PENDING"
+              icon={ClipboardList}
+              label="Pending courier applications"
+              hint="Customers waiting to hear if they can deliver"
+              count={pendingApplications}
+            />
           </ul>
         </Panel>
       </div>

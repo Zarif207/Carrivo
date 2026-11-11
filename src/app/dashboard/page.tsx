@@ -4,6 +4,7 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { BecomeCourierCard } from "@/components/courier-application/become-courier-card";
 import { Greeting } from "@/components/layout/greeting";
 import { LoadError } from "@/components/shared/load-error";
 import { PageHeader } from "@/components/shared/page-header";
@@ -108,6 +109,9 @@ export default function DashboardPage({ searchParams }: PageProps<"/dashboard">)
       <Suspense fallback={<OverviewSkeleton />}>
         <OverviewForRange searchParams={searchParams} />
       </Suspense>
+      <div className="mt-8">
+        <BecomeCourierCard />
+      </div>
     </>
   );
 }

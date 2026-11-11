@@ -19,6 +19,9 @@ export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   ZONE_CHANGED: "Zone change",
   HUB_CHANGED: "Hub change",
   COURIER_ADDED: "Courier added",
+  COURIER_APPLICATION_SUBMITTED: "Courier application",
+  COURIER_APPLICATION_APPROVED: "Application approved",
+  COURIER_APPLICATION_REJECTED: "Application not approved",
 };
 
 /** Label for a type, tolerating a type a newer API adds before the UI knows it. */

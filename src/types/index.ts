@@ -8,3 +8,4 @@ export * from "./courier";
 export * from "./payment";
 export * from "./admin";
 export * from "./notification";
+export * from "./courier-application";

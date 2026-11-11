@@ -68,6 +68,9 @@ export function SegmentedControl<T extends string>({
     refs.current[target]?.focus();
   };
 
+  // Radio-group pattern: the checked option is the tab stop; with none checked, the first enabled one is.
+  const tabStop = options.some((o) => o.value === value) ? -1 : nextEnabled(0, 1);
+
   return (
     <div
       role="radiogroup"
@@ -91,7 +94,7 @@ export function SegmentedControl<T extends string>({
             role="radio"
             aria-checked={selected}
             aria-disabled={option.disabled || undefined}
-            tabIndex={selected ? 0 : -1}
+            tabIndex={selected || index === tabStop ? 0 : -1}
             onClick={() => {
               if (!option.disabled) onValueChange(option.value);
             }}

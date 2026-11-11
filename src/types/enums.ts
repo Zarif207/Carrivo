@@ -40,6 +40,13 @@ export type ServiceType = (typeof SERVICE_TYPES)[number];
 export const VEHICLE_TYPES = ["BICYCLE", "MOTORCYCLE", "CAR", "VAN", "TRUCK"] as const;
 export type VehicleType = (typeof VEHICLE_TYPES)[number];
 
+/** A customer's request to become a courier (CANCELLED = withdrawn by the applicant). */
+export const COURIER_APPLICATION_STATUSES = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as const;
+export type CourierApplicationStatus = (typeof COURIER_APPLICATION_STATUSES)[number];
+
+export const WORK_AVAILABILITIES = ["WEEKDAYS", "WEEKENDS", "FULL_TIME"] as const;
+export type WorkAvailability = (typeof WORK_AVAILABILITIES)[number];
+
 export const PICKUP_STATUSES = ["SCHEDULED", "COMPLETED", "CANCELLED"] as const;
 export type PickupStatus = (typeof PICKUP_STATUSES)[number];
 
@@ -62,10 +69,14 @@ export const NOTIFICATION_TYPES = [
   "ZONE_CHANGED",
   "HUB_CHANGED",
   "COURIER_ADDED",
+  "COURIER_APPLICATION_SUBMITTED",
+  // To the applicant
+  "COURIER_APPLICATION_APPROVED",
+  "COURIER_APPLICATION_REJECTED",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
-export const AUDIT_ENTITY_TYPES = ["ZONE", "HUB", "PRICING_RULE", "SHIPMENT", "COURIER_PROFILE", "USER", "PAYMENT"] as const;
+export const AUDIT_ENTITY_TYPES = ["ZONE", "HUB", "PRICING_RULE", "SHIPMENT", "COURIER_PROFILE", "USER", "PAYMENT", "COURIER_APPLICATION"] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 export const AUDIT_ACTIONS = [
@@ -105,6 +116,10 @@ export const AUDIT_ACTIONS = [
   "PAYMENT_REFUND_REQUESTED",
   "PAYMENT_REFUNDED",
   "PAYMENT_REFUND_FAILED",
+  "COURIER_APPLICATION_SUBMITTED",
+  "COURIER_APPLICATION_CANCELLED",
+  "COURIER_APPLICATION_APPROVED",
+  "COURIER_APPLICATION_REJECTED",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

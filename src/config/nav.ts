@@ -1,6 +1,7 @@
 import {
   Bell,
   Bike,
+  ClipboardList,
   CreditCard,
   FileClock,
   LayoutDashboard,
@@ -64,6 +65,7 @@ const ADMIN_NAV: NavItem[] = [
   { title: "Shipments", href: "/admin/shipments", icon: Package, primary: true },
   { title: "Users", href: "/admin/users", icon: Users, primary: true },
   { title: "Payments", href: "/admin/payments", icon: CreditCard, primary: true },
+  { title: "Courier applications", href: "/admin/courier-applications", icon: ClipboardList },
   { title: "Notifications", href: "/admin/notifications", icon: Bell },
   { title: "Reports", href: "/admin/reports", icon: FileClock },
   { title: "Settings", href: "/admin/settings", icon: Settings2 },
@@ -77,6 +79,7 @@ export const DASHBOARD_NAV: Record<Role, NavItem[]> = {
     { title: "New shipment", href: "/dashboard/shipments/new", icon: PackagePlus, primary: true },
     { title: "Payments", href: "/dashboard/payments", icon: CreditCard, primary: true },
     { title: "Notifications", href: "/dashboard/notifications", icon: Bell },
+    { title: "Become a courier", href: "/courier-application", icon: Bike },
     { title: "Profile", href: "/dashboard/profile", icon: UserRound },
   ],
   COURIER: [
@@ -104,6 +107,10 @@ export const ROLE_NOTIFICATIONS: Record<Role, string | null> = {
   ADMIN: "/admin/notifications",
   ADMIN_VIEWER: "/admin/notifications",
 };
+
+/** Customers apply to become couriers here; staff review the queue at ADMIN_COURIER_APPLICATIONS. */
+export const COURIER_APPLICATION_PATH = "/courier-application";
+export const ADMIN_COURIER_APPLICATIONS = "/admin/courier-applications";
 
 /** The public site's home page (reachable from every dashboard). */
 export const PUBLIC_HOME = "/";

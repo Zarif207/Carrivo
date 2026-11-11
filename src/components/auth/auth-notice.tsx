@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /** Messages for ?reason= and ?error= on /login and /register (Google errors come from the API, contract §3.6). */
 const NOTICES: Record<string, { tone: "info" | "error"; text: string }> = {
   expired: { tone: "info", text: "Your session ended. Log in again to continue." },
-  "role-changed": { tone: "info", text: "Your account was updated. Log in again to continue." },
+  "role-changed": { tone: "info", text: "Your role changed, please sign in again. If your courier application was approved, you'll land on your courier dashboard." },
   "logged-out": { tone: "info", text: "You're logged out." },
   account_exists: {
     tone: "error",

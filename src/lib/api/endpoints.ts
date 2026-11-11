@@ -72,6 +72,12 @@ export const endpoints = {
     detail: (id: string) => `/payments/${seg(id)}`,
   },
 
+  courierApplications: {
+    apply: "/courier-applications",
+    mine: "/courier-applications/my",
+    cancel: (id: string) => `/courier-applications/my/${seg(id)}/cancel`,
+  },
+
   admin: {
     users: "/admin/users",
     userRole: (id: string) => `/admin/users/${seg(id)}/role`,
@@ -80,6 +86,10 @@ export const endpoints = {
     auditLogs: "/admin/audit-logs",
     payments: "/admin/payments",
     refund: (id: string) => `/admin/payments/${seg(id)}/refund`,
+    courierApplications: "/admin/courier-applications",
+    courierApplication: (id: string) => `/admin/courier-applications/${seg(id)}`,
+    approveCourierApplication: (id: string) => `/admin/courier-applications/${seg(id)}/approve`,
+    rejectCourierApplication: (id: string) => `/admin/courier-applications/${seg(id)}/reject`,
   },
 
   notifications: {

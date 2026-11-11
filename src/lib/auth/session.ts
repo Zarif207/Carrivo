@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { AUTH_COOKIES } from "@/lib/api/config";
 import { ROLES, type Role } from "@/types";
+import { ROLE_CHANGE_HINT_COOKIE } from "./session-end";
 
 /*
  * Session cookies (all httpOnly, SameSite=Lax, Secure in production):
@@ -109,6 +110,8 @@ export function clearSession(store: CookieWriter): void {
   for (const name of [AUTH_COOKIES.token, AUTH_COOKIES.role]) {
     store.set(name, "", { ...cookieOptions(), maxAge: 0 });
   }
+  // The "role change expected" hint belongs to the session that just ended (lib/auth/session-end.ts).
+  store.set(ROLE_CHANGE_HINT_COOKIE, "", { ...cookieOptions(), httpOnly: false, maxAge: 0 });
 }
 
 /** Fails fast (at login) when the signing secret isn't configured. */
