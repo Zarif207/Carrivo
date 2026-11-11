@@ -417,9 +417,14 @@ html.lenis,
 html.lenis body {
   height: auto;
 }
-.lenis:not(.lenis-autoToggle).lenis-stopped {
-  overflow: clip;
-}
+/*
+ * Deliberately NO `.lenis-stopped { overflow: clip }` (Lenis's stock rule). Lenis is only stopped while a
+ * Radix dialog or menu locks the page (body[data-scroll-locked] already sets overflow: hidden), and
+ * clipping <html> on top of that broke the sticky header: on long pages Chrome then laid the header
+ * (and the menu anchored to it) out at its document position, ~scrollY px above the viewport, so a
+ * header menu opened off-screen and its modal lock left the page frozen until a refresh.
+ * Regression test: tests/e2e/header-scroll.spec.ts.
+ */
 .lenis [data-lenis-prevent] {
   overscroll-behavior: contain;
 }

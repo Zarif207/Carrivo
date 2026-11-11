@@ -23,12 +23,17 @@ export default function LenisScroll() {
         prevent: (node) => node.closest(PREVENT) !== null,
       });
       setSmoothScroller(lenis);
-      // Radix dialogs, sheets and menus lock the page with data-scroll-locked on <body>: pause with them.
-      lockObserver = new MutationObserver(() => {
+      // Radix dialogs, sheets and menus lock the page with data-scroll-locked on <body>: pause with them
+      // and resume on every close path (Escape, outside click, item select, route change), because the
+      // attribute is the single source of truth. Radix's own body overflow blocks native scrolling
+      // meanwhile; globals.css must NOT clip <html> on .lenis-stopped (it knocks the sticky header off-screen).
+      const sync = () => {
         if (document.body.hasAttribute("data-scroll-locked")) lenis?.stop();
         else lenis?.start();
-      });
+      };
+      lockObserver = new MutationObserver(sync);
       lockObserver.observe(document.body, { attributes: true, attributeFilter: ["data-scroll-locked"] });
+      sync(); // a lock may already be active (e.g. reduced motion switched off while a dialog is open)
     };
 
     const stop = () => {
